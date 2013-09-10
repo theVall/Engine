@@ -48,14 +48,15 @@ private:
 
 //  Member variables
 private:
-    LPCWSTR m_applicationName;
-    HINSTANCE m_hinstance;
-    HWND m_hwnd;
 
-    Input *m_input;
-    Graphics *m_graphics;
+    LPCWSTR     m_applicationName;
+    HINSTANCE   m_hinstance;
+    HWND        m_hwnd;
+
+    Input      *m_input;
+    Graphics   *m_graphics;
 };
 
 //  Windows message handling
 static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-static System* ApplicationHandle = 0;
+static System *ApplicationHandle = 0;

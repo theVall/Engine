@@ -3,14 +3,14 @@
 
 D3D::D3D(void)
 {
-    m_swapChain             = 0;
-    m_device                = 0;
-    m_deviceContext         = 0;
-    m_renderTargetView      = 0;
-    m_depthStencilBuffer    = 0;
-    m_depthStencilState     = 0;
-    m_depthStencilView      = 0;
-    m_rasterState           = 0;
+    m_swapChain          = 0;
+    m_device             = 0;
+    m_deviceContext      = 0;
+    m_renderTargetView   = 0;
+    m_depthStencilBuffer = 0;
+    m_depthStencilState  = 0;
+    m_depthStencilView   = 0;
+    m_rasterState        = 0;
 }
 
 
@@ -25,12 +25,12 @@ D3D::~D3D(void)
 
 
 bool D3D::Initialize(int screenWidth,
-                          int screenHeight,
-                          bool vsync,
-                          HWND hwnd,
-                          bool fullscreen, 
-                          float screenDepth,
-                          float screenNear)
+                     int screenHeight,
+                     bool vSync,
+                     HWND hwnd,
+                     bool fullscreen, 
+                     float screenDepth,
+                     float screenNear)
 {
     HRESULT result;
     IDXGIFactory1 *factory;
@@ -46,8 +46,8 @@ bool D3D::Initialize(int screenWidth,
     D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc;
     D3D11_RASTERIZER_DESC rasterDesc;
     D3D11_VIEWPORT viewport;
-    unsigned int numModes;
-    unsigned int i;
+    unsigned int numModes     = 0;
+    unsigned int i            = 0;
     unsigned int numerator    = 0;
     unsigned int denominator  = 0;
     unsigned int stringLength = 0;
@@ -55,7 +55,7 @@ bool D3D::Initialize(int screenWidth,
     float fovAngleY           = 0.0f;
     float screenAspect        = 0.0f;
 
-    m_vSyncEnabled = vsync;
+    m_vSyncEnabled = vSync;
 
     //  Create a DirectX graphics interface factory.
     result = CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&factory);
@@ -126,10 +126,10 @@ bool D3D::Initialize(int screenWidth,
         return false;
     }
 
-    // Store the dedicated video card memory in megabytes.
+    //  Store the dedicated video card memory in megabytes.
     m_videoCardMemory = (int)(adapterDesc.DedicatedVideoMemory / 1024 / 1024);
 
-    // Convert the name of the video card to a character array and store it.
+    //  Convert the name of the video card to a character array and store it.
     error = wcstombs_s(&stringLength, m_videoCardDescription, 128, adapterDesc.Description, 128);
     if(error != 0)
     {
@@ -154,7 +154,7 @@ bool D3D::Initialize(int screenWidth,
 
     swapChainDesc.BufferCount = 1;
 
-    swapChainDesc.BufferDesc.Width = screenWidth;
+    swapChainDesc.BufferDesc.Width  = screenWidth;
     swapChainDesc.BufferDesc.Height = screenHeight;
 
     //  Set regular 32-bit surface for the back buffer.
@@ -163,20 +163,20 @@ bool D3D::Initialize(int screenWidth,
     //  Set the refresh rate of the back buffer.
     if (m_vSyncEnabled)
     {
-        swapChainDesc.BufferDesc.RefreshRate.Numerator = numerator;
+        swapChainDesc.BufferDesc.RefreshRate.Numerator   = numerator;
         swapChainDesc.BufferDesc.RefreshRate.Denominator = denominator;
     }
     else
     {
-        swapChainDesc.BufferDesc.RefreshRate.Numerator = 0;
+        swapChainDesc.BufferDesc.RefreshRate.Numerator   = 0;
         swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
     }
 
-    swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapChainDesc.BufferUsage  = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapChainDesc.OutputWindow = hwnd;
 
     //  Turn multisampling off.
-    swapChainDesc.SampleDesc.Count = 1;
+    swapChainDesc.SampleDesc.Count   = 1;
     swapChainDesc.SampleDesc.Quality = 0;
 
     //  Set to full screen or windowed mode.
@@ -312,16 +312,16 @@ bool D3D::Initialize(int screenWidth,
 
     //  RASTERIZER
     //  Setup the raster description for poligone draw manipulation.
-    rasterDesc.AntialiasedLineEnable    = false;
-    rasterDesc.CullMode                 = D3D11_CULL_BACK;
-    rasterDesc.DepthBias                = 0;
-    rasterDesc.DepthBiasClamp           = 0.0f;
-    rasterDesc.DepthClipEnable          = true;
-    rasterDesc.FillMode                 = D3D11_FILL_SOLID;
-    rasterDesc.FrontCounterClockwise    = false;
-    rasterDesc.MultisampleEnable        = false;
-    rasterDesc.ScissorEnable            = false;
-    rasterDesc.SlopeScaledDepthBias     = 0.0f;
+    rasterDesc.AntialiasedLineEnable = false;
+    rasterDesc.CullMode              = D3D11_CULL_BACK;
+    rasterDesc.DepthBias             = 0;
+    rasterDesc.DepthBiasClamp        = 0.0f;
+    rasterDesc.DepthClipEnable       = true;
+    rasterDesc.FillMode              = D3D11_FILL_SOLID;
+    rasterDesc.FrontCounterClockwise = false;
+    rasterDesc.MultisampleEnable     = false;
+    rasterDesc.ScissorEnable         = false;
+    rasterDesc.SlopeScaledDepthBias  = 0.0f;
 
     result = m_device->CreateRasterizerState(&rasterDesc, &m_rasterState);
     if (FAILED(result))
@@ -332,12 +332,12 @@ bool D3D::Initialize(int screenWidth,
     m_deviceContext->RSSetState(m_rasterState);
 
     //  VIEWPORT as entire window size.
-    viewport.Width      = (float) screenWidth;
-    viewport.Height     = (float) screenHeight;
-    viewport.MinDepth   = 0.0f;
-    viewport.MaxDepth   = 1.0f;
-    viewport.TopLeftX   = 0.0f;
-    viewport.TopLeftY   = 0.0f;
+    viewport.Width    = (float) screenWidth;
+    viewport.Height   = (float) screenHeight;
+    viewport.MinDepth = 0.0f;
+    viewport.MaxDepth = 1.0f;
+    viewport.TopLeftX = 0.0f;
+    viewport.TopLeftY = 0.0f;
 
     m_deviceContext->RSSetViewports(1, &viewport);
 
