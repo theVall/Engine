@@ -1,37 +1,39 @@
 
+//  Vertex shader for textured surfaces.
+
+//  Common matrices.
 cbuffer MatrixBuffer
 {
-    matrix worldMat;
-    matrix viewMat;
-    matrix projMat;
+    matrix worldMatrix;
+    matrix viewMatrix;
+    matrix projectionMatrix;
 };
-
 
 struct VertexInputType
 {
     float4 position : POSITION;
-    float4 color    : COLOR;
+    float2 tex : TEXCOORD0;
 };
-
 
 struct PixelInputType
 {
     float4 position : SV_POSITION;
-    float4 color    : COLOR;
-}
+    float2 tex : TEXCOORD0;
+};
 
-
-PixelInputType VertexShader(VertexInputType input)
+// Entry point main method.
+PixelInputType Main(VertexInputType input)
 {
     PixelInputType output;
 
     input.position.w = 1.0f;
 
+    // position calculations
     output.position = mul( input.position, worldMatrix);
     output.position = mul(output.position, viewMatrix);
     output.position = mul(output.position, projectionMatrix);
 
-    output.color = input.color;
+    output.tex = input.tex;
 
     return output;
 }

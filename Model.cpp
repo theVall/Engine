@@ -5,6 +5,8 @@ Model::Model(void)
 {
     m_vertexBuffer = 0;
     m_indexBuffer  = 0;
+    m_texture = 0;
+    m_model = 0;
 }
 
 
@@ -13,13 +15,24 @@ Model::~Model(void)
 }
 
 
-bool Model::Initialize(ID3D11Device *device)
+bool Model::Initialize(ID3D11Device *device, WCHAR *modelFilename, WCHAR *textureFilename)
 {
     bool result;
 
-    //  Initialize the vertex and index buffer that hold the geometry for the triangle.
+    result = LoadModel(modelFilename);
+    if (!result)
+    {
+        return false;
+    }
+
     result = InitializeBuffers(device);
     if(!result)
+    {
+        return false;
+    }
+
+    result = LoadTexture(device, textureFilename);
+    if (!result)
     {
         return false;
     }
@@ -30,7 +43,8 @@ bool Model::Initialize(ID3D11Device *device)
 
 void Model::Shutdown()
 {
-    //  Release the vertex and index buffers.
+    ReleaseModel();
+    ReleaseTexture();
     ShutdownBuffers();
 
     return;
@@ -52,25 +66,28 @@ int Model::GetIndexCount()
 }
 
 
+ID3D11ShaderResourceView* Model::GetTexture()
+{
+    return m_texture->GetTexture();
+}
+
+
 bool Model::InitializeBuffers(ID3D11Device* device)
 {
     VertexType* vertices;
     unsigned long* indices;
-    D3D11_BUFFER_DESC vertexBufferDesc, indexBufferDesc;
-    D3D11_SUBRESOURCE_DATA vertexData, indexData;
+    D3D11_BUFFER_DESC vertexBufferDesc;
+    D3D11_BUFFER_DESC indexBufferDesc;
+    D3D11_SUBRESOURCE_DATA vertexData;
+    D3D11_SUBRESOURCE_DATA indexData;
     HRESULT result;
 
-    m_vertexCount = 3;
-    m_indexCount = 3;
-
-    // Create the vertex array.
     vertices = new VertexType[m_vertexCount];
     if(!vertices)
     {
         return false;
     }
 
-    // Create the index array.
     indices = new unsigned long[m_indexCount];
     if(!indices)
     {
@@ -78,19 +95,16 @@ bool Model::InitializeBuffers(ID3D11Device* device)
     }
 
     // Load the vertex array with data.
-    vertices[0].position = XMFLOAT3(-1.0f, -1.0f, 0.0f);  // Bottom left.
-    vertices[0].color    = XMFLOAT4( 0.0f,  1.0f, 0.0f, 1.0f);
+    for (int i = 0; i < m_vertexCount; ++i)
+    {
+        vertices[i].position = XMFLOAT3(m_model[i].x, m_model[i].y, m_model[i].z);
+        vertices[i].texture  = XMFLOAT2(m_model[i].tu, m_model[i].tv);
+        vertices[i].normal   = XMFLOAT3(m_model[i].nx, m_model[i].ny, m_model[i].nz);
 
-    vertices[1].position = XMFLOAT3( 0.0f, 1.0f, 0.0f);  // Top middle.
-    vertices[1].color    = XMFLOAT4( 0.0f, 1.0f, 0.0f, 1.0f);
+        // Load the index array with data.
+        indices[i] = i;
+    }
 
-    vertices[2].position = XMFLOAT3( 1.0f, -1.0f, 0.0f);  // Bottom right.
-    vertices[2].color    = XMFLOAT4( 0.0f,  1.0f, 0.0f, 1.0f);
-
-    // Load the index array with data.
-    indices[0] = 0;  // Bottom left.
-    indices[1] = 1;  // Top middle.
-    indices[2] = 2;  // Bottom right.
 
     // Set up the description of the static vertex buffer.
     vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -100,7 +114,7 @@ bool Model::InitializeBuffers(ID3D11Device* device)
     vertexBufferDesc.MiscFlags = 0;
     vertexBufferDesc.StructureByteStride = 0;
 
-    // Give the subresource structure a pointer to the vertex data.
+    // Give the sub resource structure a pointer to the vertex data.
     vertexData.pSysMem = vertices;
     vertexData.SysMemPitch = 0;
     vertexData.SysMemSlicePitch = 0;
@@ -120,7 +134,7 @@ bool Model::InitializeBuffers(ID3D11Device* device)
     indexBufferDesc.MiscFlags = 0;
     indexBufferDesc.StructureByteStride = 0;
 
-    // Give the subresource structure a pointer to the index data.
+    // Give the sub resource structure a pointer to the index data.
     indexData.pSysMem = indices;
     indexData.SysMemPitch = 0;
     indexData.SysMemSlicePitch = 0;
@@ -168,19 +182,110 @@ void Model::RenderBuffers(ID3D11DeviceContext* deviceContext)
     unsigned int stride;
     unsigned int offset;
 
-
-    // Set vertex buffer stride and offset.
     stride = sizeof(VertexType); 
     offset = 0;
     
-    // Set the vertex buffer to active in the input assembler so it can be rendered.
     deviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
-
-    // Set the index buffer to active in the input assembler so it can be rendered.
     deviceContext->IASetIndexBuffer(m_indexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-    // Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
     deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    return;
+}
+
+
+bool Model::LoadTexture(ID3D11Device* device, WCHAR* filename)
+{
+    bool result;
+
+    m_texture = new Texture;
+    if (!m_texture)
+    {
+        return false;
+    }
+
+    result = m_texture->Initialize(device, filename);
+    if (!result)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+
+void Model::ReleaseTexture()
+{
+    if (m_texture)
+    {
+        m_texture->Shutdown();
+        delete m_texture;
+        m_texture = 0;
+    }
+
+    return;
+}
+
+
+bool Model::LoadModel(WCHAR *filename)
+{
+    ifstream fin;
+    char input;
+    
+    fin.open(filename);
+    if (fin.fail())
+    {
+        return false;
+    }
+
+    // Read up to the value of vertex count.
+    fin.get(input);
+    while (input != ':')
+    {
+        fin.get(input);
+    }
+
+    fin >> m_vertexCount;
+    m_indexCount = m_vertexCount;
+
+    m_model = new ModelType[m_vertexCount];
+    if (!m_model)
+    {
+        return false;
+    }
+
+    // Read up to the beginning of the data.
+    fin.get(input);
+    while (input != ':')
+    {
+        fin.get(input);
+    }
+    fin.get(input);
+    fin.get(input);
+
+    // Read in the vertex data.
+    for (int i = 0; i < m_vertexCount; ++i)
+    {
+        // position
+        fin >> m_model[i].x  >> m_model[i].y >> m_model[i].z;
+        // texture coordinates
+        fin >> m_model[i].tu >> m_model[i].tv;
+        // normal
+        fin >> m_model[i].nx >> m_model[i].ny >> m_model[i].nz;
+    }
+
+    fin.close();
+
+    return true;
+}
+
+
+void Model::ReleaseModel()
+{
+    if (m_model)
+    {
+        delete[] m_model;
+        m_model = 0;
+    }
 
     return;
 }

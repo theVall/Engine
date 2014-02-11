@@ -9,6 +9,11 @@ Graphics::Graphics(void)
     m_screenNear = 0.1f;
 
     m_D3D = 0;
+    m_Camera = 0;
+    m_Model = 0;
+    m_TextureShader = 0;
+    m_LightShader = 0;
+    m_Light = 0;
 }
 
 
@@ -26,12 +31,12 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 {
     bool success = false;
 
+    // Create D3D window object.
     m_D3D = new D3D;
     if(!m_D3D)
     {
         return false;
     }
-
     success = m_D3D->Initialize(screenWidth,
                                 screenHeight,
                                 m_vSync,
@@ -45,12 +50,91 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd)
         return false;
     }
 
+    // Create camera and set initial position.
+    m_Camera = new Camera;
+    if (!m_Camera)
+    {
+        return false;
+    }
+    m_Camera->SetPosition(0.0f, 0.0f, -10.0f);
+
+    // Load models.
+    m_Model = new Model;
+    if (!m_Model)
+    {
+        return false;
+    }
+    success = m_Model->Initialize(m_D3D->GetDevice(),
+                                  L"../Engine/res/model/cube.txt",
+                                  L"../Engine/res/tex/seafloor.dds");
+    if (!success)
+    {
+        MessageBox(hwnd, L"Could not initialize the model object.", L"Error", MB_OK);
+        return false;
+    }
+
+    // Load shaders.
+    m_LightShader = new LightShader;
+    if (!m_LightShader)
+    {
+        return false;
+    }
+
+    success = m_LightShader->Initialize(m_D3D->GetDevice(), hwnd);
+    if (!success)
+    {
+        MessageBox(hwnd, L"Could not initialize the light shader object.", L"Error", MB_OK);
+        return false;
+    }
+
+    // Load light.
+    m_Light = new Light;
+    if (!m_Light)
+    {
+        return false;
+    }
+    m_Light->SetDiffuseColor(0.0f, 0.0f, 0.7f, 1.0f);
+    m_Light->SetDirection(0.0f, 0.1f, 1.0f);
+
     return true;
 }
 
 
 void Graphics::Shutdown()
 {
+    if (m_Light)
+    {
+        delete m_Light;
+        m_Light = 0;
+    }
+
+    if (m_LightShader)
+    {
+        m_LightShader->Shutdown();
+        delete m_LightShader;
+        m_LightShader = 0;
+    }
+
+    if (m_TextureShader)
+    {
+        m_TextureShader->Shutdown();
+        delete m_TextureShader;
+        m_TextureShader = 0;
+    }
+
+    if (m_Model)
+    {
+        m_Model->Shutdown();
+        delete m_Model;
+        m_Model = 0;
+    }
+
+    if (m_Camera)
+    {
+        delete m_Camera;
+        m_Camera = 0;
+    }
+
     if(m_D3D)
     {
         m_D3D->Shutdown();
@@ -65,8 +149,15 @@ void Graphics::Shutdown()
 bool Graphics::ProcessFrame()
 {
     bool success;
+    static float rotation = 0.0f;
 
-    success = Render();
+    rotation += (float)XM_PI * 0.01f;
+    if (rotation > 360.0f)
+    {
+        rotation -= 360.0f;
+    }
+
+    success = Render(rotation);
     if(!success)
     {
         return false;
@@ -76,10 +167,44 @@ bool Graphics::ProcessFrame()
 }
 
 
-bool Graphics::Render()
+bool Graphics::Render(float rotation)
 {
-    //  Clear the scene.
-    m_D3D->BeginScene(0.5f, 0.5f, 0.5f, 1.0f);
+    XMMATRIX viewMatrix;
+    XMMATRIX projectionMatrix;
+    XMMATRIX worldMatrix;
+
+    bool result;
+
+    // Clear buffers.
+    m_D3D->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
+
+    // Generate the view matrix based on camera position.
+    m_Camera->Render();
+
+    // Get the world, view, and projection matrices.
+    m_D3D->GetWorldMatrix(worldMatrix);
+    m_Camera->GetViewMatrix(viewMatrix);
+    m_D3D->GetProjectionMatrix(projectionMatrix);
+
+    // Rotation 
+    worldMatrix = XMMatrixMultiply(XMMatrixRotationY(rotation), worldMatrix);
+    worldMatrix = XMMatrixMultiply(XMMatrixRotationX(rotation), worldMatrix);
+
+    // Put the model vertex and index buffers on the graphics pipeline.
+    m_Model->Render(m_D3D->GetDeviceContext());
+
+    result = m_LightShader->Render(m_D3D->GetDeviceContext(),
+                                   m_Model->GetIndexCount(),
+                                   worldMatrix,
+                                   viewMatrix,
+                                   projectionMatrix,
+                                   m_Model->GetTexture(),
+                                   m_Light->GetDirection(),
+                                   m_Light->GetDiffuseColor());
+    if (!result)
+    {
+        return false;
+    }
 
     m_D3D->EndScene();
 

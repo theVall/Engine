@@ -2,6 +2,13 @@
 
 #include "D3D.h"
 
+#include "Camera.h"
+#include "Model.h"
+#include "ColorShader.h"
+#include "TextureShader.h"
+#include "LightShader.h"
+#include "Light.h"
+
 class Graphics
 {
 public:
@@ -33,7 +40,7 @@ public:
 private:
 
     //  
-    bool Render();
+    bool Render(float);
 
 //  Member variables
 private:
@@ -44,5 +51,10 @@ private:
     float m_screenNear;
 
     D3D *m_D3D;
+    Camera* m_Camera;
+    Model* m_Model;
+    TextureShader* m_TextureShader;
+    LightShader* m_LightShader;
+    Light* m_Light;
 };
 

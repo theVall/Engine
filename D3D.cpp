@@ -291,7 +291,7 @@ bool D3D::Initialize(int screenWidth,
 
     m_deviceContext->OMSetDepthStencilState(m_depthStencilState, 1);
 
-    //  Initailze and set up the depth stencil view.
+    //  Initialize and set up the depth stencil view.
     ZeroMemory(&depthStencilViewDesc, sizeof(depthStencilViewDesc));
 
     depthStencilViewDesc.Format             = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -311,7 +311,7 @@ bool D3D::Initialize(int screenWidth,
     m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilView);
 
     //  RASTERIZER
-    //  Setup the raster description for poligone draw manipulation.
+    //  Setup the raster description for polygon draw manipulation.
     rasterDesc.AntialiasedLineEnable = false;
     rasterDesc.CullMode              = D3D11_CULL_BACK;
     rasterDesc.DepthBias             = 0;
