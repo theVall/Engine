@@ -14,6 +14,7 @@ Graphics::Graphics(void)
     m_TextureShader = 0;
     m_LightShader = 0;
     m_Light = 0;
+    m_Element2d = 0;
 }
 
 
@@ -93,8 +94,11 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd)
     {
         return false;
     }
-    m_Light->SetDiffuseColor(0.0f, 0.0f, 0.7f, 1.0f);
-    m_Light->SetDirection(0.0f, 0.1f, 1.0f);
+    m_Light->SetAmbientColor(0.15f, 0.15f, 0.15f, 1.0f);
+    m_Light->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
+    m_Light->SetSpecularColor(1.0f, 1.0f, 1.0f, 1.0f);
+    m_Light->SetSpecularPower(32.0f);
+    m_Light->SetDirection(1.0f, 0.0f, 0.0f);
 
     return true;
 }
@@ -146,12 +150,12 @@ void Graphics::Shutdown()
 }
 
 
-bool Graphics::ProcessFrame()
+bool Graphics::ProcessFrame(int mouseX, int mouseY)
 {
     bool success;
     static float rotation = 0.0f;
 
-    rotation += (float)XM_PI * 0.01f;
+    rotation += (float)XM_PI * 0.005f;
     if (rotation > 360.0f)
     {
         rotation -= 360.0f;
@@ -200,7 +204,11 @@ bool Graphics::Render(float rotation)
                                    projectionMatrix,
                                    m_Model->GetTexture(),
                                    m_Light->GetDirection(),
-                                   m_Light->GetDiffuseColor());
+                                   m_Light->GetAmbientColor(),
+                                   m_Light->GetDiffuseColor(),
+                                   m_Light->GetSpecularColor(),
+                                   m_Light->GetSpecularPower(),
+                                   m_Camera->GetPosition());
     if (!result)
     {
         return false;

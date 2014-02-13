@@ -3,8 +3,10 @@
 #define WIN32_LEAN_AND_MEAN
 
 //  own includes
+#include <windows.h>
 #include "Input.h"
 #include "Graphics.h"
+#include "Application.h"
 
 /*-----------------------------------
 Class for handling the system.
@@ -31,7 +33,7 @@ public:
     //  Replacement for destructor for safe cleanup.
     void Shutdown(void);
 
-    //  Handles incomming windows system messages.
+    //  Handles incoming windows system messages.
     LRESULT CALLBACK MessageHandler(HWND, UINT, WPARAM, LPARAM);
 
 
@@ -53,10 +55,11 @@ private:
     HINSTANCE   m_hinstance;
     HWND        m_hwnd;
 
-    Input      *m_input;
-    Graphics   *m_graphics;
+    Application *m_Application;
 };
 
-//  Windows message handling
+// Windows message handling
+// Function prototype
 static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+// Globals
 static System *ApplicationHandle = 0;

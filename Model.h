@@ -1,17 +1,9 @@
 #pragma once
 
-#include <d3d11.h>
-#include <DirectXMath.h>
-#include <DirectXPackedVector.h>
-#include <fstream>
+#include "ScreenElement.h"
 
-#include "Texture.h"
-
-using namespace std;
-using namespace DirectX;
-using namespace DirectX::PackedVector;
-
-class Model
+class Model:
+    public ScreenElement
 {
 public:
 
@@ -29,9 +21,6 @@ public:
     bool Initialize(ID3D11Device *, WCHAR *, WCHAR *);
     void Shutdown();
     void Render(ID3D11DeviceContext *);
-
-    int GetIndexCount();
-    ID3D11ShaderResourceView* GetTexture();
 
 private:
 
@@ -71,15 +60,6 @@ private:
     void ShutdownBuffers();
 
     //
-    // Methods to a texture from file.
-    //
-    bool LoadTexture(ID3D11Device *, WCHAR *);
-    //
-    // Methods to release a texture safely.
-    //
-    void ReleaseTexture();
-
-    //
     // Methods to create a model from file.
     //
     bool LoadModel(WCHAR *);
@@ -90,12 +70,6 @@ private:
 
 private:
 
-    ID3D11Buffer *m_vertexBuffer;
-    ID3D11Buffer *m_indexBuffer;
-    int m_vertexCount;
-    int m_indexCount;
-
-    Texture *m_texture;
     ModelType *m_model;
 };
 

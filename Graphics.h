@@ -8,6 +8,7 @@
 #include "TextureShader.h"
 #include "LightShader.h"
 #include "Light.h"
+#include "Element2d.h"
 
 class Graphics
 {
@@ -28,8 +29,12 @@ public:
     //  Safely destroy graphics class.
     void Shutdown();
 
-    //  
-    bool ProcessFrame();
+    // Process function called every frame.
+    // <param> mouseX x-position of mouse 
+    // <param> mouseY y-position of mouse 
+    bool ProcessFrame(int, int);
+
+    bool Render(float);
 
     //  Getter methods
     bool IsFullScreen();
@@ -37,10 +42,10 @@ public:
     float GetScreenDepth();
     float GetScreenNear();
 
+
 private:
 
-    //  
-    bool Render(float);
+
 
 //  Member variables
 private:
@@ -56,5 +61,6 @@ private:
     TextureShader* m_TextureShader;
     LightShader* m_LightShader;
     Light* m_Light;
+    Element2d* m_Element2d;
 };
 

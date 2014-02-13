@@ -1,6 +1,6 @@
 #include "Main.h"
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevious, PSTR pScmdline, int iCmdshow)
+int WINAPI WinMain(HINSTANCE, HINSTANCE, PSTR, int)
 {
     System *system      = NULL;
     bool initSuccess    = false;

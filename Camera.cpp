@@ -31,15 +31,15 @@ void Camera::SetRotation(float x, float y, float z)
     return;
 }
 
-XMVECTOR  Camera::GetPosition()
+XMFLOAT3  Camera::GetPosition()
 {
-    return XMLoadFloat3(&m_position);
+    return m_position;
 }
 
 
-XMVECTOR  Camera::GetRotation()
+XMFLOAT3  Camera::GetRotation()
 {
-    return XMLoadFloat3(&m_rotation);
+    return m_rotation;
 }
 
 

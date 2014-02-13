@@ -3,8 +3,6 @@
 //  linking
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3d11.lib")
-//#pragma comment(lib, "d3dx11.lib")
-//#pragma comment(lib, "d3dx10.lib")
 
 //  includes
 #include <dxgi.h>
@@ -44,6 +42,9 @@ public:
 
     void GetVideoCardInfo(char *, int &);
 
+    void TurnZBufferOn();
+    void TurnZBufferOff();
+
 private:
 
     bool m_vSyncEnabled;
@@ -58,6 +59,7 @@ private:
     ID3D11DepthStencilState *m_depthStencilState;
     ID3D11DepthStencilView  *m_depthStencilView;
     ID3D11RasterizerState   *m_rasterState;
+    ID3D11DepthStencilState *m_depthDisabledStencilState;
 
     XMMATRIX m_projectionMatrix;
     XMMATRIX m_worldMatrix;

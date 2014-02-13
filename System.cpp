@@ -3,8 +3,7 @@
 
 System::System(void)
 {
-    m_input = 0;
-    m_graphics = 0;
+    m_Application = 0;
 }
 
 
@@ -22,28 +21,26 @@ bool System::Initialize()
 {
     int screenHeight  = 0;
     int screenWidth   = 0;
+    bool result = false;
 
-    m_graphics = new Graphics;
-    if (!m_graphics)
+    // Create the application wrapper object.
+    // Must be called __before__ windows API initialization.
+    m_Application = new Application;
+    if (!m_Application)
     {
         return false;
     }
 
     //  Initialize windows API.
     InitializeWindows(screenWidth, screenHeight);
-    
-    if (!m_graphics->Initialize(screenWidth, screenHeight, m_hwnd))
+
+    // Initialize the application wrapper object.
+    // Must be called __after__ windows API initialization.
+    result = m_Application->Initialize(m_hinstance, m_hwnd, screenWidth, screenHeight);
+    if (!result)
     {
         return false;
     }
-
-    m_input = new Input;
-    if (!m_input)
-    {
-        return false;
-    }
-    m_input->Initialize();
-
 
     return true;
 }
@@ -87,17 +84,11 @@ void System::Shutdown()
 {
     ShutdownWindows();
 
-    if (m_graphics)
+    if (m_Application)
     {
-        m_graphics->Shutdown();
-        delete m_graphics;
-        m_graphics = 0;
-    }
-
-    if (m_input)
-    {
-        delete m_input;
-        m_input = 0;
+        m_Application->Shutdown();
+        delete m_Application;
+        m_Application = 0;
     }
 
     return;
@@ -106,41 +97,22 @@ void System::Shutdown()
 
 LRESULT CALLBACK System::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam)
 {
-    switch(umsg)
-    {
-        //  Check if a key has been pressed on the keyboard.
-        case WM_KEYDOWN:
-        {
-            m_input->ProcessKeyDown((unsigned int)wparam);
-            return 0;
-        }
-
-        //  Check if a key has been released on the keyboard.
-        case WM_KEYUP:
-        {
-            m_input->ProcessKeyUp((unsigned int)wparam);
-            return 0;
-        }
-
-        // Send other messages to the default message handler.
-        default:
-        {
-            return DefWindowProc(hwnd, umsg, wparam, lparam);
-        }
-    }
+    return DefWindowProc(hwnd, umsg, wparam, lparam);
 }
 
 
 bool System::ProcessFrame()
 {
+    bool result;
 
-    // Check if user pressed ESC.
-    if (m_input->IsKeyDown(VK_ESCAPE))
+    // Do the frame processing for the application object.
+    result = m_Application->ProcessFrame();
+    if (!result)
     {
         return false;
     }
 
-    return m_graphics->ProcessFrame();
+    return true;
 }
 
 
@@ -181,7 +153,7 @@ void System::InitializeWindows(int& screenWidth, int& screenHeight)
     screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
     //  Setup the screen settings depending on whether it is running in full screen or window mode.
-    if(m_graphics->IsFullScreen())
+    if(m_Application->IsFullScreen())
     {
         //  Set the screen to maximum size of the users desktop and 32bit color depth.
         memset(&dmScreenSettings, 0, sizeof(dmScreenSettings));
@@ -234,7 +206,7 @@ void System::ShutdownWindows()
     ShowCursor(true);
 
     //  Fix the display settings if leaving full screen mode.
-    if(m_graphics->IsFullScreen())
+    if(m_Application->IsFullScreen())
     {
         ChangeDisplaySettings(NULL, 0);
     }

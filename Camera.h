@@ -17,8 +17,8 @@ public:
     void SetPosition(float, float, float);
     void SetRotation(float, float, float);
 
-    XMVECTOR GetPosition();
-    XMVECTOR GetRotation();
+    XMFLOAT3 GetPosition();
+    XMFLOAT3 GetRotation();
 
     void Render();
     void GetViewMatrix(XMMATRIX &);
