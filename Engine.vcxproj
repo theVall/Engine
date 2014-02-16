@@ -97,6 +97,7 @@
     <ClInclude Include="D3D.h" />
     <ClInclude Include="D:\dev\libs\DirectXTex\DDSTextureLoader\DDSTextureLoader.h" />
     <ClInclude Include="Element2d.h" />
+    <ClInclude Include="Frustum.h" />
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="ImageUtil.h" />
     <ClInclude Include="Input.h" />
@@ -120,6 +121,7 @@
     <ClCompile Include="D3D.cpp" />
     <ClCompile Include="D:\dev\libs\DirectXTex\DDSTextureLoader\DDSTextureLoader.cpp" />
     <ClCompile Include="Element2d.cpp" />
+    <ClCompile Include="Frustum.cpp" />
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="ImageUtil.cpp" />
     <ClCompile Include="Input.cpp" />
