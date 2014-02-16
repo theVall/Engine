@@ -180,7 +180,7 @@ void System::InitializeWindows(int& screenWidth, int& screenHeight)
     m_hwnd = CreateWindowEx(WS_EX_APPWINDOW,
                 m_applicationName, 
                 m_applicationName, 
-                WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP,
+                WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP | WS_CAPTION | WS_SYSMENU,
                 posX,
                 posY,
                 screenWidth,

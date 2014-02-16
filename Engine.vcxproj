@@ -98,6 +98,7 @@
     <ClInclude Include="D:\dev\libs\DirectXTex\DDSTextureLoader\DDSTextureLoader.h" />
     <ClInclude Include="Element2d.h" />
     <ClInclude Include="Graphics.h" />
+    <ClInclude Include="ImageUtil.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="LightShader.h" />
@@ -107,6 +108,7 @@
     <ClInclude Include="ScreenElement.h" />
     <ClInclude Include="System.h" />
     <ClInclude Include="Terrain.h" />
+    <ClInclude Include="TerrainShader.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureShader.h" />
     <ClInclude Include="Timer.h" />
@@ -119,6 +121,7 @@
     <ClCompile Include="D:\dev\libs\DirectXTex\DDSTextureLoader\DDSTextureLoader.cpp" />
     <ClCompile Include="Element2d.cpp" />
     <ClCompile Include="Graphics.cpp" />
+    <ClCompile Include="ImageUtil.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="LightShader.cpp" />
@@ -128,6 +131,7 @@
     <ClCompile Include="ScreenElement.cpp" />
     <ClCompile Include="System.cpp" />
     <ClCompile Include="Terrain.cpp" />
+    <ClCompile Include="TerrainShader.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="TextureShader.cpp" />
     <ClCompile Include="Timer.cpp" />
@@ -145,6 +149,8 @@
     <FxCompile Include="shader\LightPS.hlsl" />
     <FxCompile Include="shader\LightVS.hlsl" />
     <FxCompile Include="shader\PixelShader.hlsl" />
+    <FxCompile Include="shader\TerrainPS.hlsl" />
+    <FxCompile Include="shader\TerrainVS.hlsl" />
     <FxCompile Include="shader\TexturePS.hlsl" />
     <FxCompile Include="shader\TextureVS.hlsl" />
     <FxCompile Include="shader\VertexShader.hlsl" />
