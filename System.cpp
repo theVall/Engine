@@ -36,7 +36,7 @@ bool System::Initialize()
 
     // Initialize the application wrapper object.
     // Must be called __after__ windows API initialization.
-    result = m_Application->Initialize(m_hinstance, m_hwnd, screenWidth, screenHeight);
+    result = m_Application->Initialize(m_hwnd, screenWidth, screenHeight);
     if (!result)
     {
         return false;
