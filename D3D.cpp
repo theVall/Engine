@@ -345,7 +345,7 @@ bool D3D::Initialize(int screenWidth,
     m_deviceContext->RSSetViewports(1, &viewport);
 
     //  MATRICES
-    fovAngleY    = (float) DirectX::XM_PI / 4.0f;
+    fovAngleY    = (float) XM_PI / 4.0f;
     screenAspect = (float) screenWidth / (float) screenHeight;
 
     //  Build a left-handed perspective projection matrix.

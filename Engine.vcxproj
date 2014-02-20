@@ -105,8 +105,10 @@
     <ClInclude Include="LightShader.h" />
     <ClInclude Include="Main.h" />
     <ClInclude Include="Model.h" />
+    <ClInclude Include="Plane.h" />
     <ClInclude Include="Position.h" />
     <ClInclude Include="QuadTree.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="ScreenElement.h" />
     <ClInclude Include="System.h" />
     <ClInclude Include="Terrain.h" />
@@ -114,6 +116,8 @@
     <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureShader.h" />
     <ClInclude Include="Timer.h" />
+    <ClInclude Include="Vec3f.h" />
+    <ClInclude Include="Vec4f.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
@@ -158,6 +162,9 @@
     <FxCompile Include="shader\TexturePS.hlsl" />
     <FxCompile Include="shader\TextureVS.hlsl" />
     <FxCompile Include="shader\VertexShader.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Engine.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

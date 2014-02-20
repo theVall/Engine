@@ -502,10 +502,30 @@ bool Application::RenderGraphics()
 
 
     char char1[24];
+    char char2[24];
+    char char3[24];
+    char char4[24];
     _itoa_s(m_QuadTree->GetDrawCount(), char1, (size_t) 24, 10);
     LPCSTR s = char1;
     OutputDebugStringA(s);
     OutputDebugStringW(TEXT("\n"));
+
+    //XMFLOAT3 vec = m_Camera->GetPosition();
+
+    //_itoa_s(vec.x, char2, (size_t)24, 10);
+    //_itoa_s(vec.y, char3, (size_t)24, 10);
+    //_itoa_s(vec.z, char4, (size_t)24, 10);
+
+    //OutputDebugStringW(TEXT("x: "));
+    //s = char2;
+    //OutputDebugStringA(s);
+    //OutputDebugStringW(TEXT("  y: "));
+    //s = char3;
+    //OutputDebugStringA(s);
+    //OutputDebugStringW(TEXT("  z: "));
+    //s = char4;
+    //OutputDebugStringA(s);
+    //OutputDebugStringW(TEXT("\n"));
 
 
     // Turn off the Z buffer to begin all 2D rendering.

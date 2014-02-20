@@ -23,6 +23,11 @@ void Frustum::ConstructFrustum(XMMATRIX &projectionMatrix,
     float zMinimum;
     float r;
 
+    float a;
+    float b;
+    float c;
+    float d;
+
     XMFLOAT4X4 projectionFloatMatrix;
     XMFLOAT4X4 viewFloatMatrix;
     XMFLOAT4X4 tmpFloatMatrix;
@@ -42,61 +47,62 @@ void Frustum::ConstructFrustum(XMMATRIX &projectionMatrix,
     projectionMatrixCopy = XMLoadFloat4x4(&projectionFloatMatrix);
 
     // Create the frustum matrix from the view matrix and updated projection matrix.
-    tmpMatrix = viewMatrix * projectionMatrix;
+    tmpMatrix = viewMatrix * projectionMatrixCopy;
+    // tmpMatrix = XMMatrixTranspose(tmpMatrix);
     XMStoreFloat4x4(&tmpFloatMatrix, tmpMatrix);
 
     // Calculate near plane of frustum.
-    m_planes[0].x = tmpFloatMatrix._14 + tmpFloatMatrix._13;
-    m_planes[0].y = tmpFloatMatrix._24 + tmpFloatMatrix._23;
-    m_planes[0].z = tmpFloatMatrix._34 + tmpFloatMatrix._33;
-    m_planes[0].w = tmpFloatMatrix._44 + tmpFloatMatrix._43;
-    m_planes[0] = normalize(m_planes[0]);
+    a = tmpFloatMatrix._13;
+    b = tmpFloatMatrix._23;
+    c = tmpFloatMatrix._33;
+    d = tmpFloatMatrix._43;
+    m_planes[0].Init(a, b, c, d);
 
     // Calculate far plane of frustum.
-    m_planes[1].x = tmpFloatMatrix._14 - tmpFloatMatrix._13;
-    m_planes[1].y = tmpFloatMatrix._24 - tmpFloatMatrix._23;
-    m_planes[1].z = tmpFloatMatrix._34 - tmpFloatMatrix._33;
-    m_planes[1].w = tmpFloatMatrix._44 - tmpFloatMatrix._43;
-    m_planes[1] = normalize(m_planes[1]);
+    a = tmpFloatMatrix._14 - tmpFloatMatrix._13;
+    b = tmpFloatMatrix._24 - tmpFloatMatrix._23;
+    c = tmpFloatMatrix._34 - tmpFloatMatrix._33;
+    d = tmpFloatMatrix._44 - tmpFloatMatrix._43;
+    m_planes[1].Init(a, b, c, d);
 
     // Calculate left plane of frustum.
-    m_planes[2].x = tmpFloatMatrix._14 + tmpFloatMatrix._11;
-    m_planes[2].y = tmpFloatMatrix._24 + tmpFloatMatrix._21;
-    m_planes[2].z = tmpFloatMatrix._34 + tmpFloatMatrix._31;
-    m_planes[2].w = tmpFloatMatrix._44 + tmpFloatMatrix._41;
-    m_planes[2] = normalize(m_planes[2]);
+    a = tmpFloatMatrix._14 + tmpFloatMatrix._11;
+    b = tmpFloatMatrix._24 + tmpFloatMatrix._21;
+    c = tmpFloatMatrix._34 + tmpFloatMatrix._31;
+    d = tmpFloatMatrix._44 + tmpFloatMatrix._41;
+    m_planes[2].Init(a, b, c, d);
 
     // Calculate right plane of frustum.
-    m_planes[3].x = tmpFloatMatrix._14 - tmpFloatMatrix._11;
-    m_planes[3].y = tmpFloatMatrix._24 - tmpFloatMatrix._21;
-    m_planes[3].z = tmpFloatMatrix._34 - tmpFloatMatrix._31;
-    m_planes[3].w = tmpFloatMatrix._44 - tmpFloatMatrix._41;
-    m_planes[3] = normalize(m_planes[3]);
+    a = tmpFloatMatrix._14 - tmpFloatMatrix._11;
+    b = tmpFloatMatrix._24 - tmpFloatMatrix._21;
+    c = tmpFloatMatrix._34 - tmpFloatMatrix._31;
+    d = tmpFloatMatrix._44 - tmpFloatMatrix._41;
+    m_planes[3].Init(a, b, c, d);
 
     // Calculate top plane of frustum.
-    m_planes[4].x = tmpFloatMatrix._14 - tmpFloatMatrix._12;
-    m_planes[4].y = tmpFloatMatrix._24 - tmpFloatMatrix._22;
-    m_planes[4].z = tmpFloatMatrix._34 - tmpFloatMatrix._32;
-    m_planes[4].w = tmpFloatMatrix._44 - tmpFloatMatrix._42;
-    m_planes[4] = normalize(m_planes[4]);
+    a = tmpFloatMatrix._14 - tmpFloatMatrix._12;
+    b = tmpFloatMatrix._24 - tmpFloatMatrix._22;
+    c = tmpFloatMatrix._34 - tmpFloatMatrix._32;
+    d = tmpFloatMatrix._44 - tmpFloatMatrix._42;
+    m_planes[4].Init(a, b, c, d);
 
     // Calculate bottom plane of frustum.
-    m_planes[5].x = tmpFloatMatrix._14 + tmpFloatMatrix._12;
-    m_planes[5].y = tmpFloatMatrix._24 + tmpFloatMatrix._22;
-    m_planes[5].z = tmpFloatMatrix._34 + tmpFloatMatrix._32;
-    m_planes[5].w = tmpFloatMatrix._44 + tmpFloatMatrix._42;
-    m_planes[5] = normalize(m_planes[5]);
+    a = tmpFloatMatrix._14 + tmpFloatMatrix._12;
+    b = tmpFloatMatrix._24 + tmpFloatMatrix._22;
+    c = tmpFloatMatrix._34 + tmpFloatMatrix._32;
+    d = tmpFloatMatrix._44 + tmpFloatMatrix._42;
+    m_planes[5].Init(a, b, c, d);
 
     return;
 }
 
 
-bool Frustum::CheckPoint(float x, float y, float z)
+bool Frustum::CheckPoint(Vec3f vec)
 {
     // Check if the point is inside all six planes of the view frustum.
     for (int i = 0; i < NUM_PLANES; i++)
     {
-        if (planeDot(m_planes[i], XMFLOAT3(x, y, z)) < 0.0f)
+        if (m_planes[i].IsInside(vec))
         {
             return false;
         }
@@ -109,44 +115,51 @@ bool Frustum::CheckPoint(float x, float y, float z)
 bool Frustum::CheckCube(float xCenter, float yCenter, float zCenter, float radius)
 {
     // Check if any one point of the cube is in the view frustum.
+    // ATTENTION: y-value is taken 4x because of terrain quad-tree (got no y-Center)
+    // for the use with other cubes a separate function should be used/implemented
     for (int i = 0; i < NUM_PLANES; i++)
     {
-        if (planeDot(m_planes[i], XMFLOAT3((xCenter - radius), (yCenter - radius), (zCenter - radius))) >= 0.0f)
+        if (m_planes[i].IsInside(Vec3f((xCenter), (yCenter), (zCenter))))
         {
             continue;
         }
 
-        if (planeDot(m_planes[i], XMFLOAT3((xCenter + radius), (yCenter - radius), (zCenter - radius))) >= 0.0f)
+        if (m_planes[i].IsInside(Vec3f((xCenter - radius), (yCenter - 4*radius), (zCenter - radius))))
         {
             continue;
         }
 
-        if (planeDot(m_planes[i], XMFLOAT3((xCenter - radius), (yCenter + radius), (zCenter - radius))) >= 0.0f)
+        if (m_planes[i].IsInside(Vec3f((xCenter + radius), (yCenter - 4*radius), (zCenter - radius))))
         {
             continue;
         }
 
-        if (planeDot(m_planes[i], XMFLOAT3((xCenter + radius), (yCenter + radius), (zCenter - radius))) >= 0.0f)
+        if (m_planes[i].IsInside(Vec3f((xCenter - radius), (yCenter + 4*radius), (zCenter - radius))))
         {
             continue;
         }
 
-        if (planeDot(m_planes[i], XMFLOAT3((xCenter - radius), (yCenter - radius), (zCenter + radius))) >= 0.0f)
+        if (m_planes[i].IsInside(Vec3f((xCenter + radius), (yCenter + 4*radius), (zCenter - radius))))
         {
             continue;
         }
 
-        if (planeDot(m_planes[i], XMFLOAT3((xCenter + radius), (yCenter - radius), (zCenter + radius))) >= 0.0f)
+        if (m_planes[i].IsInside(Vec3f((xCenter - radius), (yCenter - 4*radius), (zCenter + radius))))
         {
             continue;
         }
 
-        if (planeDot(m_planes[i], XMFLOAT3((xCenter - radius), (yCenter + radius), (zCenter + radius))) >= 0.0f)
+        if (m_planes[i].IsInside(Vec3f((xCenter + radius), (yCenter - 4*radius), (zCenter + radius))))
         {
             continue;
         }
 
-        if (planeDot(m_planes[i], XMFLOAT3((xCenter + radius), (yCenter + radius), (zCenter + radius))) >= 0.0f)
+        if (m_planes[i].IsInside(Vec3f((xCenter - radius), (yCenter + 4*radius), (zCenter + radius))))
+        {
+            continue;
+        }
+
+        if (m_planes[i].IsInside(Vec3f((xCenter + radius), (yCenter + 4*radius), (zCenter + radius))))
         {
             continue;
         }
@@ -163,7 +176,12 @@ bool Frustum::CheckSphere(float xCenter, float yCenter, float zCenter, float rad
     // Check if the radius of the sphere is inside the view frustum.
     for (int i = 0; i < NUM_PLANES; i++)
     {
-        if (planeDot(m_planes[i], XMFLOAT3(xCenter, yCenter, zCenter)) < -radius)
+        // TODO negative radius?
+        //if (m_planes[i].GetDistance(Vec3f(xCenter, yCenter, zCenter)) < -radius)
+        //{
+        //    return false;
+        //}
+        if (m_planes[i].IsInside(Vec3f(xCenter, yCenter, zCenter), -radius))
         {
             return false;
         }
@@ -183,42 +201,42 @@ bool Frustum::CheckRectangle(float xCenter,
     // Check if any of the 6 planes of the rectangle are inside the view frustum.
     for (int i = 0; i < NUM_PLANES; i++)
     {
-        if (planeDot(m_planes[i], XMFLOAT3((xCenter - xSize), (yCenter - ySize), (zCenter - zSize))) >= 0.0f)
+        if (m_planes[i].IsInside(Vec3f((xCenter - xSize), (yCenter - ySize), (zCenter - zSize))))
         {
             continue;
         }
 
-        if (planeDot(m_planes[i], XMFLOAT3((xCenter + xSize), (yCenter - ySize), (zCenter - zSize))) >= 0.0f)
+        if (m_planes[i].IsInside(Vec3f((xCenter + xSize), (yCenter - ySize), (zCenter - zSize))))
         {
             continue;
         }
 
-        if (planeDot(m_planes[i], XMFLOAT3((xCenter - xSize), (yCenter + ySize), (zCenter - zSize))) >= 0.0f)
+        if (m_planes[i].IsInside(Vec3f((xCenter - xSize), (yCenter + ySize), (zCenter - zSize))))
         {
             continue;
         }
 
-        if (planeDot(m_planes[i], XMFLOAT3((xCenter - xSize), (yCenter - ySize), (zCenter + zSize))) >= 0.0f)
+        if (m_planes[i].IsInside(Vec3f((xCenter - xSize), (yCenter - ySize), (zCenter + zSize))))
         {
             continue;
         }
 
-        if (planeDot(m_planes[i], XMFLOAT3((xCenter + xSize), (yCenter + ySize), (zCenter - zSize))) >= 0.0f)
+        if (m_planes[i].IsInside(Vec3f((xCenter + xSize), (yCenter + ySize), (zCenter - zSize))))
         {
             continue;
         }
 
-        if (planeDot(m_planes[i], XMFLOAT3((xCenter + xSize), (yCenter - ySize), (zCenter + zSize))) >= 0.0f)
+        if (m_planes[i].IsInside(Vec3f((xCenter + xSize), (yCenter - ySize), (zCenter + zSize))))
         {
             continue;
         }
 
-        if (planeDot(m_planes[i], XMFLOAT3((xCenter - xSize), (yCenter + ySize), (zCenter + zSize))) >= 0.0f)
+        if (m_planes[i].IsInside(Vec3f((xCenter - xSize), (yCenter + ySize), (zCenter + zSize))))
         {
             continue;
         }
 
-        if (planeDot(m_planes[i], XMFLOAT3((xCenter + xSize), (yCenter + ySize), (zCenter + zSize))) >= 0.0f)
+        if (m_planes[i].IsInside(Vec3f((xCenter + xSize), (yCenter + ySize), (zCenter + zSize))))
         {
             continue;
         }

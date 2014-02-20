@@ -31,13 +31,13 @@ void Camera::SetRotation(float x, float y, float z)
     return;
 }
 
-XMFLOAT3  Camera::GetPosition()
+XMFLOAT3 Camera::GetPosition()
 {
     return m_position;
 }
 
 
-XMFLOAT3  Camera::GetRotation()
+XMFLOAT3 Camera::GetRotation()
 {
     return m_rotation;
 }
@@ -57,7 +57,7 @@ void Camera::Render()
     XMVECTOR lookAtVec;
 
     XMFLOAT3 up = XMFLOAT3(0.0f, 1.0f, 0.0f);
-    XMFLOAT3 lookAt = XMFLOAT3(0.0f, 0.0f, 0.1f);
+    XMFLOAT3 lookAt = XMFLOAT3(0.0f, 0.0f, 1.0f);
 
     float yaw;
     float pitch;

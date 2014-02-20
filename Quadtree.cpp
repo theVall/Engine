@@ -441,6 +441,8 @@ void QuadTree::RenderNode(NodeType* node,
     unsigned int offset;
 
     // Check to see if the node can be seen.
+    // ATTENTION: y-Center value is assumed to be 0! 
+    // -> Undefined behavior on "higher/lower" nodes.
     result = frustum->CheckCube(node->positionX, 0.0f, node->positionZ, (node->width / 2.0f));
     if (!result)
     {

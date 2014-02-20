@@ -28,9 +28,13 @@ private:
 
     struct NodeType
     {
-        float positionX, positionZ, width;
+        float positionX;
+        float positionZ;
+        float width;
+
         int triangleCount;
-        ID3D11Buffer *vertexBuffer, *indexBuffer;
+        ID3D11Buffer *vertexBuffer;
+        ID3D11Buffer *indexBuffer;
         NodeType* nodes[4];
     };
 
