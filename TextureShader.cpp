@@ -3,10 +3,6 @@
 
 TextureShader::TextureShader(void)
 {
-    m_vertexShader = 0;
-    m_pixelShader = 0;
-    m_layout = 0;
-    m_matrixBuffer = 0;
     m_sampleState = 0;
 }
 
@@ -18,34 +14,6 @@ TextureShader::TextureShader(const TextureShader &)
 
 TextureShader::~TextureShader(void)
 {
-}
-
-
-bool TextureShader::Initialize(ID3D11Device* device, HWND hwnd)
-{
-    bool result;
-
-
-    // Initialize the vertex and pixel shader.
-    result = InitializeShader(device,
-        hwnd,
-        L"../Engine/shader/TextureVS.hlsl",
-        L"../Engine/shader/TexturePS.hlsl");
-    if (!result)
-    {
-        return false;
-    }
-
-    return true;
-}
-
-
-void TextureShader::Shutdown()
-{
-    // Shutdown the vertex and pixel shader as well as the related objects.
-    ShutdownShader();
-
-    return;
 }
 
 
@@ -279,21 +247,6 @@ bool TextureShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
 }
 
 
-void TextureShader::RenderShader(ID3D11DeviceContext* deviceContext, int indexCount)
-{
-    deviceContext->IASetInputLayout(m_layout);
-
-    // Set the vertex and pixel shader.
-    deviceContext->VSSetShader(m_vertexShader, NULL, 0);
-    deviceContext->PSSetShader(m_pixelShader,  NULL, 0);
-    deviceContext->PSSetSamplers(0, 1, &m_sampleState);
-
-    deviceContext->DrawIndexed(indexCount, 0, 0);
-
-    return;
-}
-
-
 void TextureShader::ShutdownShader()
 {
     if (m_sampleState)
@@ -330,33 +283,16 @@ void TextureShader::ShutdownShader()
 }
 
 
-void TextureShader::OutputShaderErrorMessage(ID3D10Blob* errorMessage,
-                                             HWND hwnd,
-                                             WCHAR* shaderFilename)
+void TextureShader::RenderShader(ID3D11DeviceContext* deviceContext, int indexCount)
 {
-    char* compileErrors;
-    unsigned long bufferSize, i;
-    std::ofstream fout;
+    deviceContext->IASetInputLayout(m_layout);
 
-    compileErrors = (char*)(errorMessage->GetBufferPointer());
+    // Set the vertex and pixel shader.
+    deviceContext->VSSetShader(m_vertexShader, NULL, 0);
+    deviceContext->PSSetShader(m_pixelShader, NULL, 0);
+    deviceContext->PSSetSamplers(0, 1, &m_sampleState);
 
-    bufferSize = errorMessage->GetBufferSize();
-
-    fout.open("ShaderErrorLog.txt");
-    for (i = 0; i<bufferSize; i++)
-    {
-        fout << compileErrors[i];
-    }
-
-    fout.close();
-
-    errorMessage->Release();
-    errorMessage = 0;
-
-    MessageBox(hwnd,
-               L"Error compiling shader. Check ShaderErrorLog.txt for details.",
-               shaderFilename,
-               MB_OK);
+    deviceContext->DrawIndexed(indexCount, 0, 0);
 
     return;
 }

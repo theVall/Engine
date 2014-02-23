@@ -45,9 +45,16 @@ public:
     void TurnZBufferOn();
     void TurnZBufferOff();
 
+    void ToggleWireframe();
+
+    void TurnOnCulling();
+    void TurnOffCulling();
+
 private:
 
     bool m_vSyncEnabled;
+    bool m_wireFrameEnabled;
+
     int m_videoCardMemory;
     char m_videoCardDescription[128];
 
@@ -58,8 +65,11 @@ private:
     ID3D11Texture2D         *m_depthStencilBuffer;
     ID3D11DepthStencilState *m_depthStencilState;
     ID3D11DepthStencilView  *m_depthStencilView;
-    ID3D11RasterizerState   *m_rasterState;
     ID3D11DepthStencilState *m_depthDisabledStencilState;
+
+    ID3D11RasterizerState *m_rasterStateSolid;
+    ID3D11RasterizerState *m_rasterStateWireFrame;
+    ID3D11RasterizerState *m_rasterStateNoCulling;
 
     XMMATRIX m_projectionMatrix;
     XMMATRIX m_worldMatrix;

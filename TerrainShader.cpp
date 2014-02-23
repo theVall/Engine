@@ -3,11 +3,7 @@
 
 TerrainShader::TerrainShader()
 {
-    m_vertexShader = 0;
-    m_pixelShader = 0;
-    m_layout = 0;
     m_sampleState = 0;
-    m_matrixBuffer = 0;
     m_lightBuffer = 0;
     m_cameraBuffer = 0;
 }
@@ -23,32 +19,6 @@ TerrainShader::~TerrainShader()
 }
 
 
-bool TerrainShader::Initialize(ID3D11Device* device, HWND hwnd)
-{
-    bool result;
-
-    result = InitializeShader(device,
-        hwnd,
-        L"../Engine/shader/TerrainVS.hlsl",
-        L"../Engine/shader/TerrainPS.hlsl");
-    if (!result)
-    {
-        return false;
-    }
-
-    return true;
-}
-
-
-void TerrainShader::Shutdown()
-{
-    // Shutdown the vertex and pixel shaders as well as the related objects.
-    ShutdownShader();
-
-    return;
-}
-
-
 bool TerrainShader::InitializeShader(ID3D11Device* device,
                                      HWND hwnd,
                                      WCHAR* vsFilename,
@@ -58,7 +28,7 @@ bool TerrainShader::InitializeShader(ID3D11Device* device,
     ID3D10Blob* errorMessage;
     ID3D10Blob* vertexShaderBuffer;
     ID3D10Blob* pixelShaderBuffer;
-    D3D11_INPUT_ELEMENT_DESC polygonLayout[3];
+    D3D11_INPUT_ELEMENT_DESC polygonLayout[4];
     D3D11_SAMPLER_DESC samplerDesc;
     D3D11_BUFFER_DESC matrixBufferDesc;
     D3D11_BUFFER_DESC lightBufferDesc;
@@ -69,7 +39,6 @@ bool TerrainShader::InitializeShader(ID3D11Device* device,
     vertexShaderBuffer = 0;
     pixelShaderBuffer = 0;
 
-    // Compile the vertex shader code.
     // Compile the vertex shader code.
     result = D3DCompileFromFile(vsFilename,
                                 NULL,
@@ -143,7 +112,7 @@ bool TerrainShader::InitializeShader(ID3D11Device* device,
     }
 
     // Create the vertex input layout description.
-    // This setup needs to match the VertexType structure in the Model class and shader.
+    // This setup needs to match the VertexType structure in the Terrain class and shader.
     polygonLayout[0].SemanticName = "POSITION";
     polygonLayout[0].SemanticIndex = 0;
     polygonLayout[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
@@ -154,7 +123,7 @@ bool TerrainShader::InitializeShader(ID3D11Device* device,
 
     polygonLayout[1].SemanticName = "TEXCOORD";
     polygonLayout[1].SemanticIndex = 0;
-    polygonLayout[1].Format = DXGI_FORMAT_R32G32_FLOAT;
+    polygonLayout[1].Format = DXGI_FORMAT_R32G32B32_FLOAT;
     polygonLayout[1].InputSlot = 0;
     polygonLayout[1].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
     polygonLayout[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
@@ -168,13 +137,21 @@ bool TerrainShader::InitializeShader(ID3D11Device* device,
     polygonLayout[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
     polygonLayout[2].InstanceDataStepRate = 0;
 
+    polygonLayout[3].SemanticName = "COLOR";
+    polygonLayout[3].SemanticIndex = 0;
+    polygonLayout[3].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    polygonLayout[3].InputSlot = 0;
+    polygonLayout[3].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
+    polygonLayout[3].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+    polygonLayout[3].InstanceDataStepRate = 0;
+
     numElements = sizeof(polygonLayout) / sizeof(polygonLayout[0]);
 
     result = device->CreateInputLayout(polygonLayout,
-        numElements,
-        vertexShaderBuffer->GetBufferPointer(),
-        vertexShaderBuffer->GetBufferSize(),
-        &m_layout);
+                                       numElements,
+                                       vertexShaderBuffer->GetBufferPointer(),
+                                       vertexShaderBuffer->GetBufferSize(),
+                                       &m_layout);
     if (FAILED(result))
     {
         return false;
@@ -289,35 +266,6 @@ void TerrainShader::ShutdownShader()
 }
 
 
-void TerrainShader::OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND hwnd, WCHAR* shaderFilename)
-{
-    char* compileErrors;
-    unsigned long bufferSize, i;
-    ofstream fout;
-
-    compileErrors = (char*)(errorMessage->GetBufferPointer());
-
-    bufferSize = errorMessage->GetBufferSize();
-
-    fout.open("ShaderErrorLog.txt");
-    for (i = 0; i<bufferSize; i++)
-    {
-        fout << compileErrors[i];
-    }
-    fout.close();
-
-    errorMessage->Release();
-    errorMessage = 0;
-
-    MessageBox(hwnd,
-        L"Error compiling shader. Check ShaderErrorLog.txt for message.",
-        shaderFilename,
-        MB_OK);
-
-    return;
-}
-
-
 bool TerrainShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
                                         const XMMATRIX &worldMatrix,
                                         const XMMATRIX &viewMatrix,
@@ -329,16 +277,16 @@ bool TerrainShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
 {
     HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedResource;
-    unsigned int bufferNumber;
     MatrixBufferType* transformDataBuffer;
     LightBufferType* lightDataBuffer;
+    unsigned int bufferNumber;
 
     // Lock the constant buffer so it can be written to.
     result = deviceContext->Map(m_matrixBuffer,
-        0,
-        D3D11_MAP_WRITE_DISCARD,
-        0,
-        &mappedResource);
+                                0,
+                                D3D11_MAP_WRITE_DISCARD,
+                                0,
+                                &mappedResource);
     if (FAILED(result))
     {
         return false;
@@ -364,10 +312,10 @@ bool TerrainShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
 
     // Lock the light constant buffer so it can be written to.
     result = deviceContext->Map(m_lightBuffer,
-        0,
-        D3D11_MAP_WRITE_DISCARD,
-        0,
-        &mappedResource);
+                                0,
+                                D3D11_MAP_WRITE_DISCARD,
+                                0,
+                                &mappedResource);
     if (FAILED(result))
     {
         return false;
@@ -394,7 +342,7 @@ void TerrainShader::RenderShader(ID3D11DeviceContext* deviceContext, int indexCo
 {
     deviceContext->IASetInputLayout(m_layout);
 
-    // Set the vertex and pixel shaders.
+    // Set the vertex and pixel shader.
     deviceContext->VSSetShader(m_vertexShader, NULL, 0);
     deviceContext->PSSetShader(m_pixelShader, NULL, 0);
     deviceContext->PSSetSamplers(0, 1, &m_sampleState);

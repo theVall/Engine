@@ -56,6 +56,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(WindowsSDK_LibraryPath_x86);$(DXSDK_DIR)include</AdditionalIncludeDirectories>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -97,9 +98,12 @@
     <ClInclude Include="D3D.h" />
     <ClInclude Include="D:\dev\libs\DirectXTex\DDSTextureLoader\DDSTextureLoader.h" />
     <ClInclude Include="Element2d.h" />
+    <ClInclude Include="Font.h" />
     <ClInclude Include="Frustum.h" />
     <ClInclude Include="Graphics.h" />
-    <ClInclude Include="ImageUtil.h" />
+    <ClInclude Include="ShaderProgram.h" />
+    <ClInclude Include="SkyDomeShader.h" />
+    <ClInclude Include="Util.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="LightShader.h" />
@@ -107,9 +111,11 @@
     <ClInclude Include="Model.h" />
     <ClInclude Include="Plane.h" />
     <ClInclude Include="Position.h" />
+    <ClInclude Include="Profiler.h" />
     <ClInclude Include="QuadTree.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ScreenElement.h" />
+    <ClInclude Include="SkyDome.h" />
     <ClInclude Include="System.h" />
     <ClInclude Include="Terrain.h" />
     <ClInclude Include="TerrainShader.h" />
@@ -118,6 +124,7 @@
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Vec3f.h" />
     <ClInclude Include="Vec4f.h" />
+    <ClInclude Include="VertexType.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
@@ -126,17 +133,22 @@
     <ClCompile Include="D3D.cpp" />
     <ClCompile Include="D:\dev\libs\DirectXTex\DDSTextureLoader\DDSTextureLoader.cpp" />
     <ClCompile Include="Element2d.cpp" />
+    <ClCompile Include="Font.cpp" />
     <ClCompile Include="Frustum.cpp" />
     <ClCompile Include="Graphics.cpp" />
-    <ClCompile Include="ImageUtil.cpp" />
+    <ClCompile Include="ShaderProgram.cpp" />
+    <ClCompile Include="SkyDomeShader.cpp" />
+    <ClCompile Include="Util.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="LightShader.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Position.cpp" />
+    <ClCompile Include="Profiler.cpp" />
     <ClCompile Include="Quadtree.cpp" />
     <ClCompile Include="ScreenElement.cpp" />
+    <ClCompile Include="SkyDome.cpp" />
     <ClCompile Include="System.cpp" />
     <ClCompile Include="Terrain.cpp" />
     <ClCompile Include="TerrainShader.cpp" />
@@ -157,6 +169,8 @@
     <FxCompile Include="shader\LightPS.hlsl" />
     <FxCompile Include="shader\LightVS.hlsl" />
     <FxCompile Include="shader\PixelShader.hlsl" />
+    <FxCompile Include="shader\SkyDomePS.hlsl" />
+    <FxCompile Include="shader\SkyDomeVS.hlsl" />
     <FxCompile Include="shader\TerrainPS.hlsl" />
     <FxCompile Include="shader\TerrainVS.hlsl" />
     <FxCompile Include="shader\TexturePS.hlsl" />

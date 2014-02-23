@@ -3,8 +3,6 @@
 
 QuadTree::QuadTree()
 {
-    m_vertexList = 0;
-    m_parentNode = 0;
 }
 
 
@@ -29,13 +27,9 @@ bool QuadTree::Initialize(Terrain* terrain, ID3D11Device* device)
     vertexCount = terrain->GetVertexCount();
     m_triangleCount = vertexCount / 3;
 
-    m_vertexList = new VertexType[vertexCount];
-    if (!m_vertexList)
-    {
-        return false;
-    }
+    m_vertexList.resize(vertexCount);
 
-    terrain->CopyVertexArray((void*) m_vertexList);
+    m_vertexList = terrain->GetVertices();
     CalculateMeshDimensions(vertexCount, centerX, centerZ, width);
 
     // Create the parent node for the quad tree.
@@ -49,11 +43,7 @@ bool QuadTree::Initialize(Terrain* terrain, ID3D11Device* device)
     CreateTreeNode(m_parentNode, centerX, centerZ, width, device);
 
     // Release the vertex list since the quad tree now has the vertices in each node.
-    if (m_vertexList)
-    {
-        delete[] m_vertexList;
-        m_vertexList = 0;
-    }
+    m_vertexList.clear();
 
     return true;
 }
@@ -169,7 +159,7 @@ void QuadTree::CreateTreeNode(NodeType* node, float positionX, float positionZ, 
     unsigned long* indices;
     bool result;
     
-    VertexType* vertices;
+    VertexCombined* vertices;
     
     D3D11_BUFFER_DESC vertexBufferDesc;
     D3D11_BUFFER_DESC indexBufferDesc;
@@ -230,8 +220,10 @@ void QuadTree::CreateTreeNode(NodeType* node, float positionX, float positionZ, 
 
         vertexCount = numTriangles * 3;
 
-        vertices = new VertexType[vertexCount];
+        vertices = new VertexCombined[vertexCount];
         indices = new unsigned long[vertexCount];
+
+        Vec3f tmpVertex;
 
         index = 0;
 
@@ -239,31 +231,27 @@ void QuadTree::CreateTreeNode(NodeType* node, float positionX, float positionZ, 
         {
             // If the triangle is inside this node then add it to the vertex array.
             result = IsTriangleContained(i, positionX, positionZ, width);
-            if (result == true)
+            if (result)
             {
                 // Calculate the index into the terrain vertex list.
                 vertexIndex = i * 3;
 
-                // Get the three vertices of this triangle from the vertex list.
-                vertices[index].position = m_vertexList[vertexIndex].position;
-                vertices[index].texture = m_vertexList[vertexIndex].texture;
-                vertices[index].normal = m_vertexList[vertexIndex].normal;
-                indices[index] = index;
-                index++;
-
-                vertexIndex++;
-                vertices[index].position = m_vertexList[vertexIndex].position;
-                vertices[index].texture = m_vertexList[vertexIndex].texture;
-                vertices[index].normal = m_vertexList[vertexIndex].normal;
-                indices[index] = index;
-                index++;
-
-                vertexIndex++;
-                vertices[index].position = m_vertexList[vertexIndex].position;
-                vertices[index].texture = m_vertexList[vertexIndex].texture;
-                vertices[index].normal = m_vertexList[vertexIndex].normal;
-                indices[index] = index;
-                index++;
+                // TODO performance! -> shared vertex class?
+                for (int j = 0; j < 3; j++)
+                {
+                    // Get the three vertices of this triangle from the vertex list.
+                    vertices[index].position = XMFLOAT3(m_vertexList[vertexIndex].position.x, m_vertexList[vertexIndex].position.y, m_vertexList[vertexIndex].position.z);
+                    vertices[index].texture = XMFLOAT3(m_vertexList[vertexIndex].texture.x, m_vertexList[vertexIndex].texture.y, m_vertexList[vertexIndex].texture.z);
+                    vertices[index].normal = XMFLOAT3(m_vertexList[vertexIndex].normal.x, m_vertexList[vertexIndex].normal.y, m_vertexList[vertexIndex].normal.z);
+                    vertices[index].color = XMFLOAT4(m_vertexList[vertexIndex].color.r, m_vertexList[vertexIndex].color.g, m_vertexList[vertexIndex].color.b, m_vertexList[vertexIndex].color.a);
+                    indices[index] = index;
+                    // Store the vertex position information in the vertex list for
+                    // intersection test (height based movement)
+                    tmpVertex.Set(m_vertexList[vertexIndex].position);
+                    node->vertexList.push_back(tmpVertex);
+                    index++;
+                    vertexIndex++;
+                }
             }
         }
 
@@ -312,14 +300,22 @@ void QuadTree::CreateTreeNode(NodeType* node, float positionX, float positionZ, 
 int QuadTree::CountTriangles(float positionX, float positionZ, float width)
 {
     int count = 0;
+    int i;
     bool result;
 
-    for (int i = 0; i < m_triangleCount; ++i)
+    omp_set_num_threads(NUM_THREADS);
+    // parallel section
+#pragma omp parallel private(i, result) shared(count, positionX, positionZ, width)
     {
-        result = IsTriangleContained(i, positionX, positionZ, width);
-        if (result == true)
+#pragma omp for
+        for (i = 0; i < m_triangleCount; ++i)
         {
-            count++;
+            result = IsTriangleContained(i, positionX, positionZ, width);
+            if (result == true)
+            {
+#pragma omp atomic
+                count++;
+            }
         }
     }
 
@@ -484,4 +480,149 @@ void QuadTree::RenderNode(NodeType* node,
     m_drawCount += node->triangleCount;
 
     return;
+}
+
+
+bool QuadTree::GetHeightAtPosition(float posX, float posZ, float& height)
+{
+    float meshMinX = m_parentNode->positionX - (m_parentNode->width / 2.0f);
+    float meshMaxX = m_parentNode->positionX + (m_parentNode->width / 2.0f);
+
+    float meshMinZ = m_parentNode->positionZ - (m_parentNode->width / 2.0f);
+    float meshMaxZ = m_parentNode->positionZ + (m_parentNode->width / 2.0f);
+
+    // Make sure the coordinates are actually above a polygon.
+    if ((posX < meshMinX) || (posX > meshMaxX) || (posZ < meshMinZ) || (posZ > meshMaxZ))
+    {
+        return false;
+    }
+
+    // Find the node which contains the polygon for this position.
+    FindNode(m_parentNode, posX, posZ, height);
+
+    return true;
+}
+
+
+void QuadTree::FindNode(NodeType* node, float x, float z, float& height)
+{
+    int count = 0;
+    int index = 0;
+
+    Vec3f v0;
+    Vec3f v1;
+    Vec3f v2;
+
+    bool foundHeight = false;
+
+    // Calculate the dimensions of this node.
+    float xMin = node->positionX - (node->width / 2.0f);
+    float xMax = node->positionX + (node->width / 2.0f);
+
+    float zMin = node->positionZ - (node->width / 2.0f);
+    float zMax = node->positionZ + (node->width / 2.0f);
+
+    // Check if the x and z coordinate are in this node.
+    if ((x < xMin) || (x > xMax) || (z < zMin) || (z > zMax))
+    {
+        return;
+    }
+
+    // Check nodes to see if children nodes exist.
+    for (int i = 0; i < MAX_CHILDREN; i++)
+    {
+        if (node->nodes[i] != 0)
+        {
+            count++;
+            // recursive call
+            FindNode(node->nodes[i], x, z, height);
+        }
+    }
+
+    // If there were children nodes then return since the polygon will be in one of these.
+    if (count > 0)
+    {
+        return;
+    }
+
+    // If there are no children, the polygon must be in this node. 
+    // Check all polygons in this node to find the height we are looking for.
+    for (int i = 0; i < node->triangleCount; i++)
+    {
+        v0 = node->vertexList.at(index++);
+        v1 = node->vertexList.at(index++);
+        v2 = node->vertexList.at(index++);
+
+        // Check if this is the polygon we are looking for.
+        foundHeight = CheckHeightOfTriangle(x, z, height, v0, v1, v2);
+
+        if (foundHeight)
+        {
+            return;
+        }
+    }
+
+    return;
+}
+
+
+bool QuadTree::CheckHeightOfTriangle(float x, float z, float& height,
+                                     Vec3f v0, Vec3f v1, Vec3f v2)
+{
+    // Starting position of the ray that is being cast.
+    Vec3f startVector = Vec3f(x, 0.0f, z);
+
+    // The direction the ray is being cast (straight down).
+    Vec3f directionVector = Vec3f(0.0f, -1.0f, 0.0f);
+    
+    // Calculate the three edges of the triangle from the three points given.
+    Vec3f edge1 = v1 - v0;
+    Vec3f edge2 = v2 - v0;
+    Vec3f normal = normal.GetCross(edge1, edge2);
+    Vec3f w0 = startVector - v0;
+
+    float numerator = -normal.Dot(w0);
+    float denominator = normal.Dot(directionVector);
+
+    // Make sure the result does not get too close to zero to prevent division overflow.
+    if (fabs(denominator) < 0.000001f)
+    {
+        return false;
+    }
+
+    // Calculate where we intersect the triangle.
+    float r = numerator / denominator;
+
+    // Find the intersection vector.
+    Vec3f intersectionVec = startVector + directionVector*r;
+
+    // check if intersection occurs inside the triangle
+    float uu = edge1.Dot(edge1);
+    float uv = edge1.Dot(edge2);
+    float vv = edge2.Dot(edge2);
+
+    Vec3f w = intersectionVec - v0;
+    float wu = w.Dot(edge1);
+    float wv = w.Dot(edge2);
+    float D = uv * uv - uu * vv;
+
+    // get and test parametric coordinates
+    float s = (uv * wv - vv * wu) / D;
+    // Intersection is outside the triangle
+    if (s < 0.0 || s > 1.0)
+    {
+        return false;
+    }
+
+    float t = (uv * wu - uu * wv) / D;
+    // Intersection is outside the triangle
+    if (t < 0.0 || (s + t) > 1.0)
+    {
+        return false;
+    }
+
+    // intersection is inside the triangle
+    height = intersectionVec.y;
+
+    return true;
 }

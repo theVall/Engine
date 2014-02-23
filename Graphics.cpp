@@ -150,7 +150,7 @@ void Graphics::Shutdown()
 }
 
 
-bool Graphics::ProcessFrame(int mouseX, int mouseY)
+bool Graphics::ProcessFrame()
 {
     bool success;
     static float rotation = 0.0f;

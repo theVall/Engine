@@ -1,5 +1,10 @@
 #pragma once
 
+#include <vector>
+
+#include <omp.h>
+#define NUM_THREADS 8
+
 #include <d3d11.h>
 #include <DirectXMath.h>
 #include <DirectXPackedVector.h>
@@ -18,12 +23,14 @@ const int MAX_CHILDREN = 4;
 class QuadTree
 {
 private:
-
-    struct VertexType
+    // used to pass vertex data to buffer for GPU
+    // this has to be a struct with XMMath types for vertex buffer
+    struct VertexCombined
     {
         XMFLOAT3 position;
         XMFLOAT3 texture;
         XMFLOAT3 normal;
+        XMFLOAT4 color;
     };
 
     struct NodeType
@@ -33,9 +40,12 @@ private:
         float width;
 
         int triangleCount;
+
+        vector<Vec3f> vertexList;
+
         ID3D11Buffer *vertexBuffer;
         ID3D11Buffer *indexBuffer;
-        NodeType* nodes[4];
+        NodeType* nodes[MAX_CHILDREN];
     };
 
 public:
@@ -48,6 +58,7 @@ public:
     void Render(Frustum *, ID3D11DeviceContext *, TerrainShader *);
 
     int GetDrawCount();
+    bool GetHeightAtPosition(float posX, float posZ, float& height);
 
 private:
     void CalculateMeshDimensions(int vertexCount,
@@ -66,12 +77,20 @@ private:
     void ReleaseNode(NodeType*);
     void RenderNode(NodeType*, Frustum*, ID3D11DeviceContext*, TerrainShader*);
 
+    void FindNode(NodeType* node, float x, float z, float& height);
+
+    // Checks if the y-parallel line with posX and posZ intersects the triangle (v0, v1, v2).
+    // <param> posX x-position of the point which height is to be determined.
+    // <param> posZ z-position of the point which height is to be determined.
+    // <returns> height the height value of the triangle on the position. 
+    bool CheckHeightOfTriangle(float posX, float posZ, float& height, Vec3f v0, Vec3f v1, Vec3f v2);
+
 // member
 private:
     int m_triangleCount;
     int m_drawCount;
 
-    VertexType* m_vertexList;
+    vector<VertexType> m_vertexList;
     NodeType* m_parentNode;
 };
 

@@ -32,7 +32,7 @@ public:
     // Process function called every frame.
     // <param> mouseX x-position of mouse 
     // <param> mouseY y-position of mouse 
-    bool ProcessFrame(int, int);
+    bool ProcessFrame();
 
     bool Render(float);
 

@@ -10,7 +10,11 @@ D3D::D3D(void)
     m_depthStencilBuffer        = 0;
     m_depthStencilState         = 0;
     m_depthStencilView          = 0;
-    m_rasterState               = 0;
+
+    m_rasterStateSolid     = 0;
+    m_rasterStateWireFrame = 0;
+    m_rasterStateNoCulling = 0;
+    
     m_depthDisabledStencilState = 0;
 }
 
@@ -310,11 +314,12 @@ bool D3D::Initialize(int screenWidth,
         return false;
     }
 
-    //  Bind the render target view and depth stencil buffer to the output render pipeline.
+    // Bind the render target view and depth stencil buffer to the output render pipeline.
     m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilView);
 
-    //  RASTERIZER
-    //  Setup the raster description for polygon draw manipulation.
+    // RASTERIZER
+    // Setup the raster description for polygon draw manipulation.
+    // Default state with back-face culling and solid fill mode.
     rasterDesc.AntialiasedLineEnable = false;
     rasterDesc.CullMode              = D3D11_CULL_BACK;
     rasterDesc.DepthBias             = 0;
@@ -326,13 +331,30 @@ bool D3D::Initialize(int screenWidth,
     rasterDesc.ScissorEnable         = false;
     rasterDesc.SlopeScaledDepthBias  = 0.0f;
 
-    result = m_device->CreateRasterizerState(&rasterDesc, &m_rasterState);
+    result = m_device->CreateRasterizerState(&rasterDesc, &m_rasterStateSolid);
     if (FAILED(result))
     {
         return false;
     }
 
-    m_deviceContext->RSSetState(m_rasterState);
+    // No back face culling state
+    rasterDesc.CullMode = D3D11_CULL_NONE;
+    result = m_device->CreateRasterizerState(&rasterDesc, &m_rasterStateNoCulling);
+    if (FAILED(result))
+    {
+        return false;
+    }
+
+    // Wire frame state
+    rasterDesc.CullMode = D3D11_CULL_BACK;
+    rasterDesc.FillMode = D3D11_FILL_WIREFRAME;
+    result = m_device->CreateRasterizerState(&rasterDesc, &m_rasterStateWireFrame);
+    if (FAILED(result))
+    {
+        return false;
+    }
+
+    m_deviceContext->RSSetState(m_rasterStateSolid);
 
     //  VIEWPORT as entire window size.
     viewport.Width    = (float) screenWidth;
@@ -407,10 +429,22 @@ void D3D::Shutdown()
         m_depthDisabledStencilState = 0;
     }
 
-    if (m_rasterState)
+    if (m_rasterStateSolid)
     {
-        m_rasterState->Release();
-        m_rasterState = 0;
+        m_rasterStateSolid->Release();
+        m_rasterStateSolid = 0;
+    }
+
+    if (m_rasterStateWireFrame)
+    {
+        m_rasterStateWireFrame->Release();
+        m_rasterStateWireFrame = 0;
+    }
+
+    if (m_rasterStateNoCulling)
+    {
+        m_rasterStateNoCulling->Release();
+        m_rasterStateNoCulling = 0;
     }
 
     if (m_depthStencilView)
@@ -545,5 +579,36 @@ void D3D::TurnZBufferOn()
 void D3D::TurnZBufferOff()
 {
     m_deviceContext->OMSetDepthStencilState(m_depthDisabledStencilState, 1);
+    return;
+}
+
+
+void D3D::ToggleWireframe()
+{
+    if (!m_wireFrameEnabled)
+    {
+        m_deviceContext->RSSetState(m_rasterStateWireFrame);
+        m_wireFrameEnabled = true;
+    }
+    else
+    {
+        m_deviceContext->RSSetState(m_rasterStateSolid);
+        m_wireFrameEnabled = false;
+    }
+}
+
+
+void D3D::TurnOnCulling()
+{
+    m_deviceContext->RSSetState(m_rasterStateSolid);
+
+    return;
+}
+
+
+void D3D::TurnOffCulling()
+{
+    m_deviceContext->RSSetState(m_rasterStateNoCulling);
+
     return;
 }

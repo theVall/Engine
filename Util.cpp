@@ -1,16 +1,17 @@
-#include "ImageUtil.h"
+#include "Util.h"
 
 
-ImageUtil::ImageUtil()
+Util::Util()
 {
 }
 
 
-ImageUtil::~ImageUtil()
+Util::~Util()
 {
 }
 
-bool ImageUtil::LoadBMP(const WCHAR *filename, unsigned char *&pixelData, int *height, int *width)
+
+bool Util::LoadBMP(const WCHAR *filename, unsigned char *&pixelData, int *height, int *width)
 {
     int* datBuff[2] = { nullptr, nullptr };
 
@@ -57,6 +58,65 @@ bool ImageUtil::LoadBMP(const WCHAR *filename, unsigned char *&pixelData, int *h
 
     *height = (bmpInfo->biHeight);
     *width = (bmpInfo->biWidth);
+
+    return true;
+}
+
+
+bool Util::LoadModel(WCHAR *filename,
+                     vector<VertexType> &model,
+                     int &indexCount,
+                     int &vertexCount)
+{
+    ifstream fin;
+    char input;
+
+    fin.open(filename);
+    if (fin.fail())
+    {
+        return false;
+    }
+
+    // Read up to the value of vertex count.
+    fin.get(input);
+    while (input != ':')
+    {
+        fin.get(input);
+    }
+
+    fin >> vertexCount;
+    indexCount = vertexCount;
+
+    model.resize(vertexCount);
+
+    // Read up to the beginning of the data.
+    fin.get(input);
+    while (input != ':')
+    {
+        fin.get(input);
+    }
+    fin.get(input);
+    fin.get(input);
+
+    float tmpX;
+    float tmpY;
+    float tmpZ;
+
+    // Read in the vertex data.
+    for (int i = 0; i < vertexCount; ++i)
+    {
+        // position
+        fin >> tmpX >> tmpY >> tmpZ;
+        model[i].position.Set(tmpX, tmpY, tmpZ);
+        // texture coordinates
+        fin >> tmpX >> tmpY;
+        model[i].texture.Set(tmpX, tmpY, 0.0);
+        // normal
+        fin >> tmpX >> tmpY >> tmpZ;
+        model[i].normal.Set(tmpX, tmpY, tmpZ);
+    }
+
+    fin.close();
 
     return true;
 }

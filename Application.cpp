@@ -5,8 +5,11 @@ Application::Application()
 {
     m_fullScreen = false;
     m_vSync = true;
+    m_lockSurfaceCamera = false;
+
     m_screenDepth = 1000.0f;
     m_screenNear = 0.1f;
+    m_SpectatorHeight = 10.0f;
 
     m_Input = 0;
     m_Direct3D = 0;
@@ -15,12 +18,16 @@ Application::Application()
     m_ColorShader = 0;
     m_Timer = 0;
     m_Position = 0;
-    m_ImageUtil = 0;
+    m_Util = 0;
     m_TerrainShader = 0;
     m_Light = 0;
     m_Texture = 0;
     m_Frustum = 0;
     m_QuadTree = 0;
+    m_Font = 0;
+    m_Profiler = 0;
+    m_SkyDome = 0;
+    m_SkyDomeShader = 0;
 }
 
 
@@ -97,8 +104,8 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     m_Camera->SetPosition(cameraX, cameraY, cameraZ);
 
     // image loading utility object
-    m_ImageUtil = new ImageUtil;
-    if (!m_ImageUtil)
+    m_Util = new Util;
+    if (!m_Util)
     {
         return false;
     } 
@@ -112,7 +119,8 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     result = m_Terrain->Initialize(m_Direct3D->GetDevice(),
                                    L"../Engine/res/terrain/heightmap01.bmp",
                                    L"../Engine/res/tex/dirt.dds",
-                                   m_ImageUtil);
+                                   L"../Engine/res/terrain/colormap01.bmp",
+                                   m_Util);
     if (!result)
     {
         MessageBox(m_hwnd, L"Could not initialize the terrain object.", L"Error", MB_OK);
@@ -125,7 +133,10 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     {
         return false;
     }
-    result = m_TerrainShader->Initialize(m_Direct3D->GetDevice(), m_hwnd);
+    result = m_TerrainShader->Initialize(m_Direct3D->GetDevice(),
+                                         m_hwnd,
+                                         L"../Engine/shader/TerrainVS.hlsl",
+                                         L"../Engine/shader/TerrainPS.hlsl");
     if (!result)
     {
         MessageBox(m_hwnd, L"Could not initialize the terrain shader object.", L"Error", MB_OK);
@@ -148,6 +159,25 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     {
         return false;
     }
+
+    // Create and initialize the __font wrapper__ object.
+    m_Font = new Font;
+    if (!m_Font)
+    {
+        MessageBox(m_hwnd, L"Could not font wrapper object.", L"Error", MB_OK);
+        return false;
+    }
+    m_Font->Initialize(L"Arial", m_Direct3D->GetDevice());
+
+    m_Direct3D->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
+    m_Font->drawText(m_Direct3D->GetDeviceContext(),
+                     L"Loading...\n",
+                     20.0f,
+                     100.0f,
+                     100.0f,
+                     0xff8cc63e,
+                     0);
+    m_Direct3D->EndScene();
 
     // Create and initialize the __quad tree__.
     m_QuadTree = new QuadTree;
@@ -187,15 +217,49 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     m_Position = new Position;
     if (!m_Position)
     {
+        MessageBox(m_hwnd, L"Could not initialize the position object.", L"Error", MB_OK);
         return false;
     }
     // Set the initial position of the viewer to the same as the initial camera position.
     m_Position->SetPosition(cameraX, cameraY, cameraZ);
 
-    // FPS
-    // CPU
-    // FONT SHADER
-    // TEXT
+    // Create and initialize the __profiler__ object.
+    m_Profiler = new Profiler;
+    if (!m_Profiler)
+    {
+        MessageBox(m_hwnd, L"Could not initialize the profiling object.", L"Error", MB_OK);
+        return false;
+    }
+    m_Profiler->Initialize();
+
+    // Create and initialize the __sky dome__ object.
+    m_SkyDome = new SkyDome;
+    if (!m_SkyDome)
+    {
+        return false;
+    }
+    result = m_SkyDome->Initialize(m_Direct3D->GetDevice(), L"../Engine/res/model/dome.txt", m_Util);
+    if (!result)
+    {
+        MessageBox(hwnd, L"Could not initialize the sky dome object.", L"Error", MB_OK);
+        return false;
+    }
+
+    // Create and initialize the __sky dome shader__ object.
+    m_SkyDomeShader = new SkyDomeShader;
+    if (!m_SkyDomeShader)
+    {
+        return false;
+    }
+    result = m_SkyDomeShader->Initialize(m_Direct3D->GetDevice(),
+                                         hwnd,
+                                         L"../Engine/shader/SkyDomeVS.hlsl",
+                                         L"../Engine/shader/SkyDomePS.hlsl");
+    if (!result)
+    {
+        MessageBox(hwnd, L"Could not initialize the sky dome shader object.", L"Error", MB_OK);
+        return false;
+    }
 
     return true;
 }
@@ -203,36 +267,32 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
 
 void Application::Shutdown()
 {
-    //// Release the text object.
-    //if (m_Text)
-    //{
-    //    m_Text->Shutdown();
-    //    delete m_Text;
-    //    m_Text = 0;
-    //}
+     if (m_SkyDomeShader)
+    {
+        m_SkyDomeShader->Shutdown();
+        delete m_SkyDomeShader;
+        m_SkyDomeShader = 0;
+    }
 
-    //// Release the font shader object.
-    //if (m_FontShader)
-    //{
-    //    m_FontShader->Shutdown();
-    //    delete m_FontShader;
-    //    m_FontShader = 0;
-    //}
+    if (m_SkyDome)
+    {
+        m_SkyDome->Shutdown();
+        delete m_SkyDome;
+        m_SkyDome = 0;
+    }
 
-    //// Release the CPU object.
-    //if (m_Cpu)
-    //{
-    //    m_Cpu->Shutdown();
-    //    delete m_Cpu;
-    //    m_Cpu = 0;
-    //}
+    if (m_Font)
+    {
+        m_Font->Shutdown();
+        delete m_Font;
+        m_Font = 0;
+    }
 
-    //// Release the fps object.
-    //if (m_Fps)
-    //{
-    //    delete m_Fps;
-    //    m_Fps = 0;
-    //}
+    if (m_Profiler)
+    {
+        delete m_Profiler;
+        m_Profiler = 0;
+    }
 
     if (m_Position)
     {
@@ -285,10 +345,10 @@ void Application::Shutdown()
         m_Terrain = 0;
     }
 
-    if (m_ImageUtil)
+    if (m_Util)
     {
-        delete m_ImageUtil;
-        m_ImageUtil = 0;
+        delete m_Util;
+        m_Util = 0;
     }
 
     if (m_Camera)
@@ -316,45 +376,31 @@ void Application::Shutdown()
 
 bool Application::ProcessFrame()
 {
-    bool result;
-
-    // Read the user input.
-    //result = m_Input->Frame();
-    //if (!result)
-    //{
-    //    return false;
-    //}
-
-    // Check if the user pressed escape and wants to exit the application.
-    //if (m_Input->IsEscapePressed() == true)
-    //{
-    //    return false;
-    //}
+    bool result = false;
+    float height;
 
     // Update the system stats.
     m_Timer->Frame();
-    //m_Fps->Frame();
-    //m_Cpu->Frame();
-
-    //// Update the FPS value in the text object.
-    //result = m_Text->SetFps(m_Fps->GetFps(), m_Direct3D->GetDeviceContext());
-    //if (!result)
-    //{
-    //    return false;
-    //}
-
-    //// Update the CPU usage value in the text object.
-    //result = m_Text->SetCpu(m_Cpu->GetCpuPercentage(), m_Direct3D->GetDeviceContext());
-    //if (!result)
-    //{
-    //    return false;
-    //}
+    m_Profiler->Frame();
 
     // Do the frame input processing.
     result = HandleInput(m_Timer->GetTime());
     if (!result)
     {
         return false;
+    }
+
+    if (m_lockSurfaceCamera)
+    {
+        // Get the current position of the camera.
+        Vec3f position = m_Camera->GetPosition();
+        // Get the height of the triangle that is directly underneath the camera position.
+        // If there was a triangle under the camera position, set the camera two units above it.
+        result = m_QuadTree->GetHeightAtPosition(position.x, position.z, height);
+        if (result)
+        {
+            m_Camera->SetPosition(position.x, height + m_SpectatorHeight, position.z);
+        }
     }
 
     // Render the graphics.
@@ -370,8 +416,7 @@ bool Application::ProcessFrame()
 
 bool Application::HandleInput(float frameTime)
 {
-    int keyDown = false;
-    bool result = false;
+    short keyDown = false;
     bool moveCamOnDrag = false;
 
     int mouseX = 0;
@@ -420,6 +465,13 @@ bool Application::HandleInput(float frameTime)
     keyDown = GetAsyncKeyState('C');
     m_Position->MoveDownward(keyDown, sensitivity);
 
+    // TODO 
+    keyDown = GetAsyncKeyState(VK_F1);
+    if (keyDown)
+    {
+        m_Direct3D->ToggleWireframe();
+    }
+
     // Yaw and pitch with __mouse__ movement.
     if (moveCamOnDrag)
     {
@@ -443,20 +495,6 @@ bool Application::HandleInput(float frameTime)
     m_Camera->SetPosition(posX, posY, posZ);
     m_Camera->SetRotation(rotX, rotY, rotZ);
 
-    //// Update the position values in the text object.
-    //result = m_Text->SetCameraPosition(posX, posY, posZ, m_Direct3D->GetDeviceContext());
-    //if (!result)
-    //{
-    //    return false;
-    //}
-
-    //// Update the rotation values in the text object.
-    //result = m_Text->SetCameraRotation(rotX, rotY, rotZ, m_Direct3D->GetDeviceContext());
-    //if (!result)
-    //{
-    //    return false;
-    //}
-
     return true;
 }
 
@@ -467,6 +505,7 @@ bool Application::RenderGraphics()
     XMMATRIX viewMatrix;
     XMMATRIX projectionMatrix;
     XMMATRIX orthoMatrix;
+    XMFLOAT3 cameraPosition;
 
     bool result;
 
@@ -480,6 +519,29 @@ bool Application::RenderGraphics()
     m_Camera->GetViewMatrix(viewMatrix);
     m_Direct3D->GetProjectionMatrix(projectionMatrix);
     m_Direct3D->GetOrthoMatrix(orthoMatrix);
+
+    // Sky dome calculations
+    cameraPosition = m_Camera->GetPosition();
+    worldMatrix = XMMatrixTranslation(cameraPosition.x, cameraPosition.y, cameraPosition.z);
+
+    m_Direct3D->TurnOffCulling();
+    m_Direct3D->TurnZBufferOff();
+
+    // Render the sky dome.
+    m_SkyDome->Render(m_Direct3D->GetDeviceContext());
+    m_SkyDomeShader->Render(m_Direct3D->GetDeviceContext(),
+                            m_SkyDome->GetIndexCount(),
+                            worldMatrix,
+                            viewMatrix,
+                            projectionMatrix,
+                            m_SkyDome->GetApexColor(),
+                            m_SkyDome->GetCenterColor());
+
+    m_Direct3D->TurnOnCulling();
+    m_Direct3D->TurnZBufferOn();
+
+    // Reset the world matrix.
+    m_Direct3D->GetWorldMatrix(worldMatrix);
 
     m_Frustum->ConstructFrustum(projectionMatrix, viewMatrix, m_screenDepth);
 
@@ -500,52 +562,28 @@ bool Application::RenderGraphics()
     // Render the terrain using the quad tree and terrain shader.
     m_QuadTree->Render(m_Frustum, m_Direct3D->GetDeviceContext(), m_TerrainShader);
 
+    int fps = m_Profiler->GetFps();
 
-    char char1[24];
-    char char2[24];
-    char char3[24];
-    char char4[24];
-    _itoa_s(m_QuadTree->GetDrawCount(), char1, (size_t) 24, 10);
-    LPCSTR s = char1;
-    OutputDebugStringA(s);
-    OutputDebugStringW(TEXT("\n"));
+    std::wostringstream fpswchar;
+    fpswchar << fps << " FPS";
 
-    //XMFLOAT3 vec = m_Camera->GetPosition();
+    m_Font->drawText(m_Direct3D->GetDeviceContext(),
+                     (WCHAR*)fpswchar.str().c_str(),
+                     13.0f,
+                     20.0f,
+                     20.0f,
+                     0xff8cc63e,
+                     0);
 
-    //_itoa_s(vec.x, char2, (size_t)24, 10);
-    //_itoa_s(vec.y, char3, (size_t)24, 10);
-    //_itoa_s(vec.z, char4, (size_t)24, 10);
-
-    //OutputDebugStringW(TEXT("x: "));
-    //s = char2;
-    //OutputDebugStringA(s);
-    //OutputDebugStringW(TEXT("  y: "));
-    //s = char3;
-    //OutputDebugStringA(s);
-    //OutputDebugStringW(TEXT("  z: "));
-    //s = char4;
-    //OutputDebugStringA(s);
-    //OutputDebugStringW(TEXT("\n"));
-
-
-    // Turn off the Z buffer to begin all 2D rendering.
-    //m_Direct3D->TurnZBufferOff();
-
-    // Turn on the alpha blending before rendering the text.
-//    m_Direct3D->TurnOnAlphaBlending();
-
-    //// Render the text user interface elements.
-    //result = m_Text->Render(m_Direct3D->GetDeviceContext(), m_FontShader, worldMatrix, orthoMatrix);
-    //if (!result)
-    //{
-    //    return false;
-    //}
-
-    // Turn off alpha blending after rendering the text.
-//    m_Direct3D->TurnOffAlphaBlending();
-
-    // Turn the Z buffer back on now that all 2D rendering has completed.
-    //m_Direct3D->TurnZBufferOn();
+    std::wostringstream triangleswchar;
+    triangleswchar << m_QuadTree->GetDrawCount() << " Tris";
+    m_Font->drawText(m_Direct3D->GetDeviceContext(),
+                     (WCHAR*)triangleswchar.str().c_str(),
+                     13.0f,
+                     20.0f,
+                     38.0f,
+                     0xff8cc63e,
+                     0);
 
     // Present the rendered scene to the screen.
     m_Direct3D->EndScene();

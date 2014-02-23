@@ -3,11 +3,9 @@
 
 Terrain::Terrain()
 {
-    m_heightMap = 0;
-    m_ImageUtil = 0;
+    m_Util = 0;
     m_Texture = 0;
     m_scaling = 2.0f;
-    m_vertices = 0;
 }
 
 
@@ -24,10 +22,11 @@ Terrain::~Terrain()
 bool Terrain::Initialize(ID3D11Device *device,
                          WCHAR *heightmapFilename,
                          WCHAR *texFilename,
-                         ImageUtil *imgUtil)
+                         WCHAR *colorMapFilename,
+                         Util  *util)
 {
     bool result;
-    m_ImageUtil = imgUtil;
+    m_Util = util;
 
     // Load in the height map for the terrain from file.
     result = LoadHeightMap(heightmapFilename);
@@ -47,6 +46,13 @@ bool Terrain::Initialize(ID3D11Device *device,
         return false;
     }
 
+    // Load in the color map.
+    result = LoadColorMap(colorMapFilename);
+    if (!result)
+    {
+        return false;
+    }
+
     // Calculate the normals for the terrain data.
     result = CalculateNormals();
     if (!result)
@@ -54,7 +60,7 @@ bool Terrain::Initialize(ID3D11Device *device,
         return false;
     }
 
-    result = InitializeBuffers(device);
+    result = InitializeBuffers();
     if (!result)
     {
         return false;
@@ -100,33 +106,24 @@ bool Terrain::LoadHeightMap(WCHAR *hightmapFilename)
     int index;
 
     unsigned char *pixelData = nullptr;
-    unsigned char height;
 
-    result = m_ImageUtil->LoadBMP(hightmapFilename, pixelData, &m_terrainHeight, &m_terrainWidth);
+    result = m_Util->LoadBMP(hightmapFilename, pixelData, &m_terrainHeight, &m_terrainWidth);
     if (!result)
     {
         return false;
     }
 
     // Create the structure to hold the height map data.
-    m_heightMap = new HeightMapType[m_terrainWidth * m_terrainHeight];
-    if (!m_heightMap)
-    {
-        return false;
-    }
+    m_heightMap.resize(m_terrainWidth * m_terrainHeight);
 
     // Read the image data into the height map.
     for (int j = 0; j < m_terrainHeight; j++)
     {
         for (int i = 0; i < m_terrainWidth; i++)
         {
-            height = pixelData[k];
-
             index = (m_terrainHeight * j) + i;
 
-            m_heightMap[index].x = (float)i;
-            m_heightMap[index].y = (float)height;
-            m_heightMap[index].z = (float)j;
+            m_heightMap[index].position = Vec3f((float)i, (float)pixelData[k], (float)j);
 
             k += 3;
         }
@@ -145,7 +142,7 @@ void Terrain::NormalizeHeightMap()
     {
         for (int i = 0; i  <m_terrainWidth; i++)
         {
-            m_heightMap[(m_terrainHeight * j) + i].y /= m_scaling;
+            m_heightMap[(m_terrainHeight * j) + i].position.y /= m_scaling;
         }
     }
 
@@ -155,69 +152,34 @@ void Terrain::NormalizeHeightMap()
 
 bool Terrain::CalculateNormals()
 {
-    int index;
+    int index0;
     int index1;
     int index2;
     int index3;
 
     int count;
 
-    float vertex1[3];
-    float vertex2[3];
-    float vertex3[3];
+    Vec3f vector0;
+    Vec3f vector1;
 
-    float vector1[3];
-    float vector2[3];
+    Vec3f sum;
 
-    float sum[3];
-    float length;
-
-    VectorType* normals;
-
-    // Create a temporary array to hold the non-normalized normal vectors.
-    normals = new VectorType[(m_terrainHeight - 1) * (m_terrainWidth - 1)];
-    if (!normals)
-    {
-        return false;
-    }
+    vector<Vec3f> normals((m_terrainHeight - 1) * (m_terrainWidth - 1));
 
     // Go through all the faces in the mesh and calculate their normals.
     for (int j = 0; j < (m_terrainHeight - 1); j++)
     {
         for (int i = 0; i < (m_terrainWidth - 1); i++)
         {
-            index1 = (j * m_terrainHeight) + i;
-            index2 = (j * m_terrainHeight) + (i + 1);
-            index3 = ((j + 1) * m_terrainHeight) + i;
+            index0 = (j       * (m_terrainHeight - 1)) + i;
+            index1 = (j       *  m_terrainHeight)      + i;
+            index2 = (j       *  m_terrainHeight)      + (i + 1);
+            index3 = ((j + 1) *  m_terrainHeight)      + i;
 
-            // Get three m_vertices from the face.
-            vertex1[0] = m_heightMap[index1].x;
-            vertex1[1] = m_heightMap[index1].y;
-            vertex1[2] = m_heightMap[index1].z;
+            vector0 = m_heightMap[index1].position - m_heightMap[index3].position;
+            vector1 = m_heightMap[index3].position - m_heightMap[index2].position;
 
-            vertex2[0] = m_heightMap[index2].x;
-            vertex2[1] = m_heightMap[index2].y;
-            vertex2[2] = m_heightMap[index2].z;
-
-            vertex3[0] = m_heightMap[index3].x;
-            vertex3[1] = m_heightMap[index3].y;
-            vertex3[2] = m_heightMap[index3].z;
-
-            // Calculate the two vectors for this face.
-            vector1[0] = vertex1[0] - vertex3[0];
-            vector1[1] = vertex1[1] - vertex3[1];
-            vector1[2] = vertex1[2] - vertex3[2];
-            vector2[0] = vertex3[0] - vertex2[0];
-            vector2[1] = vertex3[1] - vertex2[1];
-            vector2[2] = vertex3[2] - vertex2[2];
-
-            index = (j * (m_terrainHeight - 1)) + i;
-
-            // Calculate the cross product of those two vectors to get the
-            // non-normalized value for this face normal.
-            normals[index].x = (vector1[1] * vector2[2]) - (vector1[2] * vector2[1]);
-            normals[index].y = (vector1[2] * vector2[0]) - (vector1[0] * vector2[2]);
-            normals[index].z = (vector1[0] * vector2[1]) - (vector1[1] * vector2[0]);
+            normals[index0] = vector0.GetCross(vector0, vector1);
         }
     }
 
@@ -227,77 +189,54 @@ bool Terrain::CalculateNormals()
     {
         for (int i = 0; i < m_terrainWidth; i++)
         {
-            sum[0] = 0.0f;
-            sum[1] = 0.0f;
-            sum[2] = 0.0f;
-
+            sum = Vec3f(0.0f, 0.0f, 0.0f);
             count = 0;
 
             // Bottom left face.
             if (((i - 1) >= 0) && ((j - 1) >= 0))
             {
-                index = ((j - 1) * (m_terrainHeight - 1)) + (i - 1);
-
-                sum[0] += normals[index].x;
-                sum[1] += normals[index].y;
-                sum[2] += normals[index].z;
+                index0 = ((j - 1) * (m_terrainHeight - 1)) + (i - 1);
+                sum += normals[index0];
                 count++;
             }
 
             // Bottom right face.
             if ((i < (m_terrainWidth - 1)) && ((j - 1) >= 0))
             {
-                index = ((j - 1) * (m_terrainHeight - 1)) + i;
-
-                sum[0] += normals[index].x;
-                sum[1] += normals[index].y;
-                sum[2] += normals[index].z;
+                index0 = ((j - 1) * (m_terrainHeight - 1)) + i;
+                sum += normals[index0];
                 count++;
             }
 
             // Upper left face.
             if (((i - 1) >= 0) && (j < (m_terrainHeight - 1)))
             {
-                index = (j * (m_terrainHeight - 1)) + (i - 1);
-
-                sum[0] += normals[index].x;
-                sum[1] += normals[index].y;
-                sum[2] += normals[index].z;
+                index0 = (j * (m_terrainHeight - 1)) + (i - 1);
+                sum += normals[index0];
                 count++;
             }
 
             // Upper right face.
             if ((i < (m_terrainWidth - 1)) && (j < (m_terrainHeight - 1)))
             {
-                index = (j * (m_terrainHeight - 1)) + i;
-
-                sum[0] += normals[index].x;
-                sum[1] += normals[index].y;
-                sum[2] += normals[index].z;
+                index0 = (j * (m_terrainHeight - 1)) + i;
+                sum += normals[index0];
                 count++;
             }
 
             // Take the average of the faces touching this vertex.
-            sum[0] = (sum[0] / (float)count);
-            sum[1] = (sum[1] / (float)count);
-            sum[2] = (sum[2] / (float)count);
-
-            // Calculate the length of this normal.
-            length = sqrt((sum[0] * sum[0]) + (sum[1] * sum[1]) + (sum[2] * sum[2]));
+            sum /= (float)count;
 
             // Get an index to the vertex location in the height map array.
-            index = (j * m_terrainHeight) + i;
+            index0 = (j * m_terrainHeight) + i;
 
             // Normalize the shared normal for this vertex.
-            m_heightMap[index].nx = (sum[0] / length);
-            m_heightMap[index].ny = (sum[1] / length);
-            m_heightMap[index].nz = (sum[2] / length);
+            m_heightMap[index0].normal = sum.Normalize();
         }
     }
 
     // Release the temporary normals.
-    delete[] normals;
-    normals = 0;
+    normals.clear();
 
     return true;
 }
@@ -305,12 +244,7 @@ bool Terrain::CalculateNormals()
 
 void Terrain::ShutdownHeightMap()
 {
-    if (m_heightMap)
-    {
-        delete[] m_heightMap;
-        m_heightMap = 0;
-    }
-
+    m_heightMap.clear();
     return;
 }
 
@@ -333,13 +267,15 @@ void Terrain::CalculateTextureCoordinates()
     incrementCount = m_terrainWidth / TEXTURE_REPEAT;
 
     // Loop through the height map and calculate the texture coordinates for each vertex.
-    for (int j = 0; j<m_terrainHeight; j++)
+    for (int j = 0; j < m_terrainHeight; j++)
     {
-        for (int i = 0; i<m_terrainWidth; i++)
+        for (int i = 0; i < m_terrainWidth; i++)
         {
             // Store the texture coordinate in the height map.
-            m_heightMap[(m_terrainHeight * j) + i].tu = tuCoordinate;
-            m_heightMap[(m_terrainHeight * j) + i].tv = tvCoordinate;
+            m_heightMap[(m_terrainHeight * j) + i].texture.u = tuCoordinate;
+            m_heightMap[(m_terrainHeight * j) + i].texture.v = tvCoordinate;
+            // 3dr texture coordinate empty yet
+            m_heightMap[(m_terrainHeight * j) + i].texture.z = 1.0f;
 
             tuCoordinate += incrementValue;
             tuCount++;
@@ -400,7 +336,47 @@ void Terrain::ReleaseTexture()
 }
 
 
-bool Terrain::InitializeBuffers(ID3D11Device* device)
+bool Terrain::LoadColorMap(WCHAR *filename)
+{
+    bool result = false;
+
+    int i = 0;
+    int k = 0;
+    int index;
+
+    unsigned char *pixelData = nullptr;
+
+    // conversion factor used to convert color values
+    float conversionFactor = 255.0f;
+
+    result = m_Util->LoadBMP(filename, pixelData, &m_terrainHeight, &m_terrainWidth);
+    if (!result)
+    {
+        return false;
+    }
+
+    // Read the image color data into the struct.
+    for (int j = 0; j < m_terrainHeight; j++)
+    {
+        for (i = 0; i < m_terrainWidth; i++)
+        {
+            index = (m_terrainHeight * j) + i;
+
+            m_heightMap[index].color.r = (float)pixelData[k++] / conversionFactor;
+            m_heightMap[index].color.g = (float)pixelData[k++] / conversionFactor;
+            m_heightMap[index].color.b = (float)pixelData[k++] / conversionFactor;
+            m_heightMap[index].color.a = 1.0f;
+        }
+    }
+    // Release the bitmap image data.
+    delete[] pixelData;
+    pixelData = 0;
+
+    return true;
+}
+
+
+bool Terrain::InitializeBuffers()
 {
     int index = 0;
 
@@ -415,12 +391,8 @@ bool Terrain::InitializeBuffers(ID3D11Device* device)
     // Calculate the number of vertices in the terrain mesh.
     m_vertexCount = (m_terrainWidth - 1)*(m_terrainHeight - 1)*6;
 
-    // Create the vertex array.
-    m_vertices = new VertexType[m_vertexCount];
-    if (!m_vertices)
-    {
-        return false;
-    }
+    // Create the vertex vector.
+    m_vertices.resize(m_vertexCount);
 
     for (int j = 0; j < (m_terrainHeight - 1); j++)
     {
@@ -432,82 +404,38 @@ bool Terrain::InitializeBuffers(ID3D11Device* device)
             index4 = (m_terrainHeight * (1 + j)) + (i + 1); // Upper right.
 
             // Upper left.
-            tv = m_heightMap[index3].tv;
-
             // Modify the texture coordinates to cover the top edge.
-            if (tv == 1.0f)
-            {
-                tv = 0.0f;
-            }
-
-            m_vertices[index].position = XMFLOAT3(m_heightMap[index3].x, m_heightMap[index3].y, m_heightMap[index3].z);
-            m_vertices[index].texture = XMFLOAT3(m_heightMap[index3].tu, tv, 0.0f);
-            m_vertices[index].normal = XMFLOAT3(m_heightMap[index3].nx, m_heightMap[index3].ny, m_heightMap[index3].nz);
-            index++;
+            tv = m_heightMap[index3].texture.v;
+            if (tv == 1.0f) { tv = 0.0f; }
+            m_vertices[index++] = m_heightMap[index3];
 
             // Upper right.
-            tu = m_heightMap[index4].tu;
-            tv = m_heightMap[index4].tv;
-
             // Modify the texture coordinates to cover the top and right edge.
-            if (tu == 0.0f)
-            { 
-                tu = 1.0f;
-            }
-            if (tv == 1.0f)
-            {
-                tv = 0.0f;
-            }
-
-            m_vertices[index].position = XMFLOAT3(m_heightMap[index4].x, m_heightMap[index4].y, m_heightMap[index4].z);
-            m_vertices[index].texture = XMFLOAT3(tu, tv, 0.0f);
-            m_vertices[index].normal = XMFLOAT3(m_heightMap[index4].nx, m_heightMap[index4].ny, m_heightMap[index4].nz);
-            index++;
+            tu = m_heightMap[index4].texture.u;
+            tv = m_heightMap[index4].texture.v;
+            if (tu == 0.0f) { tu = 1.0f; }
+            if (tv == 1.0f) { tv = 0.0f; }
+            m_vertices[index++] = m_heightMap[index4];
 
             // Bottom left.
-            m_vertices[index].position = XMFLOAT3(m_heightMap[index1].x, m_heightMap[index1].y, m_heightMap[index1].z);
-            m_vertices[index].texture = XMFLOAT3(m_heightMap[index1].tu, m_heightMap[index1].tv, 0.0f);
-            m_vertices[index].normal = XMFLOAT3(m_heightMap[index1].nx, m_heightMap[index1].ny, m_heightMap[index1].nz);
-            index++;
+            m_vertices[index++] = m_heightMap[index1];
 
             // Bottom left.
-            m_vertices[index].position = XMFLOAT3(m_heightMap[index1].x, m_heightMap[index1].y, m_heightMap[index1].z);
-            m_vertices[index].texture = XMFLOAT3(m_heightMap[index1].tu, m_heightMap[index1].tv, 0.0f);
-            m_vertices[index].normal = XMFLOAT3(m_heightMap[index1].nx, m_heightMap[index1].ny, m_heightMap[index1].nz);
-            index++;
+            m_vertices[index++] = m_heightMap[index1];
 
             // Upper right.
-            tu = m_heightMap[index4].tu;
-            tv = m_heightMap[index4].tv;
-
             // Modify the texture coordinates to cover the top and right edge.
-            if (tu == 0.0f) 
-            { 
-                tu = 1.0f;
-            }
-            if (tv == 1.0f) 
-            { 
-                tv = 0.0f; 
-            }
-
-            m_vertices[index].position = XMFLOAT3(m_heightMap[index4].x, m_heightMap[index4].y, m_heightMap[index4].z);
-            m_vertices[index].texture = XMFLOAT3(tu, tv, 0.0f);
-            m_vertices[index].normal = XMFLOAT3(m_heightMap[index4].nx, m_heightMap[index4].ny, m_heightMap[index4].nz);
-            index++;
+            tu = m_heightMap[index4].texture.u;
+            tv = m_heightMap[index4].texture.v;
+            if (tu == 0.0f) { tu = 1.0f; }
+            if (tv == 1.0f) { tv = 0.0f; }
+            m_vertices[index++] = m_heightMap[index4];
 
             // Bottom right.
-            tu = m_heightMap[index2].tu;
-
             // Modify the texture coordinates to cover the right edge.
-            if (tu == 0.0f)
-            {
-                tu = 1.0f;
-            }
-
-            m_vertices[index].position = XMFLOAT3(m_heightMap[index2].x, m_heightMap[index2].y, m_heightMap[index2].z);
-            m_vertices[index].texture = XMFLOAT3(tu, m_heightMap[index2].tv, 0.0f);
-            m_vertices[index].normal = XMFLOAT3(m_heightMap[index2].nx, m_heightMap[index2].ny, m_heightMap[index2].nz);
-            index++;
+            tu = m_heightMap[index2].texture.u;
+            if (tu == 0.0f) { tu = 1.0f; }
+            m_vertices[index++] = m_heightMap[index2];
         }
     }
 
@@ -518,11 +446,7 @@ bool Terrain::InitializeBuffers(ID3D11Device* device)
 void Terrain::ShutdownBuffers()
 {
     // Release the vertex array.
-    if (m_vertices)
-    {
-        delete[] m_vertices;
-        m_vertices = 0;
-    }
+    m_vertices.clear();
 
     return;
 }
@@ -534,9 +458,7 @@ int Terrain::GetVertexCount()
 }
 
 
-void Terrain::CopyVertexArray(void* vertexList)
+vector<VertexType> Terrain::GetVertices()
 {
-    //vertexList = m_vertices;
-    memcpy(vertexList, m_vertices, sizeof(VertexType) * m_vertexCount);
-    return;
+    return m_vertices;
 }

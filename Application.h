@@ -1,5 +1,7 @@
 #pragma once
 
+#include <sstream>
+
 #include "Input.h"
 #include "D3D.h"
 #include "Camera.h"
@@ -7,17 +9,16 @@
 #include "ColorShader.h"
 #include "Position.h"
 #include "Timer.h"
-#include "ImageUtil.h"
+#include "Util.h"
 #include "Frustum.h"
 #include "QuadTree.h"
-//#include "Fps.h"
-//#include "Cpu.h"
-//#include "FontShader.h"
-//#include "Text.h"
-
 #include "TerrainShader.h"
 #include "Light.h"
 #include "Texture.h"
+#include "Font.h"
+#include "Profiler.h"
+#include "SkyDome.h"
+#include "SkyDomeShader.h"
 
 //
 // Wrapper class for terrain application.
@@ -49,6 +50,8 @@ public:
     // Handle user input.
     bool HandleInput(float);
 
+    bool drawText(ID3D11Device *, ID3D11DeviceContext *, IDXGISwapChain *);
+
     //  Getter methods
     bool IsFullScreen();
     bool IsVsync();
@@ -59,8 +62,11 @@ private:
     //  Member variables
     bool m_fullScreen;
     bool m_vSync;
+    bool m_lockSurfaceCamera;
+
     float m_screenDepth;
     float m_screenNear;
+    float m_SpectatorHeight;
 
     HWND m_hwnd;
 
@@ -72,13 +78,14 @@ private:
     ColorShader* m_ColorShader;
     Position* m_Position;
     Timer* m_Timer;
-    ImageUtil* m_ImageUtil;
+    Util* m_Util;
     TerrainShader* m_TerrainShader;
     Light* m_Light;
     Texture* m_Texture;
     Frustum* m_Frustum;
     QuadTree* m_QuadTree;
-    //Model* m_Model;
-    //TextureShader* m_TextureShader;
-    //Element2d* m_Element2d;
+    Font* m_Font;
+    Profiler* m_Profiler;
+    SkyDome* m_SkyDome;
+    SkyDomeShader* m_SkyDomeShader;
 };

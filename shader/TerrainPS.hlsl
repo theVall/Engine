@@ -17,6 +17,7 @@ struct PixelInputType
     float4 position : SV_POSITION;
     float2 tex : TEXCOORD0;
     float3 normal : NORMAL;
+    float4 color : COLOR;
 };
 
 // Entry point main method
@@ -40,5 +41,15 @@ float4 Main(PixelInputType input) : SV_TARGET
 
     color = color * textureColor;
 
+    // combine with color map value
+    color = saturate(color);
+
+    //lerp(color, input.color, float4(0.5f, 0.5f, 0.5f, 0.5f));
+
+    color = saturate(color);
+    color.w = 1.0;
+    // DEBUG ONLY
+    //color = float4(1,1,1,1);
+    
     return color;
 }
