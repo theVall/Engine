@@ -115,7 +115,7 @@ bool D3D::Initialize(int screenWidth,
 
     // Find the display mode that matches the screen width and height. When a match is found
     // store the numerator and denominator of the refresh rate for that monitor.
-    for (i = 0; i < numModes; i++)
+    for (i = 0; i < numModes; ++i)
     {
         if (displayModeList[i].Width == (unsigned int)screenWidth)
         {

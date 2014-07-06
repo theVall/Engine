@@ -132,8 +132,8 @@ bool Element2d::InitializeBuffers(ID3D11Device* device)
         return false;
     }
 
-    result = SetIndexBuffer(device, indices);
-    if (FAILED(result))
+    bool bResult = SetIndexBuffer(device, indices);
+    if (!bResult)
     {
         return false;
     }
@@ -191,7 +191,7 @@ bool Element2d::UpdateBuffers(ID3D11DeviceContext* deviceContext,
         m_previousPosY = positionY;
 
         // Calculate the screen coordinates.
-        left = (float)((m_screenWidth / 2) * -1) + (float)positionX;
+        left = (float)((m_screenWidth / 2.0f) * -1.0f) + (float)positionX;
         right = left + (float)m_bitmapWidth;
         top = (float)(m_screenHeight / 2) - (float)positionY;
         bottom = top - (float)m_bitmapHeight;

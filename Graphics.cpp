@@ -32,8 +32,14 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 {
     bool success = false;
 
+    // setup for 16 bit alignment used by XMMATH for SSE instruction support
+    void* ptr = 0;
+    size_t alignment = 16;
+    size_t objSize = sizeof(D3D);
+
     // Create D3D window object.
-    m_D3D = new D3D;
+    ptr = _aligned_malloc(objSize, alignment);
+    m_D3D = new(ptr) D3D();
     if(!m_D3D)
     {
         return false;
@@ -52,7 +58,8 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd)
     }
 
     // Create camera and set initial position.
-    m_Camera = new Camera;
+    ptr = _aligned_malloc(objSize, alignment);
+    m_Camera = new(ptr) Camera();
     if (!m_Camera)
     {
         return false;
@@ -99,6 +106,9 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd)
     m_Light->SetSpecularColor(1.0f, 1.0f, 1.0f, 1.0f);
     m_Light->SetSpecularPower(32.0f);
     m_Light->SetDirection(1.0f, 0.0f, 0.0f);
+
+    // cleanup
+    _aligned_free(ptr);
 
     return true;
 }

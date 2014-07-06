@@ -275,7 +275,7 @@ void Terrain::CalculateTextureCoordinates()
             m_heightMap[(m_terrainHeight * j) + i].texture.u = tuCoordinate;
             m_heightMap[(m_terrainHeight * j) + i].texture.v = tvCoordinate;
             // 3dr texture coordinate empty yet
-            m_heightMap[(m_terrainHeight * j) + i].texture.z = 1.0f;
+            //m_heightMap[(m_terrainHeight * j) + i].texture.z = 1.0f;
 
             tuCoordinate += incrementValue;
             tuCount++;
@@ -407,7 +407,8 @@ bool Terrain::InitializeBuffers()
             // Modify the texture coordinates to cover the top edge.
             tv = m_heightMap[index3].texture.v;
             if (tv == 1.0f) { tv = 0.0f; }
-            m_vertices[index++] = m_heightMap[index3];
+            m_vertices[index] = m_heightMap[index3];
+            m_vertices[index++].texture.v = tv;
 
             // Upper right.
             // Modify the texture coordinates to cover the top and right edge.
@@ -415,7 +416,9 @@ bool Terrain::InitializeBuffers()
             tv = m_heightMap[index4].texture.v;
             if (tu == 0.0f) { tu = 1.0f; }
             if (tv == 1.0f) { tv = 0.0f; }
-            m_vertices[index++] = m_heightMap[index4];
+            m_vertices[index] = m_heightMap[index4];
+            m_vertices[index].texture.u = tu;
+            m_vertices[index++].texture.v = tv;
 
             // Bottom left.
             m_vertices[index++] = m_heightMap[index1];
@@ -429,13 +432,16 @@ bool Terrain::InitializeBuffers()
             tv = m_heightMap[index4].texture.v;
             if (tu == 0.0f) { tu = 1.0f; }
             if (tv == 1.0f) { tv = 0.0f; }
-            m_vertices[index++] = m_heightMap[index4];
+            m_vertices[index] = m_heightMap[index4];
+            m_vertices[index].texture.u = tu;
+            m_vertices[index++].texture.v = tv;
 
             // Bottom right.
             // Modify the texture coordinates to cover the right edge.
             tu = m_heightMap[index2].texture.u;
             if (tu == 0.0f) { tu = 1.0f; }
-            m_vertices[index++] = m_heightMap[index2];
+            m_vertices[index] = m_heightMap[index2];
+            m_vertices[index++].texture.u = tu;
         }
     }
 

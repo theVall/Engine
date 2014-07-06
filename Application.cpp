@@ -1,5 +1,6 @@
 #include "Application.h"
 
+#define DEBUG 1
 
 Application::Application()
 {
@@ -68,8 +69,15 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
         return false;
     }
 
-    // Create and initialize the __Direct3D__ object.
-    m_Direct3D = new D3D;
+    // setup for 16 bit alignment used by XMMATH for SSE instruction support
+    // TODO: overload <new> and <delete> operators
+    void* ptr = 0;
+    size_t alignment = 16;
+    size_t objSize = sizeof(D3D);
+
+    // Create and initialize _D3D_ window object.
+    ptr = _aligned_malloc(objSize, alignment);
+    m_Direct3D = new(ptr)D3D();
     if (!m_Direct3D)
     {
         return false;
@@ -88,7 +96,8 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     }
 
     // Create and initialize the __camera__ object.
-    m_Camera = new Camera;
+    ptr = _aligned_malloc(objSize, alignment);
+    m_Camera = new(ptr)Camera();
     if (!m_Camera)
     {
         return false;
@@ -171,10 +180,10 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
 
     m_Direct3D->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
     m_Font->drawText(m_Direct3D->GetDeviceContext(),
-                     L"Loading...\n",
+                     L"Loading Terrain Data...\n",
                      20.0f,
-                     100.0f,
-                     100.0f,
+                     50.0f,
+                     50.0f,
                      0xff8cc63e,
                      0);
     m_Direct3D->EndScene();
@@ -260,6 +269,9 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
         MessageBox(hwnd, L"Could not initialize the sky dome shader object.", L"Error", MB_OK);
         return false;
     }
+
+    // cleanup
+    _aligned_free(ptr);
 
     return true;
 }
@@ -562,6 +574,9 @@ bool Application::RenderGraphics()
     // Render the terrain using the quad tree and terrain shader.
     m_QuadTree->Render(m_Frustum, m_Direct3D->GetDeviceContext(), m_TerrainShader);
 
+
+// profiling/debug output
+#if DEBUG == 1
     int fps = m_Profiler->GetFps();
 
     std::wostringstream fpswchar;
@@ -584,6 +599,8 @@ bool Application::RenderGraphics()
                      38.0f,
                      0xff8cc63e,
                      0);
+#endif
+
 
     // Present the rendered scene to the screen.
     m_Direct3D->EndScene();

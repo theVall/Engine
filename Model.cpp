@@ -111,8 +111,8 @@ bool Model::InitializeBuffers(ID3D11Device* device)
         return false;
     }
 
-    result = SetIndexBuffer(device, indices);
-    if (FAILED(result))
+    bool bResult = SetIndexBuffer(device, indices);
+    if (!bResult)
     {
         return false;
     }

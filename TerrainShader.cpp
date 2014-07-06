@@ -25,9 +25,9 @@ bool TerrainShader::InitializeShader(ID3D11Device* device,
                                      WCHAR* psFilename)
 {
     HRESULT result;
-    ID3D10Blob* errorMessage;
-    ID3D10Blob* vertexShaderBuffer;
-    ID3D10Blob* pixelShaderBuffer;
+    ID3D10Blob *errorMessage;
+    ID3D10Blob *vertexShaderBuffer;
+    ID3D10Blob *pixelShaderBuffer;
     D3D11_INPUT_ELEMENT_DESC polygonLayout[4];
     D3D11_SAMPLER_DESC samplerDesc;
     D3D11_BUFFER_DESC matrixBufferDesc;
@@ -103,9 +103,9 @@ bool TerrainShader::InitializeShader(ID3D11Device* device,
     }
 
     result = device->CreatePixelShader(pixelShaderBuffer->GetBufferPointer(),
-                                        pixelShaderBuffer->GetBufferSize(),
-                                        NULL,
-                                        &m_pixelShader);
+                                       pixelShaderBuffer->GetBufferSize(),
+                                       NULL,
+                                       &m_pixelShader);
     if (FAILED(result))
     {
         return false;
@@ -157,7 +157,7 @@ bool TerrainShader::InitializeShader(ID3D11Device* device,
         return false;
     }
 
-    // Release the vertex shader buffer and pixel shader buffer since they are no longer needed.
+    // Release the vertex shader buffer and pixel shader buffer
     vertexShaderBuffer->Release();
     vertexShaderBuffer = 0;
 
@@ -166,9 +166,9 @@ bool TerrainShader::InitializeShader(ID3D11Device* device,
 
     // Create a texture sampler state description.
     samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
     samplerDesc.MipLODBias = 0.0f;
     samplerDesc.MaxAnisotropy = 1;
     samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;

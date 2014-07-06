@@ -63,7 +63,7 @@ bool ScreenElement::SetIndexBuffer(ID3D11Device* device, unsigned long* indices)
 {
     D3D11_BUFFER_DESC indexBufferDesc;
     D3D11_SUBRESOURCE_DATA indexData;
-    HRESULT result = false;
+    HRESULT result;
 
     // Set up the description of the static index buffer.
     indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
