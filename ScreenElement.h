@@ -54,6 +54,6 @@ protected:
     int m_vertexCount;
     int m_indexCount;
 
-    Texture *m_texture;
+    Texture *m_pTexture;
 };
 

@@ -4,7 +4,7 @@
 Terrain::Terrain()
 {
     m_Util = 0;
-    m_Texture = 0;
+    m_pTexture = 0;
     m_scaling = 2.0f;
 }
 
@@ -82,7 +82,7 @@ void Terrain::Shutdown()
 
 ID3D11ShaderResourceView* Terrain::GetTexture()
 {
-    return m_Texture->GetTexture();
+    return m_pTexture->GetSrv();
 }
 
 
@@ -307,13 +307,13 @@ bool Terrain::LoadTexture(ID3D11Device* device, WCHAR* filename)
 {
     bool result;
 
-    m_Texture = new Texture;
-    if (!m_Texture)
+    m_pTexture = new Texture;
+    if (!m_pTexture)
     {
         return false;
     }
 
-    result = m_Texture->Initialize(device, filename);
+    result = m_pTexture->LoadFromDDS(device, filename);
     if (!result)
     {
         return false;
@@ -325,11 +325,11 @@ bool Terrain::LoadTexture(ID3D11Device* device, WCHAR* filename)
 
 void Terrain::ReleaseTexture()
 {
-    if (m_Texture)
+    if (m_pTexture)
     {
-        m_Texture->Shutdown();
-        delete m_Texture;
-        m_Texture = 0;
+        m_pTexture->Shutdown();
+        delete m_pTexture;
+        m_pTexture = 0;
     }
 
     return;

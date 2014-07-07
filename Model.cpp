@@ -5,7 +5,7 @@ Model::Model(void)
 {
     m_vertexBuffer = 0;
     m_indexBuffer  = 0;
-    m_texture = 0;
+    m_pTexture = 0;
     m_model = 0;
 }
 

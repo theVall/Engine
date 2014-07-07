@@ -107,9 +107,6 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd)
     m_Light->SetSpecularPower(32.0f);
     m_Light->SetDirection(1.0f, 0.0f, 0.0f);
 
-    // cleanup
-    _aligned_free(ptr);
-
     return true;
 }
 

@@ -5,7 +5,7 @@ ScreenElement::ScreenElement(void)
 {
     m_vertexBuffer = 0;
     m_indexBuffer = 0;
-    m_texture = 0;
+    m_pTexture = 0;
 }
 
 
@@ -22,7 +22,7 @@ int ScreenElement::GetIndexCount()
 
 ID3D11ShaderResourceView* ScreenElement::GetTexture()
 {
-    return m_texture->GetTexture();
+    return m_pTexture->GetSrv();
 }
 
 
@@ -30,13 +30,13 @@ bool ScreenElement::LoadTexture(ID3D11Device* device, WCHAR* filename)
 {
     bool result;
 
-    m_texture = new Texture;
-    if (!m_texture)
+    m_pTexture = new Texture;
+    if (!m_pTexture)
     {
         return false;
     }
 
-    result = m_texture->Initialize(device, filename);
+    result = m_pTexture->LoadFromDDS(device, filename);
     if (!result)
     {
         return false;
@@ -48,11 +48,11 @@ bool ScreenElement::LoadTexture(ID3D11Device* device, WCHAR* filename)
 
 void ScreenElement::ReleaseTexture()
 {
-    if (m_texture)
+    if (m_pTexture)
     {
-        m_texture->Shutdown();
-        delete m_texture;
-        m_texture = 0;
+        m_pTexture->Shutdown();
+        delete m_pTexture;
+        m_pTexture = 0;
     }
 
     return;

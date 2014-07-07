@@ -129,6 +129,15 @@
     <ClInclude Include="ColorShader.h">
       <Filter>Header Files\ShaderProgram</Filter>
     </ClInclude>
+    <ClInclude Include="Ocean.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Math.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Vec2f.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="System.cpp">
@@ -214,6 +223,9 @@
     </ClCompile>
     <ClCompile Include="ColorShader.cpp">
       <Filter>Source Files\ShaderProgram</Filter>
+    </ClCompile>
+    <ClCompile Include="Ocean.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -101,6 +101,8 @@
     <ClInclude Include="Font.h" />
     <ClInclude Include="Frustum.h" />
     <ClInclude Include="Graphics.h" />
+    <ClInclude Include="Math.h" />
+    <ClInclude Include="Ocean.h" />
     <ClInclude Include="ShaderProgram.h" />
     <ClInclude Include="SkyDomeShader.h" />
     <ClInclude Include="Util.h" />
@@ -122,6 +124,7 @@
     <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureShader.h" />
     <ClInclude Include="Timer.h" />
+    <ClInclude Include="Vec2f.h" />
     <ClInclude Include="Vec3f.h" />
     <ClInclude Include="Vec4f.h" />
     <ClInclude Include="VertexType.h" />
@@ -136,6 +139,7 @@
     <ClCompile Include="Font.cpp" />
     <ClCompile Include="Frustum.cpp" />
     <ClCompile Include="Graphics.cpp" />
+    <ClCompile Include="Ocean.cpp" />
     <ClCompile Include="ShaderProgram.cpp" />
     <ClCompile Include="SkyDomeShader.cpp" />
     <ClCompile Include="Util.cpp" />

@@ -1,6 +1,5 @@
 #include "Application.h"
 
-#define DEBUG 1
 
 Application::Application()
 {
@@ -22,7 +21,7 @@ Application::Application()
     m_Util = 0;
     m_TerrainShader = 0;
     m_Light = 0;
-    m_Texture = 0;
+    m_pGroundTex = 0;
     m_Frustum = 0;
     m_QuadTree = 0;
     m_Font = 0;
@@ -202,12 +201,12 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     }
 
     // Create and initialize __texture__.
-    m_Texture = new Texture;
-    if (!m_Texture)
+    m_pGroundTex = new Texture;
+    if (!m_pGroundTex)
     {
         return false;
     }
-    result = m_Texture->Initialize(m_Direct3D->GetDevice(), L"../Engine/res/tex/dirt.dds");
+    result = m_pGroundTex->LoadFromDDS(m_Direct3D->GetDevice(), L"../Engine/res/tex/dirt.dds");
 
     // Create and initialize the __timer__ object.
     m_Timer = new Timer;
@@ -270,9 +269,6 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
         return false;
     }
 
-    // cleanup
-    _aligned_free(ptr);
-
     return true;
 }
 
@@ -318,10 +314,10 @@ void Application::Shutdown()
         m_Timer = 0;
     }
 
-    if (m_Texture)
+    if (m_pGroundTex)
     {
-        delete m_Texture;
-        m_Texture = 0;
+        delete m_pGroundTex;
+        m_pGroundTex = 0;
     }
 
     if (m_QuadTree)
@@ -365,14 +361,14 @@ void Application::Shutdown()
 
     if (m_Camera)
     {
-        delete m_Camera;
+        //delete m_Camera;
         m_Camera = 0;
     }
 
     if (m_Direct3D)
     {
-        m_Direct3D->Shutdown();
-        delete m_Direct3D;
+        //m_Direct3D->Shutdown();
+        //delete m_Direct3D;
         m_Direct3D = 0;
     }
 
@@ -561,7 +557,7 @@ bool Application::RenderGraphics()
                                                   worldMatrix,
                                                   viewMatrix,
                                                   projectionMatrix,
-                                                  m_Texture->GetTexture(),
+                                                  m_pGroundTex->GetSrv(),
                                                   m_Light->GetDirection(),
                                                   m_Light->GetAmbientColor(),
                                                   m_Light->GetDiffuseColor() );
@@ -576,7 +572,7 @@ bool Application::RenderGraphics()
 
 
 // profiling/debug output
-#if DEBUG == 1
+#ifdef DEBUG
     int fps = m_Profiler->GetFps();
 
     std::wostringstream fpswchar;

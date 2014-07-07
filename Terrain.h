@@ -68,7 +68,7 @@ private:
     int m_vertexCount;
 
     Util *m_Util;
-    Texture *m_Texture;
+    Texture *m_pTexture;
 
     vector<VertexType> m_heightMap;
     vector<VertexType> m_vertices;

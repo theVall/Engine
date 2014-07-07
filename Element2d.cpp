@@ -5,7 +5,7 @@ Element2d::Element2d()
 {
     m_vertexBuffer = 0;
     m_indexBuffer = 0;
-    m_texture = 0;
+    m_pTexture = 0;
 }
 
 
