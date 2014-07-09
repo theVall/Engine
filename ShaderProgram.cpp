@@ -21,7 +21,7 @@ ShaderProgram::~ShaderProgram()
 }
 
 
-bool ShaderProgram::Initialize(ID3D11Device *device, HWND hwnd, WCHAR* vsFilename, WCHAR* psFilename)
+bool ShaderProgram::Initialize(ID3D11Device *device, HWND hwnd, WCHAR *vsFilename, WCHAR *psFilename)
 {
     bool result;
 
@@ -47,13 +47,13 @@ void ShaderProgram::Shutdown()
 }
 
 
-void ShaderProgram::OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND hwnd, WCHAR* shaderFilename)
+void ShaderProgram::OutputShaderErrorMessage(ID3D10Blob *errorMessage, HWND hwnd, WCHAR *shaderFilename)
 {
-    char* compileErrors;
+    char *compileErrors;
     unsigned long bufferSize, i;
     ofstream fout;
 
-    compileErrors = (char*)(errorMessage->GetBufferPointer());
+    compileErrors = (char *)(errorMessage->GetBufferPointer());
 
     bufferSize = errorMessage->GetBufferSize();
 
@@ -68,9 +68,9 @@ void ShaderProgram::OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND hwnd
     errorMessage = 0;
 
     MessageBox(hwnd,
-        L"Error compiling shader. Check ShaderErrorLog.txt for message.",
-        shaderFilename,
-        MB_OK);
+               L"Error compiling shader. Check ShaderErrorLog.txt for message.",
+               shaderFilename,
+               MB_OK);
 
     return;
 }

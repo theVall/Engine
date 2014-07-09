@@ -19,6 +19,7 @@
 #include "Profiler.h"
 #include "SkyDome.h"
 #include "SkyDomeShader.h"
+#include "Ocean.h"
 
 //
 // Wrapper class for terrain application.
@@ -88,4 +89,5 @@ private:
     Profiler *m_Profiler;
     SkyDome *m_SkyDome;
     SkyDomeShader *m_SkyDomeShader;
+    Ocean *m_pOcean;
 };

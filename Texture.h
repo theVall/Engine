@@ -12,24 +12,26 @@ public:
     Texture(const Texture &);
     ~Texture();
 
-    bool Create2DTextureAndViews(ID3D11Device* device,
+    // Create texture with SRV and RTV
+    bool Create2DTextureAndViews(ID3D11Device *device,
                                  UINT width,
                                  UINT height,
                                  DXGI_FORMAT format);
 
-    bool Texture::LoadFromDDS(ID3D11Device* device, WCHAR* filename);
+    // Load texture from DDS file
+    bool Texture::LoadFromDDS(ID3D11Device *device, WCHAR *filename);
 
     void Shutdown();
 
     // Get the 2D texture.
-    ID3D11Texture2D* GetTex2D();
+    ID3D11Texture2D *GetTex2D();
 
     // Get the shader resource view.
-    ID3D11ShaderResourceView* GetSrv();
+    ID3D11ShaderResourceView *GetSrv();
 
     // Get the render target view.
-    ID3D11RenderTargetView* GetRtv();
-    
+    ID3D11RenderTargetView *GetRtv();
+
 
 private:
     ID3D11Texture2D *m_pTex2D;

@@ -70,7 +70,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
 
     // setup for 16 bit alignment used by XMMATH for SSE instruction support
     // TODO: overload <new> and <delete> operators
-    void* ptr = 0;
+    void *ptr = 0;
     size_t alignment = 16;
     size_t objSize = sizeof(D3D);
 
@@ -116,7 +116,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     if (!m_Util)
     {
         return false;
-    } 
+    }
 
     // Create and initialize the __terrain__ object.
     m_Terrain = new Terrain;
@@ -246,8 +246,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     {
         return false;
     }
-    result = m_SkyDome->Initialize(m_Direct3D->GetDevice(), L"../Engine/res/model/dome.txt", m_Util);
-    if (!result)
+    if (!m_SkyDome->Initialize(m_Direct3D->GetDevice(), L"../Engine/res/model/dome.txt", m_Util))
     {
         MessageBox(hwnd, L"Could not initialize the sky dome object.", L"Error", MB_OK);
         return false;
@@ -259,15 +258,41 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     {
         return false;
     }
-    result = m_SkyDomeShader->Initialize(m_Direct3D->GetDevice(),
-                                         hwnd,
-                                         L"../Engine/shader/SkyDomeVS.hlsl",
-                                         L"../Engine/shader/SkyDomePS.hlsl");
-    if (!result)
+    if (!m_SkyDomeShader->Initialize(m_Direct3D->GetDevice(),
+                                     hwnd,
+                                     L"../Engine/shader/SkyDomeVS.hlsl",
+                                     L"../Engine/shader/SkyDomePS.hlsl"))
     {
         MessageBox(hwnd, L"Could not initialize the sky dome shader object.", L"Error", MB_OK);
         return false;
     }
+
+    // Create and initialize the __Ocean__ object
+    m_pOcean = new Ocean;
+    if (!m_pOcean)
+    {
+        return false;
+    }
+    Ocean::OceanParameter oceanParams = { 512,
+                                          0.8f,
+                                          0.35f,
+                                          Vec2f(0.8f, 0.6f),
+                                          600.0f,
+                                          0.07f,
+                                          1.3f
+                                        };
+    if (!m_pOcean->Initialize(oceanParams,
+                              m_Direct3D->GetDevice(),
+                              m_Direct3D->GetDeviceContext(),
+                              hwnd,
+                              L"../Engine/shader/OceanSimVS.hlsl",
+                              L"../Engine/shader/OceanSimPS.hlsl",
+                              L"../Engine/shader/OceanSimCS.hlsl"))
+    {
+        MessageBox(hwnd, L"Could not initialize the ocean object.", L"Error", MB_OK);
+        return false;
+    }
+    // TODO: Ocean shading
 
     return true;
 }
@@ -275,7 +300,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
 
 void Application::Shutdown()
 {
-     if (m_SkyDomeShader)
+    if (m_SkyDomeShader)
     {
         m_SkyDomeShader->Shutdown();
         delete m_SkyDomeShader;
@@ -364,7 +389,7 @@ void Application::Shutdown()
         //delete m_Camera;
         m_Camera = 0;
     }
-
+    // TODO
     if (m_Direct3D)
     {
         //m_Direct3D->Shutdown();
@@ -400,10 +425,10 @@ bool Application::ProcessFrame()
 
     if (m_lockSurfaceCamera)
     {
-        // Get the current position of the camera.
         Vec3f position = m_Camera->GetPosition();
         // Get the height of the triangle that is directly underneath the camera position.
-        // If there was a triangle under the camera position, set the camera two units above it.
+        // If there was a triangle under the camera position,
+        // set the camera two units above it.
         result = m_QuadTree->GetHeightAtPosition(position.x, position.z, height);
         if (result)
         {
@@ -457,7 +482,7 @@ bool Application::HandleInput(float frameTime)
 
     keyDown = GetAsyncKeyState(VK_UP) || GetAsyncKeyState('W');
     m_Position->MoveForward((keyDown == 1) || (keyDown == 0x8000), sensitivity);
-    
+
     keyDown = GetAsyncKeyState(VK_LEFT) || GetAsyncKeyState('A');
     m_Position->MoveLeft((keyDown == 1) || (keyDown == 0x8000), sensitivity);
 
@@ -468,12 +493,12 @@ bool Application::HandleInput(float frameTime)
     m_Position->MoveRight((keyDown == 1) || (keyDown == 0x8000), sensitivity);
 
     keyDown = GetAsyncKeyState(VK_SPACE);
-    m_Position->MoveUpward(keyDown, sensitivity);
+    m_Position->MoveUpward(keyDown != 0, sensitivity);
 
     keyDown = GetAsyncKeyState('C');
-    m_Position->MoveDownward(keyDown, sensitivity);
+    m_Position->MoveDownward(keyDown != 0, sensitivity);
 
-    // TODO 
+    // TODO
     keyDown = GetAsyncKeyState(VK_F1);
     if (keyDown)
     {
@@ -561,7 +586,7 @@ bool Application::RenderGraphics()
                                                   m_Light->GetDirection(),
                                                   m_Light->GetAmbientColor(),
                                                   m_Light->GetDiffuseColor() );
-    
+
     if (!result)
     {
         return false;
@@ -579,7 +604,7 @@ bool Application::RenderGraphics()
     fpswchar << fps << " FPS";
 
     m_Font->drawText(m_Direct3D->GetDeviceContext(),
-                     (WCHAR*)fpswchar.str().c_str(),
+                     (WCHAR *)fpswchar.str().c_str(),
                      13.0f,
                      20.0f,
                      20.0f,
@@ -589,7 +614,7 @@ bool Application::RenderGraphics()
     std::wostringstream triangleswchar;
     triangleswchar << m_QuadTree->GetDrawCount() << " Tris";
     m_Font->drawText(m_Direct3D->GetDeviceContext(),
-                     (WCHAR*)triangleswchar.str().c_str(),
+                     (WCHAR *)triangleswchar.str().c_str(),
                      13.0f,
                      20.0f,
                      38.0f,
