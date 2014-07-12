@@ -52,7 +52,7 @@ void Main(uint3 threadId : SV_DispatchThreadID)
     // avoid zero div
     if (sqrK > 1e-12f)
     {
-        rsqrK = 1 / sqrt(sqrK);
+        rsqrK = 1.0f / sqrt(sqrK);
     }
 
     kx *= rsqrK;

@@ -1,5 +1,6 @@
 #include "Application.h"
 
+#define DEBUG
 
 Application::Application()
 {
@@ -9,25 +10,25 @@ Application::Application()
 
     m_screenDepth = 1000.0f;
     m_screenNear = 0.1f;
-    m_SpectatorHeight = 10.0f;
+    m_spectatorHeight = 10.0f;
 
-    m_Input = 0;
-    m_Direct3D = 0;
-    m_Camera = 0;
-    m_Terrain = 0;
-    m_ColorShader = 0;
-    m_Timer = 0;
-    m_Position = 0;
-    m_Util = 0;
-    m_TerrainShader = 0;
-    m_Light = 0;
+    m_pInput = 0;
+    m_pDirect3D = 0;
+    m_pCamera = 0;
+    m_pTerrain = 0;
+    m_pColorShader = 0;
+    m_pTimer = 0;
+    m_pPosition = 0;
+    m_pUtil = 0;
+    m_pTerrainShader = 0;
+    m_pLight = 0;
     m_pGroundTex = 0;
-    m_Frustum = 0;
-    m_QuadTree = 0;
-    m_Font = 0;
-    m_Profiler = 0;
-    m_SkyDome = 0;
-    m_SkyDomeShader = 0;
+    m_pFrustum = 0;
+    m_pQuadTree = 0;
+    m_pFont = 0;
+    m_pProfiler = 0;
+    m_pSkyDome = 0;
+    m_pSkyDomeShader = 0;
 }
 
 
@@ -56,12 +57,12 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     m_hwnd = hwnd;
 
     // Create and initialize __input__ object for keyboard and mouse handling.
-    m_Input = new Input;
-    if (!m_Input)
+    m_pInput = new Input;
+    if (!m_pInput)
     {
         return false;
     }
-    result = m_Input->Initialize(m_hwnd, screenWidth, screenHeight);
+    result = m_pInput->Initialize(m_hwnd, screenWidth, screenHeight);
     if (!result)
     {
         MessageBox(m_hwnd, L"Could not initialize the input object.", L"Error", MB_OK);
@@ -76,18 +77,18 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
 
     // Create and initialize _D3D_ window object.
     ptr = _aligned_malloc(objSize, alignment);
-    m_Direct3D = new(ptr)D3D();
-    if (!m_Direct3D)
+    m_pDirect3D = new(ptr)D3D();
+    if (!m_pDirect3D)
     {
         return false;
     }
-    result = m_Direct3D->Initialize(screenWidth,
-                                    screenHeight,
-                                    m_vSync,
-                                    m_hwnd,
-                                    m_fullScreen,
-                                    m_screenDepth,
-                                    m_screenNear);
+    result = m_pDirect3D->Initialize(screenWidth,
+                                     screenHeight,
+                                     m_vSync,
+                                     m_hwnd,
+                                     m_fullScreen,
+                                     m_screenDepth,
+                                     m_screenNear);
     if (!result)
     {
         MessageBox(m_hwnd, L"Could not initialize DirectX 11.", L"Error", MB_OK);
@@ -96,39 +97,39 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
 
     // Create and initialize the __camera__ object.
     ptr = _aligned_malloc(objSize, alignment);
-    m_Camera = new(ptr)Camera();
-    if (!m_Camera)
+    m_pCamera = new(ptr)Camera();
+    if (!m_pCamera)
     {
         return false;
     }
     // Initialize a base view matrix with the camera for 2D user interface rendering.
-    m_Camera->SetPosition(0.0f, 0.0f, -1.0f);
-    m_Camera->Render();
-    m_Camera->GetViewMatrix(baseViewMatrix);
+    m_pCamera->SetPosition(0.0f, 0.0f, -1.0f);
+    m_pCamera->Render();
+    m_pCamera->GetViewMatrix(baseViewMatrix);
     // Set the initial position of the camera.
     cameraX = 50.0f;
     cameraY = 200.0f;
     cameraZ = 50.0f;
-    m_Camera->SetPosition(cameraX, cameraY, cameraZ);
+    m_pCamera->SetPosition(cameraX, cameraY, cameraZ);
 
     // image loading utility object
-    m_Util = new Util;
-    if (!m_Util)
+    m_pUtil = new Util;
+    if (!m_pUtil)
     {
         return false;
     }
 
     // Create and initialize the __terrain__ object.
-    m_Terrain = new Terrain;
-    if (!m_Terrain)
+    m_pTerrain = new Terrain;
+    if (!m_pTerrain)
     {
         return false;
     }
-    result = m_Terrain->Initialize(m_Direct3D->GetDevice(),
-                                   L"../Engine/res/terrain/heightmap01.bmp",
-                                   L"../Engine/res/tex/dirt.dds",
-                                   L"../Engine/res/terrain/colormap01.bmp",
-                                   m_Util);
+    result = m_pTerrain->Initialize(m_pDirect3D->GetDevice(),
+                                    L"../Engine/res/terrain/heightmap01.bmp",
+                                    L"../Engine/res/tex/dirt.dds",
+                                    L"../Engine/res/terrain/colormap01.bmp",
+                                    m_pUtil);
     if (!result)
     {
         MessageBox(m_hwnd, L"Could not initialize the terrain object.", L"Error", MB_OK);
@@ -136,15 +137,15 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     }
 
     // Create and initialize __shader__.
-    m_TerrainShader = new TerrainShader;
-    if (!m_TerrainShader)
+    m_pTerrainShader = new TerrainShader;
+    if (!m_pTerrainShader)
     {
         return false;
     }
-    result = m_TerrainShader->Initialize(m_Direct3D->GetDevice(),
-                                         m_hwnd,
-                                         L"../Engine/shader/TerrainVS.hlsl",
-                                         L"../Engine/shader/TerrainPS.hlsl");
+    result = m_pTerrainShader->Initialize(m_pDirect3D->GetDevice(),
+                                          m_hwnd,
+                                          L"../Engine/shader/TerrainVS.hlsl",
+                                          L"../Engine/shader/TerrainPS.hlsl");
     if (!result)
     {
         MessageBox(m_hwnd, L"Could not initialize the terrain shader object.", L"Error", MB_OK);
@@ -152,48 +153,48 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     }
 
     // Create and initialize __light__.
-    m_Light = new Light;
-    if (!m_Light)
+    m_pLight = new Light;
+    if (!m_pLight)
     {
         return false;
     }
-    m_Light->SetAmbientColor(0.05f, 0.05f, 0.05f, 1.0f);
-    m_Light->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
-    m_Light->SetDirection(-0.5f, -1.0f, 0.0f);
+    m_pLight->SetAmbientColor(0.05f, 0.05f, 0.05f, 1.0f);
+    m_pLight->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
+    m_pLight->SetDirection(-0.5f, -1.0f, 0.0f);
 
     // Create the __frustum__ for culling
-    m_Frustum = new Frustum;
-    if (!m_Frustum)
+    m_pFrustum = new Frustum;
+    if (!m_pFrustum)
     {
         return false;
     }
 
     // Create and initialize the __font wrapper__ object.
-    m_Font = new Font;
-    if (!m_Font)
+    m_pFont = new Font;
+    if (!m_pFont)
     {
         MessageBox(m_hwnd, L"Could not font wrapper object.", L"Error", MB_OK);
         return false;
     }
-    m_Font->Initialize(L"Arial", m_Direct3D->GetDevice());
+    m_pFont->Initialize(L"Arial", m_pDirect3D->GetDevice());
 
-    m_Direct3D->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
-    m_Font->drawText(m_Direct3D->GetDeviceContext(),
-                     L"Loading Terrain Data...\n",
-                     20.0f,
-                     50.0f,
-                     50.0f,
-                     0xff8cc63e,
-                     0);
-    m_Direct3D->EndScene();
+    m_pDirect3D->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
+    m_pFont->drawText(m_pDirect3D->GetDeviceContext(),
+                      L"Loading Terrain Data...\n",
+                      20.0f,
+                      50.0f,
+                      50.0f,
+                      0xff8cc63e,
+                      0);
+    m_pDirect3D->EndScene();
 
     // Create and initialize the __quad tree__.
-    m_QuadTree = new QuadTree;
-    if (!m_QuadTree)
+    m_pQuadTree = new QuadTree;
+    if (!m_pQuadTree)
     {
         return false;
     }
-    result = m_QuadTree->Initialize(m_Terrain, m_Direct3D->GetDevice());
+    result = m_pQuadTree->Initialize(m_pTerrain, m_pDirect3D->GetDevice());
     if (!result)
     {
         MessageBox(hwnd, L"Could not initialize the quad tree object.", L"Error", MB_OK);
@@ -206,15 +207,15 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     {
         return false;
     }
-    result = m_pGroundTex->LoadFromDDS(m_Direct3D->GetDevice(), L"../Engine/res/tex/dirt.dds");
+    result = m_pGroundTex->LoadFromDDS(m_pDirect3D->GetDevice(), L"../Engine/res/tex/dirt.dds");
 
     // Create and initialize the __timer__ object.
-    m_Timer = new Timer;
-    if (!m_Timer)
+    m_pTimer = new Timer;
+    if (!m_pTimer)
     {
         return false;
     }
-    result = m_Timer->Initialize();
+    result = m_pTimer->Initialize();
     if (!result)
     {
         MessageBox(m_hwnd, L"Could not initialize the timer object.", L"Error", MB_OK);
@@ -222,46 +223,46 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     }
 
     // Create and initialize the __position__ object.
-    m_Position = new Position;
-    if (!m_Position)
+    m_pPosition = new Position;
+    if (!m_pPosition)
     {
         MessageBox(m_hwnd, L"Could not initialize the position object.", L"Error", MB_OK);
         return false;
     }
     // Set the initial position of the viewer to the same as the initial camera position.
-    m_Position->SetPosition(cameraX, cameraY, cameraZ);
+    m_pPosition->SetPosition(cameraX, cameraY, cameraZ);
 
     // Create and initialize the __profiler__ object.
-    m_Profiler = new Profiler;
-    if (!m_Profiler)
+    m_pProfiler = new Profiler;
+    if (!m_pProfiler)
     {
         MessageBox(m_hwnd, L"Could not initialize the profiling object.", L"Error", MB_OK);
         return false;
     }
-    m_Profiler->Initialize();
+    m_pProfiler->Initialize();
 
     // Create and initialize the __sky dome__ object.
-    m_SkyDome = new SkyDome;
-    if (!m_SkyDome)
+    m_pSkyDome = new SkyDome;
+    if (!m_pSkyDome)
     {
         return false;
     }
-    if (!m_SkyDome->Initialize(m_Direct3D->GetDevice(), L"../Engine/res/model/dome.txt", m_Util))
+    if (!m_pSkyDome->Initialize(m_pDirect3D->GetDevice(), L"../Engine/res/model/dome.txt", m_pUtil))
     {
         MessageBox(hwnd, L"Could not initialize the sky dome object.", L"Error", MB_OK);
         return false;
     }
 
     // Create and initialize the __sky dome shader__ object.
-    m_SkyDomeShader = new SkyDomeShader;
-    if (!m_SkyDomeShader)
+    m_pSkyDomeShader = new SkyDomeShader;
+    if (!m_pSkyDomeShader)
     {
         return false;
     }
-    if (!m_SkyDomeShader->Initialize(m_Direct3D->GetDevice(),
-                                     hwnd,
-                                     L"../Engine/shader/SkyDomeVS.hlsl",
-                                     L"../Engine/shader/SkyDomePS.hlsl"))
+    if (!m_pSkyDomeShader->Initialize(m_pDirect3D->GetDevice(),
+                                      hwnd,
+                                      L"../Engine/shader/SkyDomeVS.hlsl",
+                                      L"../Engine/shader/SkyDomePS.hlsl"))
     {
         MessageBox(hwnd, L"Could not initialize the sky dome shader object.", L"Error", MB_OK);
         return false;
@@ -282,8 +283,8 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
                                           1.3f
                                         };
     if (!m_pOcean->Initialize(oceanParams,
-                              m_Direct3D->GetDevice(),
-                              m_Direct3D->GetDeviceContext(),
+                              m_pDirect3D->GetDevice(),
+                              m_pDirect3D->GetDeviceContext(),
                               hwnd,
                               L"../Engine/shader/OceanSimVS.hlsl",
                               L"../Engine/shader/OceanSimPS.hlsl",
@@ -300,43 +301,43 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
 
 void Application::Shutdown()
 {
-    if (m_SkyDomeShader)
+    if (m_pSkyDomeShader)
     {
-        m_SkyDomeShader->Shutdown();
-        delete m_SkyDomeShader;
-        m_SkyDomeShader = 0;
+        m_pSkyDomeShader->Shutdown();
+        delete m_pSkyDomeShader;
+        m_pSkyDomeShader = 0;
     }
 
-    if (m_SkyDome)
+    if (m_pSkyDome)
     {
-        m_SkyDome->Shutdown();
-        delete m_SkyDome;
-        m_SkyDome = 0;
+        m_pSkyDome->Shutdown();
+        delete m_pSkyDome;
+        m_pSkyDome = 0;
     }
 
-    if (m_Font)
+    if (m_pFont)
     {
-        m_Font->Shutdown();
-        delete m_Font;
-        m_Font = 0;
+        m_pFont->Shutdown();
+        delete m_pFont;
+        m_pFont = 0;
     }
 
-    if (m_Profiler)
+    if (m_pProfiler)
     {
-        delete m_Profiler;
-        m_Profiler = 0;
+        delete m_pProfiler;
+        m_pProfiler = 0;
     }
 
-    if (m_Position)
+    if (m_pPosition)
     {
-        delete m_Position;
-        m_Position = 0;
+        delete m_pPosition;
+        m_pPosition = 0;
     }
 
-    if (m_Timer)
+    if (m_pTimer)
     {
-        delete m_Timer;
-        m_Timer = 0;
+        delete m_pTimer;
+        m_pTimer = 0;
     }
 
     if (m_pGroundTex)
@@ -345,63 +346,63 @@ void Application::Shutdown()
         m_pGroundTex = 0;
     }
 
-    if (m_QuadTree)
+    if (m_pQuadTree)
     {
-        m_QuadTree->Shutdown();
-        delete m_QuadTree;
-        m_QuadTree = 0;
+        m_pQuadTree->Shutdown();
+        delete m_pQuadTree;
+        m_pQuadTree = 0;
     }
 
-    if (m_Frustum)
+    if (m_pFrustum)
     {
-        delete m_Frustum;
-        m_Frustum = 0;
+        delete m_pFrustum;
+        m_pFrustum = 0;
     }
 
-    if (m_Light)
+    if (m_pLight)
     {
-        delete m_Light;
-        m_Light = 0;
+        delete m_pLight;
+        m_pLight = 0;
     }
 
-    if (m_TerrainShader)
+    if (m_pTerrainShader)
     {
-        m_TerrainShader->Shutdown();
-        delete m_TerrainShader;
-        m_TerrainShader = 0;
+        m_pTerrainShader->Shutdown();
+        delete m_pTerrainShader;
+        m_pTerrainShader = 0;
     }
 
-    if (m_Terrain)
+    if (m_pTerrain)
     {
-        m_Terrain->Shutdown();
-        delete m_Terrain;
-        m_Terrain = 0;
+        m_pTerrain->Shutdown();
+        delete m_pTerrain;
+        m_pTerrain = 0;
     }
 
-    if (m_Util)
+    if (m_pUtil)
     {
-        delete m_Util;
-        m_Util = 0;
+        delete m_pUtil;
+        m_pUtil = 0;
     }
 
-    if (m_Camera)
+    if (m_pCamera)
     {
-        //delete m_Camera;
-        m_Camera = 0;
+        //delete m_pCamera;
+        m_pCamera = 0;
     }
     // TODO
-    if (m_Direct3D)
+    if (m_pDirect3D)
     {
-        //m_Direct3D->Shutdown();
-        //delete m_Direct3D;
-        m_Direct3D = 0;
+        //m_pDirect3D->Shutdown();
+        //delete m_pDirect3D;
+        m_pDirect3D = 0;
     }
 
-    if (m_Input)
+    if (m_pInput)
     {
-        m_Input->Shutdown();
-        delete m_Input;
-        m_Input = 0;
+        m_pInput->Shutdown();
+        delete m_pInput;
+        m_pInput = 0;
     }
 
     return;
@@ -413,11 +414,11 @@ bool Application::ProcessFrame()
     float height;
 
     // Update the system stats.
-    m_Timer->Frame();
-    m_Profiler->Frame();
+    m_pTimer->Frame();
+    m_pProfiler->Frame();
 
     // Do the frame input processing.
-    result = HandleInput(m_Timer->GetTime());
+    result = HandleInput(m_pTimer->GetTime());
     if (!result)
     {
         return false;
@@ -425,14 +426,14 @@ bool Application::ProcessFrame()
 
     if (m_lockSurfaceCamera)
     {
-        Vec3f position = m_Camera->GetPosition();
+        Vec3f position = m_pCamera->GetPosition();
         // Get the height of the triangle that is directly underneath the camera position.
         // If there was a triangle under the camera position,
         // set the camera two units above it.
-        result = m_QuadTree->GetHeightAtPosition(position.x, position.z, height);
+        result = m_pQuadTree->GetHeightAtPosition(position.x, position.z, height);
         if (result)
         {
-            m_Camera->SetPosition(position.x, height + m_SpectatorHeight, position.z);
+            m_pCamera->SetPosition(position.x, height + m_spectatorHeight, position.z);
         }
     }
 
@@ -466,7 +467,7 @@ bool Application::HandleInput(float frameTime)
     float sensitivity = 0.1f;
 
     // Set the frame time for calculating the updated position.
-    m_Position->SetFrameTime(frameTime);
+    m_pPosition->SetFrameTime(frameTime);
 
     // Handle the __keyboard__ input.
     keyDown = GetAsyncKeyState(VK_ESCAPE);
@@ -481,52 +482,52 @@ bool Application::HandleInput(float frameTime)
     }
 
     keyDown = GetAsyncKeyState(VK_UP) || GetAsyncKeyState('W');
-    m_Position->MoveForward((keyDown == 1) || (keyDown == 0x8000), sensitivity);
+    m_pPosition->MoveForward((keyDown == 1) || (keyDown == 0x8000), sensitivity);
 
     keyDown = GetAsyncKeyState(VK_LEFT) || GetAsyncKeyState('A');
-    m_Position->MoveLeft((keyDown == 1) || (keyDown == 0x8000), sensitivity);
+    m_pPosition->MoveLeft((keyDown == 1) || (keyDown == 0x8000), sensitivity);
 
     keyDown = GetAsyncKeyState(VK_DOWN) || GetAsyncKeyState('S');
-    m_Position->MoveBackward((keyDown == 1) || (keyDown == 0x8000), sensitivity);
+    m_pPosition->MoveBackward((keyDown == 1) || (keyDown == 0x8000), sensitivity);
 
     keyDown = GetAsyncKeyState(VK_RIGHT) || GetAsyncKeyState('D');
-    m_Position->MoveRight((keyDown == 1) || (keyDown == 0x8000), sensitivity);
+    m_pPosition->MoveRight((keyDown == 1) || (keyDown == 0x8000), sensitivity);
 
     keyDown = GetAsyncKeyState(VK_SPACE);
-    m_Position->MoveUpward(keyDown != 0, sensitivity);
+    m_pPosition->MoveUpward(keyDown != 0, sensitivity);
 
     keyDown = GetAsyncKeyState('C');
-    m_Position->MoveDownward(keyDown != 0, sensitivity);
+    m_pPosition->MoveDownward(keyDown != 0, sensitivity);
 
     // TODO
     keyDown = GetAsyncKeyState(VK_F1);
     if (keyDown)
     {
-        m_Direct3D->ToggleWireframe();
+        m_pDirect3D->ToggleWireframe();
     }
 
     // Yaw and pitch with __mouse__ movement.
     if (moveCamOnDrag)
     {
         // not working properly yet
-        if (DragDetect(m_hwnd, m_Input->GetMousePoint()))
+        if (DragDetect(m_hwnd, m_pInput->GetMousePoint()))
         {
-            m_Input->GetMouseLocationChage(mouseX, mouseY);
-            m_Position->TurnOnMouseMovement(mouseX, mouseY, 0.2f);
+            m_pInput->GetMouseLocationChage(mouseX, mouseY);
+            m_pPosition->TurnOnMouseMovement(mouseX, mouseY, 0.2f);
         }
     }
     else
     {
-        m_Input->GetMouseLocationChage(mouseX, mouseY);
-        m_Position->TurnOnMouseMovement(mouseX, mouseY, 0.2f);
+        m_pInput->GetMouseLocationChage(mouseX, mouseY);
+        m_pPosition->TurnOnMouseMovement(mouseX, mouseY, 0.2f);
     }
     // Get the view point position/rotation.
-    m_Position->GetPosition(posX, posY, posZ);
-    m_Position->GetRotation(rotX, rotY, rotZ);
+    m_pPosition->GetPosition(posX, posY, posZ);
+    m_pPosition->GetRotation(rotX, rotY, rotZ);
 
     // Set the position of the camera.
-    m_Camera->SetPosition(posX, posY, posZ);
-    m_Camera->SetRotation(rotX, rotY, rotZ);
+    m_pCamera->SetPosition(posX, posY, posZ);
+    m_pCamera->SetRotation(rotX, rotY, rotZ);
 
     return true;
 }
@@ -543,49 +544,49 @@ bool Application::RenderGraphics()
     bool result;
 
     // Clear the scene.
-    m_Direct3D->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
+    m_pDirect3D->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
 
     // Generate the view matrix based on the camera's position.
-    m_Camera->Render();
+    m_pCamera->Render();
 
-    m_Direct3D->GetWorldMatrix(worldMatrix);
-    m_Camera->GetViewMatrix(viewMatrix);
-    m_Direct3D->GetProjectionMatrix(projectionMatrix);
-    m_Direct3D->GetOrthoMatrix(orthoMatrix);
+    m_pDirect3D->GetWorldMatrix(worldMatrix);
+    m_pCamera->GetViewMatrix(viewMatrix);
+    m_pDirect3D->GetProjectionMatrix(projectionMatrix);
+    m_pDirect3D->GetOrthoMatrix(orthoMatrix);
 
     // Sky dome calculations
-    cameraPosition = m_Camera->GetPosition();
+    cameraPosition = m_pCamera->GetPosition();
     worldMatrix = XMMatrixTranslation(cameraPosition.x, cameraPosition.y, cameraPosition.z);
 
-    m_Direct3D->TurnOffCulling();
-    m_Direct3D->TurnZBufferOff();
+    m_pDirect3D->TurnOffCulling();
+    m_pDirect3D->TurnZBufferOff();
 
     // Render the sky dome.
-    m_SkyDome->Render(m_Direct3D->GetDeviceContext());
-    m_SkyDomeShader->Render(m_Direct3D->GetDeviceContext(),
-                            m_SkyDome->GetIndexCount(),
-                            worldMatrix,
-                            viewMatrix,
-                            projectionMatrix,
-                            m_SkyDome->GetApexColor(),
-                            m_SkyDome->GetCenterColor());
+    m_pSkyDome->Render(m_pDirect3D->GetDeviceContext());
+    m_pSkyDomeShader->Render(m_pDirect3D->GetDeviceContext(),
+                             m_pSkyDome->GetIndexCount(),
+                             worldMatrix,
+                             viewMatrix,
+                             projectionMatrix,
+                             m_pSkyDome->GetApexColor(),
+                             m_pSkyDome->GetCenterColor());
 
-    m_Direct3D->TurnOnCulling();
-    m_Direct3D->TurnZBufferOn();
+    m_pDirect3D->TurnOnCulling();
+    m_pDirect3D->TurnZBufferOn();
 
     // Reset the world matrix.
-    m_Direct3D->GetWorldMatrix(worldMatrix);
+    m_pDirect3D->GetWorldMatrix(worldMatrix);
 
-    m_Frustum->ConstructFrustum(projectionMatrix, viewMatrix, m_screenDepth);
+    m_pFrustum->ConstructFrustum(projectionMatrix, viewMatrix, m_screenDepth);
 
-    result = m_TerrainShader->SetShaderParameters(m_Direct3D->GetDeviceContext(),
-                                                  worldMatrix,
-                                                  viewMatrix,
-                                                  projectionMatrix,
-                                                  m_pGroundTex->GetSrv(),
-                                                  m_Light->GetDirection(),
-                                                  m_Light->GetAmbientColor(),
-                                                  m_Light->GetDiffuseColor() );
+    result = m_pTerrainShader->SetShaderParameters(m_pDirect3D->GetDeviceContext(),
+                                                   worldMatrix,
+                                                   viewMatrix,
+                                                   projectionMatrix,
+                                                   m_pGroundTex->GetSrv(),
+                                                   m_pLight->GetDirection(),
+                                                   m_pLight->GetAmbientColor(),
+                                                   m_pLight->GetDiffuseColor() );
 
     if (!result)
     {
@@ -593,38 +594,38 @@ bool Application::RenderGraphics()
     }
 
     // Render the terrain using the quad tree and terrain shader.
-    m_QuadTree->Render(m_Frustum, m_Direct3D->GetDeviceContext(), m_TerrainShader);
+    m_pQuadTree->Render(m_pFrustum, m_pDirect3D->GetDeviceContext(), m_pTerrainShader);
 
 
 // profiling/debug output
 #ifdef DEBUG
-    int fps = m_Profiler->GetFps();
+    int fps = m_pProfiler->GetFps();
 
     std::wostringstream fpswchar;
     fpswchar << fps << " FPS";
 
-    m_Font->drawText(m_Direct3D->GetDeviceContext(),
-                     (WCHAR *)fpswchar.str().c_str(),
-                     13.0f,
-                     20.0f,
-                     20.0f,
-                     0xff8cc63e,
-                     0);
+    m_pFont->drawText(m_pDirect3D->GetDeviceContext(),
+                      (WCHAR *)fpswchar.str().c_str(),
+                      13.0f,
+                      20.0f,
+                      20.0f,
+                      0xff8cc63e,
+                      0);
 
     std::wostringstream triangleswchar;
-    triangleswchar << m_QuadTree->GetDrawCount() << " Tris";
-    m_Font->drawText(m_Direct3D->GetDeviceContext(),
-                     (WCHAR *)triangleswchar.str().c_str(),
-                     13.0f,
-                     20.0f,
-                     38.0f,
-                     0xff8cc63e,
-                     0);
+    triangleswchar << m_pQuadTree->GetDrawCount() << " Tris";
+    m_pFont->drawText(m_pDirect3D->GetDeviceContext(),
+                      (WCHAR *)triangleswchar.str().c_str(),
+                      13.0f,
+                      20.0f,
+                      38.0f,
+                      0xff8cc63e,
+                      0);
 #endif
 
 
     // Present the rendered scene to the screen.
-    m_Direct3D->EndScene();
+    m_pDirect3D->EndScene();
 
     return true;
 }

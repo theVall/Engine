@@ -51,7 +51,7 @@ void Position::SetRotation(float x, float y, float z)
 }
 
 
-void Position::GetPosition(float& x, float& y, float& z)
+void Position::GetPosition(float &x, float &y, float &z)
 {
     x = m_positionX;
     y = m_positionY;
@@ -60,7 +60,7 @@ void Position::GetPosition(float& x, float& y, float& z)
 }
 
 
-void Position::GetRotation(float& x, float& y, float& z)
+void Position::GetRotation(float &x, float &y, float &z)
 {
     x = m_rotationX;
     y = m_rotationY;
@@ -199,7 +199,7 @@ void Position::MoveUpward(bool keydown, float sensitivity)
 
 void Position::MoveDownward(bool keydown, float sensitivity)
 {
-    // Update the downward speed movement based on the frame time 
+    // Update the downward speed movement based on the frame time
     // and whether the user is holding the key down or not.
     if (keydown)
     {

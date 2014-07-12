@@ -138,6 +138,9 @@
     <ClInclude Include="Vec2f.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
+    <ClInclude Include="FFT.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="System.cpp">
@@ -225,6 +228,9 @@
       <Filter>Source Files\ShaderProgram</Filter>
     </ClCompile>
     <ClCompile Include="Ocean.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FFT.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

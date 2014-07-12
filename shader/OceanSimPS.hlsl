@@ -22,7 +22,7 @@ cbuffer PerFrameConstBuf : register(b1)
 struct PixelInputType
 {
 float4 position		: SV_POSITION;
-float2 tex  		: tex0;
+float2 tex  		: TEXCOORD0;
 };
 
 // Data buffers for Dx, Dy and Dz
@@ -69,8 +69,8 @@ float4 NormalsFoldingsPS(PixelInputType input) : SV_Target
     float2 Dy = (displaceFront.xy - displaceBack.xy) * choppyScale; // *gridLength;
     float jacobian = (1.0f + Dx.x) * (1.0f + Dy.y) - Dx.y * Dy.x;
 
-    float fold = max(1.0f - jacobian, 0);
+    float fold = max(1.0f - jacobian, 0.0f);
 
     // Output
-    return float4(gradient, 0, fold);
+    return float4(gradient, 0.0f, fold);
 }

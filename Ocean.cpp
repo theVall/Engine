@@ -199,6 +199,8 @@ bool Ocean::Initialize(OceanParameter &params,
 
     // Create FFT
     // TODO
+
+    return true;
 }
 
 bool Ocean::InitializeShader(ID3D11Device *device,

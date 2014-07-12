@@ -67,27 +67,26 @@ private:
 
     float m_screenDepth;
     float m_screenNear;
-    float m_SpectatorHeight;
+    float m_spectatorHeight;
 
     HWND m_hwnd;
 
-    D3D *m_D3D;
-    Camera *m_Camera;
-    Input *m_Input;
-    D3D *m_Direct3D;
-    Terrain *m_Terrain;
-    ColorShader *m_ColorShader;
-    Position *m_Position;
-    Timer *m_Timer;
-    Util *m_Util;
-    TerrainShader *m_TerrainShader;
-    Light *m_Light;
+    Camera *m_pCamera;
+    Input *m_pInput;
+    D3D *m_pDirect3D;
+    Terrain *m_pTerrain;
+    ColorShader *m_pColorShader;
+    Position *m_pPosition;
+    Timer *m_pTimer;
+    Util *m_pUtil;
+    TerrainShader *m_pTerrainShader;
+    Light *m_pLight;
     Texture *m_pGroundTex;
-    Frustum *m_Frustum;
-    QuadTree *m_QuadTree;
-    Font *m_Font;
-    Profiler *m_Profiler;
-    SkyDome *m_SkyDome;
-    SkyDomeShader *m_SkyDomeShader;
+    Frustum *m_pFrustum;
+    QuadTree *m_pQuadTree;
+    Font *m_pFont;
+    Profiler *m_pProfiler;
+    SkyDome *m_pSkyDome;
+    SkyDomeShader *m_pSkyDomeShader;
     Ocean *m_pOcean;
 };
