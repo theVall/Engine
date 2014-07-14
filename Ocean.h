@@ -9,6 +9,7 @@
 #include <d3dcompiler.h>
 
 #include "Texture.h"
+#include "FFT.h"
 #include "Math.h"
 #include "Vec2f.h"
 
@@ -109,6 +110,10 @@ private:
 private:
     // Ocean parameter setup
     OceanParameter m_params;
+
+    // FFT
+    //
+    FFT *m_pFft;
 
     // textures
     //

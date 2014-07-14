@@ -418,8 +418,7 @@ bool Application::ProcessFrame()
     m_pProfiler->Frame();
 
     // Do the frame input processing.
-    result = HandleInput(m_pTimer->GetTime());
-    if (!result)
+    if (!HandleInput(m_pTimer->GetTime()))
     {
         return false;
     }
@@ -437,9 +436,11 @@ bool Application::ProcessFrame()
         }
     }
 
+    // Ocean displacement
+    m_pOcean->UpdateDisplacement(m_pTimer->GetTime(), m_pDirect3D->GetDeviceContext());
+
     // Render the graphics.
-    result = RenderGraphics();
-    if (!result)
+    if (!RenderGraphics())
     {
         return false;
     }

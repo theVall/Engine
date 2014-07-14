@@ -17,8 +17,8 @@ Ocean::~Ocean()
 
 
 bool Ocean::Initialize(OceanParameter &params,
-                       ID3D11Device *device,
-                       ID3D11DeviceContext *context,
+                       ID3D11Device *pDevice,
+                       ID3D11DeviceContext *pContext,
                        HWND hwnd,
                        WCHAR *vsFilename,
                        WCHAR *psFilename,
@@ -43,7 +43,7 @@ bool Ocean::Initialize(OceanParameter &params,
     memset(zeroData, 0, fftBufferSize * float2size);
 
     // Initial height buffer H(0)
-    if (!InitializeBuffer(device,
+    if (!InitializeBuffer(pDevice,
                           heightData,
                           heightMapSize * float2size,
                           float2size,
@@ -54,7 +54,7 @@ bool Ocean::Initialize(OceanParameter &params,
         return false;
     }
     // Omega buffer (angular frequencies)
-    if (!InitializeBuffer(device,
+    if (!InitializeBuffer(pDevice,
                           omegaData,
                           heightMapSize * sizeof(float),
                           sizeof(float),
@@ -68,7 +68,7 @@ bool Ocean::Initialize(OceanParameter &params,
     // Initialize frequency domain buffers with zeros
     //
     // H(t), height
-    if(!InitializeBuffer(device,
+    if(!InitializeBuffer(pDevice,
                          zeroData,
                          fftBufferSize * float2size,
                          float2size,
@@ -79,7 +79,7 @@ bool Ocean::Initialize(OceanParameter &params,
         return false;
     }
     // Dx(t), choppy field
-    if (!InitializeBuffer(device, zeroData,
+    if (!InitializeBuffer(pDevice, zeroData,
                           fftBufferSize * float2size,
                           float2size,
                           &m_pBufferFloat2Dxt,
@@ -89,7 +89,7 @@ bool Ocean::Initialize(OceanParameter &params,
         return false;
     }
     // Dy(t), choppy field
-    if (!InitializeBuffer(device,
+    if (!InitializeBuffer(pDevice,
                           zeroData,
                           fftBufferSize * float2size,
                           float2size,
@@ -103,7 +103,7 @@ bool Ocean::Initialize(OceanParameter &params,
     // Initialize space domain buffers with zeros
     //
     // Dz(t), height
-    if (!InitializeBuffer(device,
+    if (!InitializeBuffer(pDevice,
                           zeroData,
                           fftBufferSize * float2size,
                           float2size,
@@ -114,7 +114,7 @@ bool Ocean::Initialize(OceanParameter &params,
         return false;
     }
     // Dx(t), choppy
-    if (!InitializeBuffer(device,
+    if (!InitializeBuffer(pDevice,
                           zeroData,
                           fftBufferSize * float2size,
                           float2size,
@@ -125,7 +125,7 @@ bool Ocean::Initialize(OceanParameter &params,
         return false;
     }
     // Dy(t), choppy
-    if (!InitializeBuffer(device,
+    if (!InitializeBuffer(pDevice,
                           zeroData,
                           fftBufferSize * float2size,
                           float2size,
@@ -149,7 +149,7 @@ bool Ocean::Initialize(OceanParameter &params,
     {
         return false;
     }
-    if (!m_pDisplacementTex->Create2DTextureAndViews(device,
+    if (!m_pDisplacementTex->Create2DTextureAndViews(pDevice,
                                                      heightMapDim,
                                                      heightMapDim,
                                                      DXGI_FORMAT_R32G32B32A32_FLOAT))
@@ -162,7 +162,7 @@ bool Ocean::Initialize(OceanParameter &params,
     {
         return false;
     }
-    if (!m_pGradientTex->Create2DTextureAndViews(device,
+    if (!m_pGradientTex->Create2DTextureAndViews(pDevice,
                                                  heightMapDim,
                                                  heightMapDim,
                                                  DXGI_FORMAT_R16G16B16A16_FLOAT))
@@ -184,7 +184,7 @@ bool Ocean::Initialize(OceanParameter &params,
     samplerDesc.BorderColor[3] = 1.0f;
     samplerDesc.MinLOD = -FLT_MAX;
     samplerDesc.MaxLOD = FLT_MAX;
-    hres = device->CreateSamplerState(&samplerDesc, &m_pPointSampler);
+    hres = pDevice->CreateSamplerState(&samplerDesc, &m_pPointSampler);
     if (FAILED(hres))
     {
         return false;
@@ -192,19 +192,24 @@ bool Ocean::Initialize(OceanParameter &params,
 
     // Shaders
     //
-    if (!InitializeShader(device, context, hwnd, vsFilename, psFilename, csFilename))
+    if (!InitializeShader(pDevice, pContext, hwnd, vsFilename, psFilename, csFilename))
     {
         return false;
     }
 
     // Create FFT
-    // TODO
+    //
+    m_pFft = new FFT();
+    if (!m_pFft->Initialize512(pDevice, hwnd, L"../Engine/shader/FftCS.hlsl", 3))
+    {
+        return false;
+    }
 
     return true;
 }
 
-bool Ocean::InitializeShader(ID3D11Device *device,
-                             ID3D11DeviceContext *context,
+bool Ocean::InitializeShader(ID3D11Device *pDevice,
+                             ID3D11DeviceContext *pContext,
                              HWND hwnd,
                              WCHAR *vsFilename,
                              WCHAR *psFilename,
@@ -311,34 +316,34 @@ bool Ocean::InitializeShader(ID3D11Device *device,
 
     // Create shader
     //
-    hres = device->CreateVertexShader(pVertexShaderBuffer->GetBufferPointer(),
-                                      pVertexShaderBuffer->GetBufferSize(),
-                                      NULL,
-                                      &m_pQuadVS);
-    if (FAILED(hres))
-    {
-        return false;
-    }
-    hres = device->CreatePixelShader(pDisplacementPSBuffer->GetBufferPointer(),
-                                     pDisplacementPSBuffer->GetBufferSize(),
-                                     NULL,
-                                     &m_pUpdateDisplacementPS);
-    if (FAILED(hres))
-    {
-        return false;
-    }
-    hres = device->CreatePixelShader(pGradientPSBuffer->GetBufferPointer(),
-                                     pGradientPSBuffer->GetBufferSize(),
-                                     NULL,
-                                     &m_pNormalsFoldingsPS);
-    if (FAILED(hres))
-    {
-        return false;
-    }
-    hres = device->CreateComputeShader(pComputeShaderBuffer->GetBufferPointer(),
-                                       pComputeShaderBuffer->GetBufferSize(),
+    hres = pDevice->CreateVertexShader(pVertexShaderBuffer->GetBufferPointer(),
+                                       pVertexShaderBuffer->GetBufferSize(),
                                        NULL,
-                                       &m_pSimulationCS);
+                                       &m_pQuadVS);
+    if (FAILED(hres))
+    {
+        return false;
+    }
+    hres = pDevice->CreatePixelShader(pDisplacementPSBuffer->GetBufferPointer(),
+                                      pDisplacementPSBuffer->GetBufferSize(),
+                                      NULL,
+                                      &m_pUpdateDisplacementPS);
+    if (FAILED(hres))
+    {
+        return false;
+    }
+    hres = pDevice->CreatePixelShader(pGradientPSBuffer->GetBufferPointer(),
+                                      pGradientPSBuffer->GetBufferSize(),
+                                      NULL,
+                                      &m_pNormalsFoldingsPS);
+    if (FAILED(hres))
+    {
+        return false;
+    }
+    hres = pDevice->CreateComputeShader(pComputeShaderBuffer->GetBufferPointer(),
+                                        pComputeShaderBuffer->GetBufferSize(),
+                                        NULL,
+                                        &m_pSimulationCS);
     if (FAILED(hres))
     {
         return false;
@@ -358,11 +363,11 @@ bool Ocean::InitializeShader(ID3D11Device *device,
         },
     };
 
-    hres = device->CreateInputLayout(vertLayoutDesc,
-                                     1,
-                                     pVertexShaderBuffer->GetBufferPointer(),
-                                     pVertexShaderBuffer->GetBufferSize(),
-                                     &m_pVSLayout);
+    hres = pDevice->CreateInputLayout(vertLayoutDesc,
+                                      1,
+                                      pVertexShaderBuffer->GetBufferPointer(),
+                                      pVertexShaderBuffer->GetBufferSize(),
+                                      &m_pVSLayout);
     if (FAILED(hres))
     {
         return false;
@@ -388,7 +393,7 @@ bool Ocean::InitializeShader(ID3D11Device *device,
     initData.SysMemPitch = 0;
     initData.SysMemSlicePitch = 0;
 
-    hres = device->CreateBuffer(&vbDesc, &initData, &m_pQuadVB);
+    hres = pDevice->CreateBuffer(&vbDesc, &initData, &m_pQuadVB);
     if (FAILED(hres))
     {
         return false;
@@ -410,15 +415,15 @@ bool Ocean::InitializeShader(ID3D11Device *device,
     cbDesc.CPUAccessFlags = 0;
     cbDesc.MiscFlags = 0;
     cbDesc.ByteWidth = CalcPad16(sizeof(constants));
-    hres = device->CreateBuffer(&cbDesc, &initConstBuf, &m_pImmutableConstBuf);
+    hres = pDevice->CreateBuffer(&cbDesc, &initConstBuf, &m_pImmutableConstBuf);
     if (FAILED(hres))
     {
         return false;
     }
 
     ID3D11Buffer *constBuffers[1] = { m_pImmutableConstBuf };
-    context->CSSetConstantBuffers(0, 1, constBuffers);
-    context->PSSetConstantBuffers(0, 1, constBuffers);
+    pContext->CSSetConstantBuffers(0, 1, constBuffers);
+    pContext->PSSetConstantBuffers(0, 1, constBuffers);
 
     // Constants that change on a per frame basis
     cbDesc.Usage = D3D11_USAGE_DYNAMIC;
@@ -426,7 +431,7 @@ bool Ocean::InitializeShader(ID3D11Device *device,
     cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     cbDesc.MiscFlags = 0;
     cbDesc.ByteWidth = CalcPad16(sizeof(float) * 3);
-    device->CreateBuffer(&cbDesc, NULL, &m_pPerFrameConstBuf);
+    pDevice->CreateBuffer(&cbDesc, NULL, &m_pPerFrameConstBuf);
     if (FAILED(hres))
     {
         return false;
@@ -449,7 +454,7 @@ bool Ocean::InitializeShader(ID3D11Device *device,
 }
 
 
-bool Ocean::InitializeBuffer(ID3D11Device *device,
+bool Ocean::InitializeBuffer(ID3D11Device *pDevice,
                              void *data,
                              UINT byteWidth,
                              UINT byteStride,
@@ -470,7 +475,7 @@ bool Ocean::InitializeBuffer(ID3D11Device *device,
 
     D3D11_SUBRESOURCE_DATA initData = { data, 0, 0 };
 
-    result = device->CreateBuffer(&bufDesc, data != NULL ? &initData : NULL, ppBuffer);
+    result = pDevice->CreateBuffer(&bufDesc, data != NULL ? &initData : NULL, ppBuffer);
     if (FAILED(result))
     {
         return false;
@@ -484,7 +489,7 @@ bool Ocean::InitializeBuffer(ID3D11Device *device,
     uavDesc.Buffer.NumElements = byteWidth / byteStride;
     uavDesc.Buffer.Flags = 0;
 
-    result = device->CreateUnorderedAccessView(*ppBuffer, &uavDesc, ppUAV);
+    result = pDevice->CreateUnorderedAccessView(*ppBuffer, &uavDesc, ppUAV);
     if (FAILED(result))
     {
         return false;
@@ -497,7 +502,7 @@ bool Ocean::InitializeBuffer(ID3D11Device *device,
     srvDesc.Buffer.FirstElement = 0;
     srvDesc.Buffer.NumElements = byteWidth / byteStride;
 
-    result = device->CreateShaderResourceView(*ppBuffer, &srvDesc, ppSRV);
+    result = pDevice->CreateShaderResourceView(*ppBuffer, &srvDesc, ppSRV);
     if (FAILED(result))
     {
         return false;
@@ -620,7 +625,11 @@ void Ocean::Shutdown()
     ShutdownBuffers();
 
     // FFT
-    // TODO
+    if (m_pFft)
+    {
+        m_pFft->Shutdown512();
+        m_pFft = 0;
+    }
 }
 
 
@@ -668,22 +677,22 @@ void Ocean::ShutdownBuffers()
 }
 
 
-bool Ocean::UpdateDisplacement(float time, ID3D11DeviceContext *context)
+bool Ocean::UpdateDisplacement(float time, ID3D11DeviceContext *pContext)
 {
     HRESULT hres;
 
     // Calculate data for the time step: H(0) -> H(t), D(x, t), D(y, t)
-    context->CSSetShader(m_pSimulationCS, NULL, 0);
+    pContext->CSSetShader(m_pSimulationCS, NULL, 0);
 
     // Set H(t) and Omega buffers
     ID3D11ShaderResourceView *cs0Srvs[2] = { m_pSrvH0, m_pSrvOmega };
-    context->CSSetShaderResources(0, 2, cs0Srvs);
+    pContext->CSSetShaderResources(0, 2, cs0Srvs);
     ID3D11UnorderedAccessView *cs0Uavs[1] = { m_pUavHt };
-    context->CSSetUnorderedAccessViews(0, 1, cs0Uavs, (UINT *)(&cs0Uavs[0]));
+    pContext->CSSetUnorderedAccessViews(0, 1, cs0Uavs, (UINT *)(&cs0Uavs[0]));
 
     // Update per frame constants
     D3D11_MAPPED_SUBRESOURCE mappedRes;
-    hres = context->Map(m_pPerFrameConstBuf, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedRes);
+    hres = pContext->Map(m_pPerFrameConstBuf, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedRes);
     if (FAILED(hres))
     {
         return false;
@@ -692,33 +701,36 @@ bool Ocean::UpdateDisplacement(float time, ID3D11DeviceContext *context)
     perFrameData[0] = time * m_params.timeScale;
     perFrameData[1] = m_params.choppyScale;
     perFrameData[2] = (float)m_params.displacementMapDim; // div by patch length?
-    context->Unmap(m_pPerFrameConstBuf, 0);
+    pContext->Unmap(m_pPerFrameConstBuf, 0);
     ID3D11Buffer *csCbs[2] = { m_pImmutableConstBuf, m_pPerFrameConstBuf };
-    context->CSSetConstantBuffers(0, 2, csCbs);
+    pContext->CSSetConstantBuffers(0, 2, csCbs);
 
     // Run the computation
     UINT groupCountX = (m_params.displacementMapDim + BLOCK_SIZE_X - 1) / BLOCK_SIZE_X;
     UINT groupCountY = (m_params.displacementMapDim + BLOCK_SIZE_Y - 1) / BLOCK_SIZE_Y;
-    context->Dispatch(groupCountX, groupCountY, 1);
+    pContext->Dispatch(groupCountX, groupCountY, 1);
     // Unbind resources
     cs0Uavs[0] = NULL;
-    context->CSSetUnorderedAccessViews(0, 1, cs0Uavs, (UINT *)(&cs0Uavs[0]));
+    pContext->CSSetUnorderedAccessViews(0, 1, cs0Uavs, (UINT *)(&cs0Uavs[0]));
     cs0Srvs[0] = NULL;
     cs0Srvs[1] = NULL;
-    context->CSSetShaderResources(0, 2, cs0Srvs);
+    pContext->CSSetShaderResources(0, 2, cs0Srvs);
 
-    // Run FFT
-    // TODO
+    // Run FFTs
+    //
+    m_pFft->Calculate512(m_pUavDx, m_pSrvDx, m_pSrvHt);
+    m_pFft->Calculate512(m_pUavDy, m_pSrvDy, m_pSrvHt);
+    m_pFft->Calculate512(m_pUavDz, m_pSrvDz, m_pSrvHt);
 
     // Positions
     //
     // Push old RTV onto 'stack'
     ID3D11RenderTargetView *pOldRtv;
     ID3D11DepthStencilView *pOldDepthStencil;
-    context->OMGetRenderTargets(1, &pOldRtv, &pOldDepthStencil);
+    pContext->OMGetRenderTargets(1, &pOldRtv, &pOldDepthStencil);
     D3D11_VIEWPORT oldViewPort;
     UINT numViewports = 1;
-    context->RSGetViewports(&numViewports, &oldViewPort);
+    pContext->RSGetViewports(&numViewports, &oldViewPort);
 
     D3D11_VIEWPORT newViewport = { 0,
                                    0,
@@ -727,63 +739,63 @@ bool Ocean::UpdateDisplacement(float time, ID3D11DeviceContext *context)
                                    0.0f,
                                    1.0f
                                  };
-    context->RSSetViewports(1, &newViewport);
+    pContext->RSSetViewports(1, &newViewport);
 
     // Set render target view
     ID3D11RenderTargetView *pRtvs[1] = { m_pDisplacementTex->GetRtv() };
-    context->OMSetRenderTargets(1, pRtvs, NULL);
+    pContext->OMSetRenderTargets(1, pRtvs, NULL);
 
     // Vertex and pixel shaders
-    context->VSSetShader(m_pQuadVS, NULL, 0);
-    context->PSSetShader(m_pUpdateDisplacementPS, NULL, 0);
+    pContext->VSSetShader(m_pQuadVS, NULL, 0);
+    pContext->PSSetShader(m_pUpdateDisplacementPS, NULL, 0);
 
     // Constant buffers
     ID3D11Buffer *pPSconstBuf[2] = { m_pImmutableConstBuf, m_pPerFrameConstBuf };
-    context->PSSetConstantBuffers(0, 2, pPSconstBuf);
+    pContext->PSSetConstantBuffers(0, 2, pPSconstBuf);
 
     // Buffer resources (space domain Dx, Dy, Dz)
     ID3D11ShaderResourceView *pPSsrvs[3] = { m_pSrvDx, m_pSrvDy, m_pSrvDz };
-    context->PSSetShaderResources(0, 3, pPSsrvs);
+    pContext->PSSetShaderResources(0, 3, pPSsrvs);
 
     ID3D11Buffer *pVertexBuffers[1] = { m_pQuadVB };
     UINT strides[1] = { sizeof(XMFLOAT4) };
     UINT offsets[1] = { 0 };
-    context->IASetVertexBuffers(0, 1, &pVertexBuffers[0], &strides[0], &offsets[0]);
-    context->IASetInputLayout(m_pVSLayout);
-    context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    pContext->IASetVertexBuffers(0, 1, &pVertexBuffers[0], &strides[0], &offsets[0]);
+    pContext->IASetInputLayout(m_pVSLayout);
+    pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
-    context->Draw(4, 0);
+    pContext->Draw(4, 0);
 
     // Unbind pixel SRV
     pPSsrvs[0] = NULL;
-    context->PSSetShaderResources(0, 1, pPSsrvs);
+    pContext->PSSetShaderResources(0, 1, pPSsrvs);
 
     // Calculate normals and folding
     //
     // Set render target view
     pRtvs[0] = m_pGradientTex->GetRtv();
-    context->OMSetRenderTargets(1, pRtvs, NULL);
+    pContext->OMSetRenderTargets(1, pRtvs, NULL);
 
     // Vertex and pixel shaders
-    context->VSSetShader(m_pQuadVS, NULL, 0);
-    context->PSSetShader(m_pNormalsFoldingsPS, NULL, 0);
+    pContext->VSSetShader(m_pQuadVS, NULL, 0);
+    pContext->PSSetShader(m_pNormalsFoldingsPS, NULL, 0);
 
     // Texture resource from displacement map and point sampler
     pPSsrvs[0] = m_pDisplacementTex->GetSrv();
-    context->PSSetShaderResources(0, 1, pPSsrvs);
+    pContext->PSSetShaderResources(0, 1, pPSsrvs);
     ID3D11SamplerState *pSamplers[1] = { m_pPointSampler };
-    context->PSSetSamplers(0, 1, &pSamplers[0]);
+    pContext->PSSetSamplers(0, 1, &pSamplers[0]);
 
-    context->Draw(4, 0);
+    pContext->Draw(4, 0);
 
     // Unbind pixel SRV
     pPSsrvs[0] = NULL;
-    context->PSSetShaderResources(0, 1, pPSsrvs);
+    pContext->PSSetShaderResources(0, 1, pPSsrvs);
 
     // Pop old RTV from 'stack'
-    context->RSSetViewports(1, &oldViewPort);
-    context->OMSetRenderTargets(1, &pOldRtv, pOldDepthStencil);
-    context->GenerateMips(m_pGradientTex->GetSrv());
+    pContext->RSSetViewports(1, &oldViewPort);
+    pContext->OMSetRenderTargets(1, &pOldRtv, pOldDepthStencil);
+    //pContext->GenerateMips(m_pGradientTex->GetSrv());
 
     // cleanup
     pOldRtv->Release();

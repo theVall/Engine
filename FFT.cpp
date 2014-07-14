@@ -29,14 +29,14 @@ bool FFT::Initialize512(ID3D11Device *pDevice, HWND hwnd, WCHAR *csFilename, UIN
 
     ID3D10Blob *errorMessage = 0;
     ID3D10Blob *pComputeShaderBuffer = 0;
-    ID3D10Blob *pComputeShaderBuffer2 = 0;
+    //ID3D10Blob *pComputeShaderBuffer2 = 0;
 
     // Compile compute shaders
     //
     hres = D3DCompileFromFile(csFilename,
                               NULL,
                               NULL,
-                              "Radix8",
+                              "Main",
                               "cs_5_0",
                               NULL,
                               NULL,
@@ -64,37 +64,37 @@ bool FFT::Initialize512(ID3D11Device *pDevice, HWND hwnd, WCHAR *csFilename, UIN
         return false;
     }
 
-    // Compile the shader for the last step
-    hres = D3DCompileFromFile(csFilename,
-                              NULL,
-                              NULL,
-                              "Radix8_1",
-                              "cs_5_0",
-                              NULL,
-                              NULL,
-                              &pComputeShaderBuffer2,
-                              &errorMessage);
-    if (FAILED(hres))
-    {
-        if (errorMessage)
-        {
-            OutputShaderErrorMessage(errorMessage, hwnd, csFilename);
-        }
-        else
-        {
-            MessageBox(hwnd, csFilename, L"Missing Shader File", MB_OK);
-        }
-        return false;
-    }
+    //// Compile the shader for the last step
+    //hres = D3DCompileFromFile(csFilename,
+    //                          NULL,
+    //                          NULL,
+    //                          "Radix8_1",
+    //                          "cs_5_0",
+    //                          NULL,
+    //                          NULL,
+    //                          &pComputeShaderBuffer2,
+    //                          &errorMessage);
+    //if (FAILED(hres))
+    //{
+    //    if (errorMessage)
+    //    {
+    //        OutputShaderErrorMessage(errorMessage, hwnd, csFilename);
+    //    }
+    //    else
+    //    {
+    //        MessageBox(hwnd, csFilename, L"Missing Shader File", MB_OK);
+    //    }
+    //    return false;
+    //}
 
-    hres = pDevice->CreateComputeShader(pComputeShaderBuffer2->GetBufferPointer(),
-                                        pComputeShaderBuffer2->GetBufferSize(),
-                                        NULL,
-                                        &m_pComputeShader2);
-    if (FAILED(hres))
-    {
-        return false;
-    }
+    //hres = pDevice->CreateComputeShader(pComputeShaderBuffer2->GetBufferPointer(),
+    //                                    pComputeShaderBuffer2->GetBufferSize(),
+    //                                    NULL,
+    //                                    &m_pComputeShader2);
+    //if (FAILED(hres))
+    //{
+    //    return false;
+    //}
 
     // Constant buffers
     //
@@ -223,6 +223,8 @@ bool FFT::Initialize512(ID3D11Device *pDevice, HWND hwnd, WCHAR *csFilename, UIN
 
     // cleanup
     pComputeShaderBuffer->Release();
+
+    return true;
 }
 
 
@@ -256,13 +258,14 @@ bool FFT::Shutdown512()
 
     for (int i = 0; i < 6; ++i)
     {
-        if (m_pConstBuffer[i]);
+        if (m_pConstBuffer[i])
         {
             m_pConstBuffer[i]->Release();
             m_pConstBuffer[i] = 0;
         }
-
     }
+
+    return true;
 }
 
 
@@ -324,14 +327,14 @@ void FFT::Radix8(ID3D11UnorderedAccessView *pUavDst,
     ID3D11UnorderedAccessView *pUavs[1] = { pUavDst };
     pContext->CSSetUnorderedAccessViews(0, 1, pUavs, (UINT *)(&pUavs[0]));
 
-    if (inStride > 1)
-    {
-        pContext->CSSetShader(m_pComputeShader, NULL, 0);
-    }
-    else
-    {
-        pContext->CSSetShader(m_pComputeShader2, NULL, 0);
-    }
+    //if (inStride > 1)
+    //{
+    pContext->CSSetShader(m_pComputeShader, NULL, 0);
+    //}
+    //else
+    //{
+    //    pContext->CSSetShader(m_pComputeShader2, NULL, 0);
+    //}
 
     // Execute
     pContext->Dispatch(grid, 1, 1);
