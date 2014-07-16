@@ -2,33 +2,29 @@
 
 #include "ShaderProgram.h"
 
-class TerrainShader :
+class OceanShader :
     public ShaderProgram
 {
-private:
-    struct LightBufferType
-    {
-        XMFLOAT4 ambientColor;
-        XMFLOAT4 diffuseColor;
-        XMFLOAT3 lightDirection;
-        float padding;
-    };
 
 public:
-    TerrainShader();
-    TerrainShader(const TerrainShader &);
-    ~TerrainShader();
+    OceanShader();
+    OceanShader(const OceanShader &);
+    ~OceanShader();
 
     bool SetShaderParameters(ID3D11DeviceContext *pContext,
                              const XMMATRIX &worldMatrix,
                              const XMMATRIX &viewMatrix,
                              const XMMATRIX &projectionMatrix,
-                             ID3D11ShaderResourceView *pSrv,
+                             ID3D11ShaderResourceView *texture,
                              const XMFLOAT3 &lightDirection,
                              const XMFLOAT4 &ambientColor,
                              const XMFLOAT4 &diffuseColor);
 
-    void RenderShader(ID3D11DeviceContext *pContext, int indexCount);
+    bool Render(ID3D11DeviceContext *pContext,
+                const XMMATRIX &worldMatrix,
+                const XMMATRIX &viewMatrix,
+                const XMMATRIX &projectionMatrix);
+
 
 private:
     bool InitializeShader(ID3D11Device *pDevice,
@@ -37,8 +33,14 @@ private:
                           WCHAR *psFilename);
     void ShutdownShader();
 
+    bool SetShaderParameters(ID3D11DeviceContext *peContext,
+                             const XMMATRIX &worldMatrix,
+                             const XMMATRIX &viewMatrix,
+                             const XMMATRIX &projectionMatrix);
+
+    void RenderShader(ID3D11DeviceContext *pContext, int indexCount);
+
 private:
-    ID3D11Buffer *m_pCameraBuffer;
-    ID3D11Buffer *m_pLightBuffer;
+
 };
 

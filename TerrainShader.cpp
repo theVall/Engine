@@ -4,8 +4,8 @@
 TerrainShader::TerrainShader()
 {
     m_sampleState = 0;
-    m_lightBuffer = 0;
-    m_cameraBuffer = 0;
+    m_pLightBuffer = 0;
+    m_pCameraBuffer = 0;
 }
 
 
@@ -19,10 +19,10 @@ TerrainShader::~TerrainShader()
 }
 
 
-bool TerrainShader::InitializeShader(ID3D11Device* device,
+bool TerrainShader::InitializeShader(ID3D11Device *device,
                                      HWND hwnd,
-                                     WCHAR* vsFilename,
-                                     WCHAR* psFilename)
+                                     WCHAR *vsFilename,
+                                     WCHAR *psFilename)
 {
     HRESULT result;
     ID3D10Blob *errorMessage;
@@ -208,7 +208,7 @@ bool TerrainShader::InitializeShader(ID3D11Device* device,
     lightBufferDesc.MiscFlags = 0;
     lightBufferDesc.StructureByteStride = 0;
     // Create the constant buffer pointer so we can access the vertex shader constant buffer from within this class.
-    result = device->CreateBuffer(&lightBufferDesc, NULL, &m_lightBuffer);
+    result = device->CreateBuffer(&lightBufferDesc, NULL, &m_pLightBuffer);
     if (FAILED(result))
     {
         return false;
@@ -220,16 +220,16 @@ bool TerrainShader::InitializeShader(ID3D11Device* device,
 
 void TerrainShader::ShutdownShader()
 {
-    if (m_lightBuffer)
+    if (m_pLightBuffer)
     {
-        m_lightBuffer->Release();
-        m_lightBuffer = 0;
+        m_pLightBuffer->Release();
+        m_pLightBuffer = 0;
     }
 
-    if (m_cameraBuffer)
+    if (m_pCameraBuffer)
     {
-        m_cameraBuffer->Release();
-        m_cameraBuffer = 0;
+        m_pCameraBuffer->Release();
+        m_pCameraBuffer = 0;
     }
 
     if (m_matrixBuffer)
@@ -266,19 +266,19 @@ void TerrainShader::ShutdownShader()
 }
 
 
-bool TerrainShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
+bool TerrainShader::SetShaderParameters(ID3D11DeviceContext *deviceContext,
                                         const XMMATRIX &worldMatrix,
                                         const XMMATRIX &viewMatrix,
                                         const XMMATRIX &projectionMatrix,
-                                        ID3D11ShaderResourceView* texture,
+                                        ID3D11ShaderResourceView *texture,
                                         const XMFLOAT3 &lightDirection,
                                         const XMFLOAT4 &ambientColor,
                                         const XMFLOAT4 &diffuseColor)
 {
     HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedResource;
-    MatrixBufferType* transformDataBuffer;
-    LightBufferType* lightDataBuffer;
+    MatrixBufferType *transformDataBuffer;
+    LightBufferType *lightDataBuffer;
     unsigned int bufferNumber;
 
     // Lock the constant buffer so it can be written to.
@@ -292,7 +292,7 @@ bool TerrainShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
         return false;
     }
 
-    transformDataBuffer = (MatrixBufferType*)mappedResource.pData;
+    transformDataBuffer = (MatrixBufferType *)mappedResource.pData;
 
     // Transpose the matrices for shader and copy them into the constant buffer.
     transformDataBuffer->world = XMMatrixTranspose(worldMatrix);
@@ -306,12 +306,12 @@ bool TerrainShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
 
     // Position of the camera constant buffer in the vertex shader.
     bufferNumber = 1;
-    deviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_cameraBuffer);
+    deviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_pCameraBuffer);
 
     deviceContext->PSSetShaderResources(0, 1, &texture);
 
     // Lock the light constant buffer so it can be written to.
-    result = deviceContext->Map(m_lightBuffer,
+    result = deviceContext->Map(m_pLightBuffer,
                                 0,
                                 D3D11_MAP_WRITE_DISCARD,
                                 0,
@@ -322,7 +322,7 @@ bool TerrainShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
     }
 
     // Get a pointer to the data in the constant buffer.
-    lightDataBuffer = (LightBufferType*)mappedResource.pData;
+    lightDataBuffer = (LightBufferType *)mappedResource.pData;
 
     lightDataBuffer->ambientColor = ambientColor;
     lightDataBuffer->diffuseColor = diffuseColor;
@@ -330,15 +330,15 @@ bool TerrainShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
     lightDataBuffer->padding = 0.0f;
 
     // Unlock the constant buffer.
-    deviceContext->Unmap(m_lightBuffer, 0);
+    deviceContext->Unmap(m_pLightBuffer, 0);
     bufferNumber = 0;
-    deviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_lightBuffer);
+    deviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_pLightBuffer);
 
     return true;
 }
 
 
-void TerrainShader::RenderShader(ID3D11DeviceContext* deviceContext, int indexCount)
+void TerrainShader::RenderShader(ID3D11DeviceContext *deviceContext, int indexCount)
 {
     deviceContext->IASetInputLayout(m_layout);
 

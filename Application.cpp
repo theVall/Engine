@@ -410,7 +410,6 @@ void Application::Shutdown()
 
 bool Application::ProcessFrame()
 {
-    bool result = false;
     float height;
 
     // Update the system stats.
@@ -429,8 +428,7 @@ bool Application::ProcessFrame()
         // Get the height of the triangle that is directly underneath the camera position.
         // If there was a triangle under the camera position,
         // set the camera two units above it.
-        result = m_pQuadTree->GetHeightAtPosition(position.x, position.z, height);
-        if (result)
+        if (m_pQuadTree->GetHeightAtPosition(position.x, position.z, height))
         {
             m_pCamera->SetPosition(position.x, height + m_spectatorHeight, position.z);
         }
@@ -445,7 +443,7 @@ bool Application::ProcessFrame()
         return false;
     }
 
-    return result;
+    return true;
 }
 
 
@@ -542,8 +540,6 @@ bool Application::RenderGraphics()
     XMMATRIX orthoMatrix;
     XMFLOAT3 cameraPosition;
 
-    bool result;
-
     // Clear the scene.
     m_pDirect3D->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -580,19 +576,23 @@ bool Application::RenderGraphics()
 
     m_pFrustum->ConstructFrustum(projectionMatrix, viewMatrix, m_screenDepth);
 
-    result = m_pTerrainShader->SetShaderParameters(m_pDirect3D->GetDeviceContext(),
-                                                   worldMatrix,
-                                                   viewMatrix,
-                                                   projectionMatrix,
-                                                   m_pGroundTex->GetSrv(),
-                                                   m_pLight->GetDirection(),
-                                                   m_pLight->GetAmbientColor(),
-                                                   m_pLight->GetDiffuseColor() );
-
-    if (!result)
+    if (!m_pTerrainShader->SetShaderParameters(m_pDirect3D->GetDeviceContext(),
+                                               worldMatrix,
+                                               viewMatrix,
+                                               projectionMatrix,
+                                               m_pGroundTex->GetSrv(),
+                                               m_pLight->GetDirection(),
+                                               m_pLight->GetAmbientColor(),
+                                               m_pLight->GetDiffuseColor() ))
     {
         return false;
     }
+
+    // Render the ocean geometry
+    //m_pOceanShader->Render(m_pDirect3D->GetDeviceContext(),
+    //                       worldMatrix,
+    //                       viewMatrix,
+    //                       projectionMatrix);
 
     // Render the terrain using the quad tree and terrain shader.
     m_pQuadTree->Render(m_pFrustum, m_pDirect3D->GetDeviceContext(), m_pTerrainShader);

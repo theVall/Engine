@@ -141,6 +141,9 @@
     <ClInclude Include="FFT.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="OceanShader.h">
+      <Filter>Header Files\ShaderProgram</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="System.cpp">
@@ -232,6 +235,9 @@
     </ClCompile>
     <ClCompile Include="FFT.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OceanShader.cpp">
+      <Filter>Source Files\ShaderProgram</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

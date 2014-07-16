@@ -104,6 +104,7 @@
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="Ocean.h" />
+    <ClInclude Include="OceanShader.h" />
     <ClInclude Include="ShaderProgram.h" />
     <ClInclude Include="SkyDomeShader.h" />
     <ClInclude Include="Util.h" />
@@ -142,6 +143,7 @@
     <ClCompile Include="Frustum.cpp" />
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="Ocean.cpp" />
+    <ClCompile Include="OceanShader.cpp" />
     <ClCompile Include="ShaderProgram.cpp" />
     <ClCompile Include="SkyDomeShader.cpp" />
     <ClCompile Include="Util.cpp" />

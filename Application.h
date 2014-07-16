@@ -20,6 +20,7 @@
 #include "SkyDome.h"
 #include "SkyDomeShader.h"
 #include "Ocean.h"
+#include "OceanShader.h"
 
 //
 // Wrapper class for terrain application.
@@ -89,4 +90,5 @@ private:
     SkyDome *m_pSkyDome;
     SkyDomeShader *m_pSkyDomeShader;
     Ocean *m_pOcean;
+    OceanShader *m_pOceanShader;
 };

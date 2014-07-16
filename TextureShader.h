@@ -10,23 +10,26 @@ public:
     TextureShader(const TextureShader &);
     ~TextureShader();
 
-    bool Render(ID3D11DeviceContext *,
-                int,
-                const XMMATRIX &,
-                const XMMATRIX &,
-                const XMMATRIX &,
-                ID3D11ShaderResourceView *);
+    bool Render(ID3D11DeviceContext *deviceContext,
+                int indexCount,
+                const XMMATRIX &worldMatrix,
+                const XMMATRIX &viewMatrix,
+                const XMMATRIX &projectionMatrix,
+                ID3D11ShaderResourceView *texture);
 
 private:
-    bool InitializeShader(ID3D11Device*, HWND, WCHAR*, WCHAR*);
+    bool InitializeShader(ID3D11Device *pDevice,
+                          HWND hwnd,
+                          WCHAR *vsFilename,
+                          WCHAR *psFilename);
     void ShutdownShader();
-    bool SetShaderParameters(ID3D11DeviceContext*,
-                             const XMMATRIX &,
-                             const XMMATRIX &,
-                             const XMMATRIX &,
-                             ID3D11ShaderResourceView *);
+    bool SetShaderParameters(ID3D11DeviceContext *pContext,
+                             const XMMATRIX &worldMatrix,
+                             const XMMATRIX &viewMatrix,
+                             const XMMATRIX &projectionMatrix,
+                             ID3D11ShaderResourceView *pSrv);
 
-    void RenderShader(ID3D11DeviceContext*, int);
+    void RenderShader(ID3D11DeviceContext *pContext, int indexCount);
 };
 
 

@@ -37,7 +37,7 @@ public:
 
     int GetVertexCount();
     vector<VertexType> Terrain::GetVertices();
-    ID3D11ShaderResourceView* GetTexture();
+    ID3D11ShaderResourceView *GetTexture();
     float GetScalingFactor();
     // Set the scaling for the terrain height.
     void SetScalingFactor(float);
@@ -62,9 +62,7 @@ private:
 private:
     int m_terrainWidth;
     int m_terrainHeight;
-
     float m_scaling;
-
     int m_vertexCount;
 
     Util *m_Util;

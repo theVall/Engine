@@ -17,7 +17,7 @@ SkyDomeShader::~SkyDomeShader()
 }
 
 
-bool SkyDomeShader::Render(ID3D11DeviceContext* deviceContext,
+bool SkyDomeShader::Render(ID3D11DeviceContext *deviceContext,
                            int indexCount,
                            const XMMATRIX &worldMatrix,
                            const XMMATRIX &viewMatrix,
@@ -25,16 +25,13 @@ bool SkyDomeShader::Render(ID3D11DeviceContext* deviceContext,
                            const XMFLOAT4 &apexColor,
                            const XMFLOAT4 &centerColor)
 {
-    bool result;
-
-    // Set the shader parameters that it will use for rendering.
-    result = SetShaderParameters(deviceContext,
-                                 worldMatrix,
-                                 viewMatrix,
-                                 projectionMatrix,
-                                 apexColor,
-                                 centerColor);
-    if (!result)
+    // Set the shader parameters that will be used for rendering.
+    if (!SetShaderParameters(deviceContext,
+                             worldMatrix,
+                             viewMatrix,
+                             projectionMatrix,
+                             apexColor,
+                             centerColor))
     {
         return false;
     }
@@ -47,16 +44,16 @@ bool SkyDomeShader::Render(ID3D11DeviceContext* deviceContext,
 
 
 // TODO -> move (parts) to base class
-bool SkyDomeShader::InitializeShader(ID3D11Device* device,
+bool SkyDomeShader::InitializeShader(ID3D11Device *device,
                                      HWND hwnd,
-                                     WCHAR* vsFilename,
-                                     WCHAR* psFilename)
+                                     WCHAR *vsFilename,
+                                     WCHAR *psFilename)
 {
     HRESULT result;
 
-    ID3D10Blob* errorMessage = 0;
-    ID3D10Blob* vertexShaderBuffer = 0;
-    ID3D10Blob* pixelShaderBuffer = 0;
+    ID3D10Blob *errorMessage = 0;
+    ID3D10Blob *vertexShaderBuffer = 0;
+    ID3D10Blob *pixelShaderBuffer = 0;
 
     D3D11_INPUT_ELEMENT_DESC polygonLayout[1];
 
@@ -240,7 +237,7 @@ void SkyDomeShader::ShutdownShader()
 }
 
 
-bool SkyDomeShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
+bool SkyDomeShader::SetShaderParameters(ID3D11DeviceContext *deviceContext,
                                         const XMMATRIX &worldMatrix,
                                         const XMMATRIX &viewMatrix,
                                         const XMMATRIX &projectionMatrix,
@@ -249,8 +246,8 @@ bool SkyDomeShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
 {
     HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedResource;
-    MatrixBufferType* pTransformDataBuffer;
-    GradientBufferType* pGradientDataBuffer;
+    MatrixBufferType *pTransformDataBuffer;
+    GradientBufferType *pGradientDataBuffer;
     unsigned int bufferNumber;
 
     // Lock the constant buffer so it can be written to.
@@ -265,7 +262,7 @@ bool SkyDomeShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
     }
 
     // Get a pointer to the data in the constant buffer.
-    pTransformDataBuffer = (MatrixBufferType*)mappedResource.pData;
+    pTransformDataBuffer = (MatrixBufferType *)mappedResource.pData;
 
     // Copy the matrices into the constant buffer.
     pTransformDataBuffer->world = XMMatrixTranspose(worldMatrix);
@@ -289,7 +286,7 @@ bool SkyDomeShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
     }
 
     // Get a pointer to the data in the constant buffer.
-    pGradientDataBuffer = (GradientBufferType*)mappedResource.pData;
+    pGradientDataBuffer = (GradientBufferType *)mappedResource.pData;
 
     // Copy the gradient color variables into the constant buffer.
     pGradientDataBuffer->apexColor = apexColor;
@@ -304,7 +301,7 @@ bool SkyDomeShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
 }
 
 
-void SkyDomeShader::RenderShader(ID3D11DeviceContext* deviceContext, int indexCount)
+void SkyDomeShader::RenderShader(ID3D11DeviceContext *deviceContext, int indexCount)
 {
     // Set the vertex input layout.
     deviceContext->IASetInputLayout(m_layout);
