@@ -11,12 +11,14 @@ cbuffer MatrixBuffer
 struct VertexInputType
 {
 float4 position : POSITION;
+float2 texCoord : TEXCOORD;
 };
 
 struct PixelInputType
 {
 float4 position : SV_POSITION;
 float4 domePosition : TEXCOORD0;
+float2 tex : TEXCOORD1;
 };
 
 
@@ -32,6 +34,7 @@ PixelInputType Main(VertexInputType input)
 
     // Send the unmodified position through to the pixel shader.
     output.domePosition = input.position;
+    output.tex = input.texCoord;
 
     return output;
 }

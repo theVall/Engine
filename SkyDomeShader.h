@@ -24,7 +24,8 @@ public:
                 const XMMATRIX &viewMatrix,
                 const XMMATRIX &projectionMatrix,
                 const XMFLOAT4 &apexColor,
-                const XMFLOAT4 &centerColor);
+                const XMFLOAT4 &centerColor,
+                ID3D11ShaderResourceView *skyDomeTex);
 
 private:
     bool InitializeShader(ID3D11Device *pDevice,
@@ -38,11 +39,13 @@ private:
                              const XMMATRIX &viewMatrix,
                              const XMMATRIX &projectionMatrix,
                              const XMFLOAT4 &apexColor,
-                             const XMFLOAT4 &centerColor);
+                             const XMFLOAT4 &centerColor,
+                             ID3D11ShaderResourceView *skyDomeTex);
 
     void RenderShader(ID3D11DeviceContext *pContext, int indexCount);
 
 private:
     ID3D11Buffer *m_gradientBuffer;
+    ID3D11SamplerState *m_pSkySampler;
 };
 

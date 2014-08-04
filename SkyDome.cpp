@@ -18,7 +18,7 @@ SkyDome::~SkyDome()
 }
 
 
-bool SkyDome::Initialize(ID3D11Device* device, WCHAR* modelFilename, Util* util)
+bool SkyDome::Initialize(ID3D11Device *device, WCHAR *modelFilename, Util *util)
 {
     bool result;
 
@@ -57,7 +57,7 @@ void SkyDome::Shutdown()
 }
 
 
-void SkyDome::Render(ID3D11DeviceContext* deviceContext)
+void SkyDome::Render(ID3D11DeviceContext *deviceContext)
 {
     RenderBuffers(deviceContext);
 
@@ -91,10 +91,10 @@ void SkyDome::ReleaseSkyDomeModel()
 }
 
 
-bool SkyDome::InitializeBuffers(ID3D11Device* device)
+bool SkyDome::InitializeBuffers(ID3D11Device *device)
 {
-    VertexCombined* vertices;
-    unsigned long* indices;
+    VertexCombined *vertices;
+    unsigned long *indices;
 
     D3D11_BUFFER_DESC vertexBufferDesc;
     D3D11_BUFFER_DESC indexBufferDesc;
@@ -125,6 +125,9 @@ bool SkyDome::InitializeBuffers(ID3D11Device* device)
                                         m_model[i].position.y,
                                         m_model[i].position.z,
                                         1.0);
+        // tex coordinates
+        vertices[i].tex = XMFLOAT2(m_model[i].texture.x,
+                                   m_model[i].texture.y);
         indices[i] = i;
     }
 
@@ -197,7 +200,7 @@ void SkyDome::ShutdownBuffers()
 }
 
 
-void SkyDome::RenderBuffers(ID3D11DeviceContext* deviceContext)
+void SkyDome::RenderBuffers(ID3D11DeviceContext *deviceContext)
 {
     unsigned int stride;
     unsigned int offset;

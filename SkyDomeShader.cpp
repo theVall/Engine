@@ -23,14 +23,16 @@ bool SkyDomeShader::Render(ID3D11DeviceContext *deviceContext,
                            const XMMATRIX &viewMatrix,
                            const XMMATRIX &projectionMatrix,
                            const XMFLOAT4 &apexColor,
-                           const XMFLOAT4 &centerColor)
+                           const XMFLOAT4 &centerColor,
+                           ID3D11ShaderResourceView *skyDomeTex)
 {
     if (!SetShaderParameters(deviceContext,
                              worldMatrix,
                              viewMatrix,
                              projectionMatrix,
                              apexColor,
-                             centerColor))
+                             centerColor,
+                             skyDomeTex))
     {
         return false;
     }
@@ -53,8 +55,6 @@ bool SkyDomeShader::InitializeShader(ID3D11Device *device,
     ID3D10Blob *vertexShaderBuffer = 0;
     ID3D10Blob *pixelShaderBuffer = 0;
 
-    D3D11_INPUT_ELEMENT_DESC polygonLayout[1];
-
     unsigned int numElements;
 
     D3D11_BUFFER_DESC matrixBufferDesc;
@@ -73,7 +73,7 @@ bool SkyDomeShader::InitializeShader(ID3D11Device *device,
 
     if (FAILED(result))
     {
-        // If the shader failed to compile it should have writen something to the error message.
+        // If the shader failed to compile it should have written something to the error message.
         if (errorMessage)
         {
             OutputShaderErrorMessage(errorMessage, hwnd, vsFilename);
@@ -136,6 +136,8 @@ bool SkyDomeShader::InitializeShader(ID3D11Device *device,
     }
 
     // Create the vertex input layout description.
+    D3D11_INPUT_ELEMENT_DESC polygonLayout[2];
+
     polygonLayout[0].SemanticName = "POSITION";
     polygonLayout[0].SemanticIndex = 0;
     polygonLayout[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
@@ -143,6 +145,14 @@ bool SkyDomeShader::InitializeShader(ID3D11Device *device,
     polygonLayout[0].AlignedByteOffset = 0;
     polygonLayout[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
     polygonLayout[0].InstanceDataStepRate = 0;
+
+    polygonLayout[1].SemanticName = "TEXCOORD";
+    polygonLayout[1].SemanticIndex = 0;
+    polygonLayout[1].Format = DXGI_FORMAT_R32G32_FLOAT;
+    polygonLayout[1].InputSlot = 0;
+    polygonLayout[1].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
+    polygonLayout[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+    polygonLayout[1].InstanceDataStepRate = 0;
 
     // Get a count of the elements in the layout.
     numElements = sizeof(polygonLayout) / sizeof(polygonLayout[0]);
@@ -158,7 +168,7 @@ bool SkyDomeShader::InitializeShader(ID3D11Device *device,
         return false;
     }
 
-    // Release the vertex shader buffer and pixel shader buffer since they are no longer needed.
+// Release the vertex shader buffer and pixel shader buffer since they are no longer needed.
     vertexShaderBuffer->Release();
     vertexShaderBuffer = 0;
 
@@ -180,7 +190,7 @@ bool SkyDomeShader::InitializeShader(ID3D11Device *device,
         return false;
     }
 
-    // Setup the description of the gradient constant buffer that is in the pixel shader.
+// Setup the description of the gradient constant buffer that is in the pixel shader.
     gradientBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
     gradientBufferDesc.ByteWidth = sizeof(GradientBufferType);
     gradientBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -195,12 +205,40 @@ bool SkyDomeShader::InitializeShader(ID3D11Device *device,
         return false;
     }
 
+// Samplers
+    D3D11_SAMPLER_DESC samplerDesc;
+    samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+    samplerDesc.MipLODBias = 0.0f;
+    samplerDesc.MaxAnisotropy = 1;
+    samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    samplerDesc.BorderColor[0] = 0;
+    samplerDesc.BorderColor[1] = 0;
+    samplerDesc.BorderColor[2] = 0;
+    samplerDesc.BorderColor[3] = 0;
+    samplerDesc.MinLOD = 0;
+    samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+    result = device->CreateSamplerState(&samplerDesc, &m_pSkySampler);
+    if (FAILED(result))
+    {
+        return false;
+    }
+
     return true;
 }
 
 
 void SkyDomeShader::ShutdownShader()
 {
+    if (m_pSkySampler)
+    {
+        m_pSkySampler->Release();
+        m_pSkySampler = 0;
+    }
+
     if (m_gradientBuffer)
     {
         m_gradientBuffer->Release();
@@ -240,7 +278,8 @@ bool SkyDomeShader::SetShaderParameters(ID3D11DeviceContext *deviceContext,
                                         const XMMATRIX &viewMatrix,
                                         const XMMATRIX &projectionMatrix,
                                         const XMFLOAT4 &apexColor,
-                                        const XMFLOAT4 &centerColor)
+                                        const XMFLOAT4 &centerColor,
+                                        ID3D11ShaderResourceView *skyDomeTex)
 {
     HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -272,6 +311,7 @@ bool SkyDomeShader::SetShaderParameters(ID3D11DeviceContext *deviceContext,
     bufferNumber = 0;
     deviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_matrixBuffer);
 
+
     // Lock the gradient constant buffer so it can be written to.
     result = deviceContext->Map(m_gradientBuffer,
                                 0,
@@ -290,6 +330,7 @@ bool SkyDomeShader::SetShaderParameters(ID3D11DeviceContext *deviceContext,
     pGradientDataBuffer->apexColor = apexColor;
     pGradientDataBuffer->centerColor = centerColor;
 
+    deviceContext->PSSetShaderResources(0, 1, &skyDomeTex);
     // Unlock the constant buffer.
     deviceContext->Unmap(m_gradientBuffer, 0);
     bufferNumber = 0;
@@ -304,12 +345,15 @@ void SkyDomeShader::RenderShader(ID3D11DeviceContext *deviceContext, int indexCo
     // Set the vertex input layout.
     deviceContext->IASetInputLayout(m_layout);
 
-    // Set the vertex and pixel shaders that will be used to render the triangles.
     deviceContext->VSSetShader(m_vertexShader, NULL, 0);
     deviceContext->PSSetShader(m_pixelShader, NULL, 0);
+    deviceContext->PSSetSamplers(0, 1, &m_pSkySampler);
 
-    // Render the triangle.
     deviceContext->DrawIndexed(indexCount, 0, 0);
+
+    // Unbind SRV
+    ID3D11ShaderResourceView *pNullSrv[1] = { NULL };
+    deviceContext->PSSetShaderResources(0, 1, pNullSrv);
 
     return;
 }

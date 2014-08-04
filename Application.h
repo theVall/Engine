@@ -85,6 +85,7 @@ private:
     TerrainShader *m_pTerrainShader;
     Light *m_pLight;
     Texture *m_pGroundTex;
+    Texture *m_pSkyDomeTex;
     Frustum *m_pFrustum;
     QuadTree *m_pQuadTree;
     Font *m_pFont;

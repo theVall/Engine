@@ -18,6 +18,7 @@ private:
     struct VertexCombined
     {
         XMFLOAT4 position;
+        XMFLOAT2 tex;
     };
 
 public:
@@ -46,7 +47,7 @@ private:
 
     int m_vertexCount;
     int m_indexCount;
-    
+
     ID3D11Buffer *m_vertexBuffer;
     ID3D11Buffer *m_indexBuffer;
 

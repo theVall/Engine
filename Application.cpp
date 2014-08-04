@@ -25,6 +25,7 @@ Application::Application()
     m_pTerrainShader = 0;
     m_pLight = 0;
     m_pGroundTex = 0;
+    m_pSkyDomeTex = 0;
     m_pFrustum = 0;
     m_pQuadTree = 0;
     m_pFont = 0;
@@ -203,13 +204,21 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     //    return false;
     //}
 
-    // Create and initialize __texture__.
-    m_pGroundTex = new Texture;
-    if (!m_pGroundTex)
+    // Create and initialize __textures__.
+    /*   m_pGroundTex = new Texture;
+       if (!m_pGroundTex)
+       {
+           return false;
+       }
+       result = m_pGroundTex->LoadFromDDS(m_pDirect3D->GetDevice(), L"../Engine/res/tex/dirt.dds");*/
+
+    m_pSkyDomeTex = new Texture;
+    if (!m_pSkyDomeTex)
     {
         return false;
     }
-    result = m_pGroundTex->LoadFromDDS(m_pDirect3D->GetDevice(), L"../Engine/res/tex/dirt.dds");
+    result = m_pSkyDomeTex->LoadFromDDS(m_pDirect3D->GetDevice(), L"../Engine/res/tex/sky2.dds");
+
 
     // Create and initialize the __timer__ object.
     m_pTimer = new Timer;
@@ -362,6 +371,11 @@ void Application::Shutdown()
     {
         delete m_pGroundTex;
         m_pGroundTex = 0;
+    }
+    if (m_pSkyDomeTex)
+    {
+        delete m_pSkyDomeTex;
+        m_pSkyDomeTex = 0;
     }
 
     if (m_pQuadTree)
@@ -595,7 +609,8 @@ bool Application::RenderGraphics()
                              viewMatrix,
                              projectionMatrix,
                              m_pSkyDome->GetApexColor(),
-                             m_pSkyDome->GetCenterColor());
+                             m_pSkyDome->GetCenterColor(),
+                             m_pSkyDomeTex->GetSrv());
     m_pDirect3D->TurnZBufferOn();
 
     // Reset the world matrix.
@@ -610,22 +625,21 @@ bool Application::RenderGraphics()
                            m_pLight->GetDirection(),
                            m_pOcean->GetDisplacementMap(),
                            m_pOcean->GetGradientMap());
-
     m_pDirect3D->TurnOnCulling();
 
     m_pFrustum->ConstructFrustum(projectionMatrix, viewMatrix, m_screenDepth);
 
-    if (!m_pTerrainShader->SetShaderParameters(m_pDirect3D->GetDeviceContext(),
-                                               worldMatrix,
-                                               viewMatrix,
-                                               projectionMatrix,
-                                               m_pGroundTex->GetSrv(),
-                                               m_pLight->GetDirection(),
-                                               m_pLight->GetAmbientColor(),
-                                               m_pLight->GetDiffuseColor() ))
-    {
-        return false;
-    }
+    //if (!m_pTerrainShader->SetShaderParameters(m_pDirect3D->GetDeviceContext(),
+    //                                           worldMatrix,
+    //                                           viewMatrix,
+    //                                           projectionMatrix,
+    //                                           m_pGroundTex->GetSrv(),
+    //                                           m_pLight->GetDirection(),
+    //                                           m_pLight->GetAmbientColor(),
+    //                                           m_pLight->GetDiffuseColor() ))
+    //{
+    //    return false;
+    //}
 
     // Render the terrain using the quad tree and terrain shader.
     //m_pQuadTree->Render(m_pFrustum, m_pDirect3D->GetDeviceContext(), m_pTerrainShader);
