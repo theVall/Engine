@@ -19,12 +19,12 @@ Element2d::~Element2d()
 }
 
 
-bool Element2d::Initialize(ID3D11Device* device,
-                             int screenWidth,
-                             int screenHeight,
-                             WCHAR* textureFilename,
-                             int bitmapWidth,
-                             int bitmapHeight)
+bool Element2d::Initialize(ID3D11Device *pDevice,
+                           int screenWidth,
+                           int screenHeight,
+                           WCHAR *textureFilename,
+                           int bitmapWidth,
+                           int bitmapHeight)
 {
     bool result;
 
@@ -37,13 +37,13 @@ bool Element2d::Initialize(ID3D11Device* device,
     m_previousPosX = -1;
     m_previousPosY = -1;
 
-    result = InitializeBuffers(device);
+    result = InitializeBuffers(pDevice);
     if (!result)
     {
         return false;
     }
 
-    result = LoadTexture(device, textureFilename);
+    result = LoadTexture(pDevice, textureFilename);
     if (!result)
     {
         return false;
@@ -62,29 +62,29 @@ void Element2d::Shutdown()
 }
 
 
-bool Element2d::Render(ID3D11DeviceContext* deviceContext, int positionX, int positionY)
+bool Element2d::Render(ID3D11DeviceContext *pContext, int positionX, int positionY)
 {
     bool result;
 
     // Re-build the dynamic vertex buffer for rendering to possibly a different
     // location on the screen.
-    result = UpdateBuffers(deviceContext, positionX, positionY);
+    result = UpdateBuffers(pContext, positionX, positionY);
     if (!result)
     {
         return false;
     }
 
     // Put the vertex and index buffers on the graphics pipeline to prepare for drawing.
-    RenderBuffers(deviceContext);
+    RenderBuffers(pContext);
 
     return true;
 }
 
 
-bool Element2d::InitializeBuffers(ID3D11Device* device)
+bool Element2d::InitializeBuffers(ID3D11Device *pDevice)
 {
-    VertexType* vertices;
-    unsigned long* indices;
+    VertexType *vertices;
+    unsigned long *indices;
     D3D11_BUFFER_DESC vertexBufferDesc;
     D3D11_SUBRESOURCE_DATA vertexData;
     HRESULT result;
@@ -126,13 +126,13 @@ bool Element2d::InitializeBuffers(ID3D11Device* device)
     vertexData.SysMemPitch = 0;
     vertexData.SysMemSlicePitch = 0;
 
-    result = device->CreateBuffer(&vertexBufferDesc, &vertexData, &m_vertexBuffer);
+    result = pDevice->CreateBuffer(&vertexBufferDesc, &vertexData, &m_vertexBuffer);
     if (FAILED(result))
     {
         return false;
     }
 
-    bool bResult = SetIndexBuffer(device, indices);
+    bool bResult = SetIndexBuffer(pDevice, indices);
     if (!bResult)
     {
         return false;
@@ -165,7 +165,7 @@ void Element2d::ShutdownBuffers()
 }
 
 
-bool Element2d::UpdateBuffers(ID3D11DeviceContext* deviceContext,
+bool Element2d::UpdateBuffers(ID3D11DeviceContext *pContext,
                               int positionX,
                               int positionY)
 {
@@ -174,9 +174,9 @@ bool Element2d::UpdateBuffers(ID3D11DeviceContext* deviceContext,
     float top;
     float bottom;
 
-    VertexType* vertices;
+    VertexType *vertices;
     D3D11_MAPPED_SUBRESOURCE mappedResource;
-    VertexType* verticesPtr;
+    VertexType *verticesPtr;
     HRESULT result;
 
     // If the position we are rendering this bitmap to has not changed, do not update
@@ -220,21 +220,21 @@ bool Element2d::UpdateBuffers(ID3D11DeviceContext* deviceContext,
         vertices[5].texture = XMFLOAT2(1.0f, 1.0f);
 
         // Lock the vertex buffer.
-        result = deviceContext->Map(m_vertexBuffer,
-                                    0,
-                                    D3D11_MAP_WRITE_DISCARD,
-                                    0,
-                                    &mappedResource);
+        result = pContext->Map(m_vertexBuffer,
+                               0,
+                               D3D11_MAP_WRITE_DISCARD,
+                               0,
+                               &mappedResource);
         if (FAILED(result))
         {
             return false;
         }
 
-        verticesPtr = (VertexType*)mappedResource.pData;
-        memcpy(verticesPtr, (void*)vertices, (sizeof(VertexType)* m_vertexCount));
+        verticesPtr = (VertexType *)mappedResource.pData;
+        memcpy(verticesPtr, (void *)vertices, (sizeof(VertexType)* m_vertexCount));
 
         // Unlock the vertex buffer.
-        deviceContext->Unmap(m_vertexBuffer, 0);
+        pContext->Unmap(m_vertexBuffer, 0);
 
         delete[] vertices;
         vertices = 0;
@@ -244,7 +244,7 @@ bool Element2d::UpdateBuffers(ID3D11DeviceContext* deviceContext,
 }
 
 
-void Element2d::RenderBuffers(ID3D11DeviceContext* deviceContext)
+void Element2d::RenderBuffers(ID3D11DeviceContext *pContext)
 {
     unsigned int stride;
     unsigned int offset;
@@ -253,11 +253,11 @@ void Element2d::RenderBuffers(ID3D11DeviceContext* deviceContext)
     offset = 0;
 
     // Set the vertex buffer to active in the input assembler so it can be rendered.
-    deviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
-    deviceContext->IASetIndexBuffer(m_indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+    pContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
+    pContext->IASetIndexBuffer(m_indexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
     // Set primitive topology.
-    deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     return;
 }

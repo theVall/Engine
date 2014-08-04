@@ -14,10 +14,10 @@ cbuffer LightBuffer
 
 struct PixelInputType
 {
-    float4 position : SV_POSITION;
-    float2 tex : TEXCOORD0;
-    float3 normal : NORMAL;
-    float4 color : COLOR;
+float4 position : SV_POSITION;
+float2 tex : TEXCOORD0;
+float3 normal : NORMAL;
+float4 color : COLOR;
 };
 
 // Entry point main method
@@ -26,10 +26,9 @@ float4 Main(PixelInputType input) : SV_TARGET
     float4 textureColor;
     float3 lightDir;
     float lightIntensity;
-    float4 color;
+    float4 color = ambientColor;
 
     textureColor = shaderTexture.Sample(SampleType, input.tex);
-    color = ambientColor;
 
     lightDir = -lightDirection;
     lightIntensity = saturate(dot(input.normal, lightDir));
@@ -46,10 +45,9 @@ float4 Main(PixelInputType input) : SV_TARGET
 
     //lerp(color, input.color, float4(0.5f, 0.5f, 0.5f, 0.5f));
 
-    color = saturate(color);
     color.w = 1.0;
     // DEBUG ONLY
     //color = float4(1,1,1,1);
-    
+
     return color;
 }

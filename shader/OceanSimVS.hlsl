@@ -1,5 +1,5 @@
 
-//  Vertex shader for ocean simulation.
+//  Vertex shader for ocean simulation: simple quad.
 
 struct VertexInputType
 {

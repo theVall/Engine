@@ -13,6 +13,7 @@
 #include <fstream>
 #include <d3dcompiler.h>
 
+#include "Vec3f.h"
 #include "Vec4f.h"
 
 using namespace std;
@@ -36,22 +37,33 @@ public:
     ShaderProgram(const ShaderProgram &);
     virtual ~ShaderProgram();
 
-    bool Initialize(ID3D11Device *, HWND, WCHAR* vsFilename, WCHAR* psFilename);
-    bool Initialize(ID3D11Device *, HWND, WCHAR* vsFilename, WCHAR* psFilename, WCHAR* gsFilename);
+    bool Initialize(ID3D11Device *pDevice,
+                    HWND hwnd,
+                    WCHAR *vsFilename,
+                    WCHAR *psFilename);
+    bool Initialize(ID3D11Device *pDevice,
+                    HWND hwnd,
+                    WCHAR *vsFilename,
+                    WCHAR *psFilename,
+                    WCHAR *gsFilename);
     void Shutdown();
 
 protected:
-    void OutputShaderErrorMessage(ID3D10Blob*, HWND, WCHAR*);
+    void OutputShaderErrorMessage(ID3D10Blob *pBlob, HWND hwnd, WCHAR *pError);
+
     // pure virtual methods
-    virtual bool InitializeShader(ID3D11Device* device, HWND hwnd, WCHAR* vsFilename, WCHAR* psFilename) = 0;
+    virtual bool InitializeShader(ID3D11Device *device,
+                                  HWND hwnd,
+                                  WCHAR *vsFilename,
+                                  WCHAR *psFilename) = 0;
     virtual void ShutdownShader() = 0;
 
 protected:
-    ID3D11VertexShader* m_vertexShader;
-    ID3D11PixelShader* m_pixelShader;
-    ID3D11InputLayout* m_layout;
-    ID3D11SamplerState* m_sampleState;
+    ID3D11VertexShader *m_vertexShader;
+    ID3D11PixelShader *m_pixelShader;
+    ID3D11InputLayout *m_layout;
+    ID3D11SamplerState *m_sampleState;
 
-    ID3D11Buffer* m_matrixBuffer;
+    ID3D11Buffer *m_matrixBuffer;
 };
 

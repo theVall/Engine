@@ -14,7 +14,7 @@ D3D::D3D(void)
     m_rasterStateSolid     = 0;
     m_rasterStateWireFrame = 0;
     m_rasterStateNoCulling = 0;
-    
+
     m_depthDisabledStencilState = 0;
 }
 
@@ -33,7 +33,7 @@ bool D3D::Initialize(int screenWidth,
                      int screenHeight,
                      bool vSync,
                      HWND hwnd,
-                     bool fullscreen, 
+                     bool fullscreen,
                      float screenDepth,
                      float screenNear)
 {
@@ -65,7 +65,7 @@ bool D3D::Initialize(int screenWidth,
     m_vSyncEnabled = vSync;
 
     //  Create a DirectX graphics interface factory.
-    result = CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&factory);
+    result = CreateDXGIFactory(__uuidof(IDXGIFactory), (void **)&factory);
     if (FAILED(result))
     {
         return false;
@@ -214,7 +214,7 @@ bool D3D::Initialize(int screenWidth,
                                            NULL,
                                            D3D11_CREATE_DEVICE_DEBUG,
                                            &featureLevel,
-                                           1, 
+                                           1,
                                            D3D11_SDK_VERSION,
                                            &swapChainDesc,
                                            &m_swapChain,
@@ -228,7 +228,7 @@ bool D3D::Initialize(int screenWidth,
     }
 
     //  Get the pointer to the back buffer.
-    result = m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*) &backBufferPtr);
+    result = m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID *) &backBufferPtr);
     if (FAILED(result))
     {
         return false;
@@ -371,7 +371,7 @@ bool D3D::Initialize(int screenWidth,
     screenAspect = (float) screenWidth / (float) screenHeight;
 
     //  Build a left-handed perspective projection matrix.
-    m_projectionMatrix = DirectX::XMMatrixPerspectiveFovLH(fovAngleY, 
+    m_projectionMatrix = DirectX::XMMatrixPerspectiveFovLH(fovAngleY,
                                                            screenAspect,
                                                            screenNear,
                                                            screenDepth);
@@ -413,7 +413,7 @@ bool D3D::Initialize(int screenWidth,
 
     return true;
 }
-    
+
 
 void D3D::Shutdown()
 {
@@ -528,13 +528,13 @@ void D3D::EndScene()
 }
 
 
-ID3D11Device * D3D::GetDevice()
+ID3D11Device *D3D::GetDevice()
 {
     return m_device;
 }
 
 
-ID3D11DeviceContext * D3D::GetDeviceContext()
+ID3D11DeviceContext *D3D::GetDeviceContext()
 {
     return m_deviceContext;
 }

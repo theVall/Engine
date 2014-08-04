@@ -27,9 +27,9 @@ bool FFT::Initialize512(ID3D11Device *pDevice, HWND hwnd, WCHAR *csFilename, UIN
 
     HRESULT hres;
 
-    ID3D10Blob *errorMessage = 0;
+    ID3D10Blob *errorMessage = NULL;
     ID3D10Blob *pComputeShaderBuffer = 0;
-    //ID3D10Blob *pComputeShaderBuffer2 = 0;
+    ID3D10Blob *pComputeShaderBuffer2 = 0;
 
     // Compile compute shaders
     //
@@ -64,37 +64,37 @@ bool FFT::Initialize512(ID3D11Device *pDevice, HWND hwnd, WCHAR *csFilename, UIN
         return false;
     }
 
-    //// Compile the shader for the last step
-    //hres = D3DCompileFromFile(csFilename,
-    //                          NULL,
-    //                          NULL,
-    //                          "Radix8_1",
-    //                          "cs_5_0",
-    //                          NULL,
-    //                          NULL,
-    //                          &pComputeShaderBuffer2,
-    //                          &errorMessage);
-    //if (FAILED(hres))
-    //{
-    //    if (errorMessage)
-    //    {
-    //        OutputShaderErrorMessage(errorMessage, hwnd, csFilename);
-    //    }
-    //    else
-    //    {
-    //        MessageBox(hwnd, csFilename, L"Missing Shader File", MB_OK);
-    //    }
-    //    return false;
-    //}
+    // Compile the shader for the last step
+    hres = D3DCompileFromFile(csFilename,
+                              NULL,
+                              NULL,
+                              "Radix8_1",
+                              "cs_5_0",
+                              NULL,
+                              NULL,
+                              &pComputeShaderBuffer2,
+                              &errorMessage);
+    if (FAILED(hres))
+    {
+        if (errorMessage)
+        {
+            OutputShaderErrorMessage(errorMessage, hwnd, csFilename);
+        }
+        else
+        {
+            MessageBox(hwnd, csFilename, L"Missing Shader File", MB_OK);
+        }
+        return false;
+    }
 
-    //hres = pDevice->CreateComputeShader(pComputeShaderBuffer2->GetBufferPointer(),
-    //                                    pComputeShaderBuffer2->GetBufferSize(),
-    //                                    NULL,
-    //                                    &m_pComputeShader2);
-    //if (FAILED(hres))
-    //{
-    //    return false;
-    //}
+    hres = pDevice->CreateComputeShader(pComputeShaderBuffer2->GetBufferPointer(),
+                                        pComputeShaderBuffer2->GetBufferSize(),
+                                        NULL,
+                                        &m_pComputeShader2);
+    if (FAILED(hres))
+    {
+        return false;
+    }
 
     // Constant buffers
     //
@@ -183,7 +183,7 @@ bool FFT::Initialize512(ID3D11Device *pDevice, HWND hwnd, WCHAR *csFilename, UIN
     UINT float2size = 2 * sizeof(float);
 
     D3D11_BUFFER_DESC bufDesc;
-    bufDesc.ByteWidth = float2size * (512 * slices) * 512;
+    bufDesc.ByteWidth = float2size * 512 * slices * 512;
     bufDesc.Usage = D3D11_USAGE_DEFAULT;
     bufDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
     bufDesc.CPUAccessFlags = 0;
@@ -200,7 +200,7 @@ bool FFT::Initialize512(ID3D11Device *pDevice, HWND hwnd, WCHAR *csFilename, UIN
     uavDesc.Format = DXGI_FORMAT_UNKNOWN;
     uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
     uavDesc.Buffer.FirstElement = 0;
-    uavDesc.Buffer.NumElements = (512 * slices) * 512;
+    uavDesc.Buffer.NumElements = 512 * slices * 512;
     uavDesc.Buffer.Flags = 0;
 
     pDevice->CreateUnorderedAccessView(m_pTempBuffer, &uavDesc, &m_pTempUav);
@@ -213,7 +213,7 @@ bool FFT::Initialize512(ID3D11Device *pDevice, HWND hwnd, WCHAR *csFilename, UIN
     srvDesc.Format = DXGI_FORMAT_UNKNOWN;
     srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
     srvDesc.Buffer.FirstElement = 0;
-    srvDesc.Buffer.NumElements = (512 * slices) * 512;
+    srvDesc.Buffer.NumElements = 512 * slices * 512;
 
     pDevice->CreateShaderResourceView(m_pTempBuffer, &srvDesc, &m_pTempSrv);
     if (!m_pTempSrv)
@@ -273,40 +273,39 @@ bool FFT::Calculate512(ID3D11UnorderedAccessView *pUavDst,
                        ID3D11ShaderResourceView *pSrvDst,
                        ID3D11ShaderResourceView *pSrvSrc)
 {
-    const UINT threadCnt = m_slices * (512 * 512) / 8;
+    const UINT threadCnt = m_slices * 512 * 512 / 8;
     ID3D11UnorderedAccessView *pTempUav = m_pTempUav;
     ID3D11ShaderResourceView *pTempSrv = m_pTempSrv;
-    ID3D11DeviceContext *pContext = m_pContext;
     ID3D11Buffer *constBuffersCS[1];
 
-    UINT inStride = 512*512 / 8;
+    UINT inStride = 512 * 512 / 8;
     constBuffersCS[0] = m_pConstBuffer[0];
-    pContext->CSSetConstantBuffers(0, 1, &constBuffersCS[0]);
+    m_pContext->CSSetConstantBuffers(0, 1, &constBuffersCS[0]);
     Radix8(pTempUav, pSrvSrc, threadCnt, inStride);
 
     inStride /= 8;
     constBuffersCS[0] = m_pConstBuffer[1];
-    pContext->CSSetConstantBuffers(0, 1, &constBuffersCS[0]);
+    m_pContext->CSSetConstantBuffers(0, 1, &constBuffersCS[0]);
     Radix8(pUavDst, pTempSrv, threadCnt, inStride);
 
     inStride /= 8;
     constBuffersCS[0] = m_pConstBuffer[2];
-    pContext->CSSetConstantBuffers(0, 1, &constBuffersCS[0]);
+    m_pContext->CSSetConstantBuffers(0, 1, &constBuffersCS[0]);
     Radix8(pTempUav, pSrvDst, threadCnt, inStride);
 
     inStride /= 8;
     constBuffersCS[0] = m_pConstBuffer[3];
-    pContext->CSSetConstantBuffers(0, 1, &constBuffersCS[0]);
+    m_pContext->CSSetConstantBuffers(0, 1, &constBuffersCS[0]);
     Radix8(pUavDst, pTempSrv, threadCnt, inStride);
 
     inStride /= 8;
     constBuffersCS[0] = m_pConstBuffer[4];
-    pContext->CSSetConstantBuffers(0, 1, &constBuffersCS[0]);
+    m_pContext->CSSetConstantBuffers(0, 1, &constBuffersCS[0]);
     Radix8(pTempUav, pSrvDst, threadCnt, inStride);
 
     inStride /= 8;
     constBuffersCS[0] = m_pConstBuffer[5];
-    pContext->CSSetConstantBuffers(0, 1, &constBuffersCS[0]);
+    m_pContext->CSSetConstantBuffers(0, 1, &constBuffersCS[0]);
     Radix8(pUavDst, pTempSrv, threadCnt, inStride);
 
     return true;
@@ -319,31 +318,30 @@ void FFT::Radix8(ID3D11UnorderedAccessView *pUavDst,
                  UINT inStride)
 {
     UINT grid = threadCnt / 128;
-    ID3D11DeviceContext *pContext = m_pContext;
 
     ID3D11ShaderResourceView *pSrvs[1] = { pSrvSrc };
-    pContext->CSSetShaderResources(0, 1, pSrvs);
+    m_pContext->CSSetShaderResources(0, 1, pSrvs);
 
     ID3D11UnorderedAccessView *pUavs[1] = { pUavDst };
-    pContext->CSSetUnorderedAccessViews(0, 1, pUavs, (UINT *)(&pUavs[0]));
+    m_pContext->CSSetUnorderedAccessViews(0, 1, pUavs, (UINT *)(&pUavs[0]));
 
-    //if (inStride > 1)
-    //{
-    pContext->CSSetShader(m_pComputeShader, NULL, 0);
-    //}
-    //else
-    //{
-    //    pContext->CSSetShader(m_pComputeShader2, NULL, 0);
-    //}
+    if (inStride > 1)
+    {
+        m_pContext->CSSetShader(m_pComputeShader, NULL, 0);
+    }
+    else
+    {
+        m_pContext->CSSetShader(m_pComputeShader2, NULL, 0);
+    }
 
     // Execute
-    pContext->Dispatch(grid, 1, 1);
+    m_pContext->Dispatch(grid, 1, 1);
 
-    // Cleanup
-    pSrvs[0] = 0;
-    pContext->CSSetShaderResources(0, 1, pSrvs);
-    pUavs[0] = 0;
-    pContext->CSSetUnorderedAccessViews(0, 1, pUavs, (UINT *)(&pUavs[0]));
+    // Unbind
+    pSrvs[0] = NULL;
+    m_pContext->CSSetShaderResources(0, 1, pSrvs);
+    pUavs[0] = NULL;
+    m_pContext->CSSetUnorderedAccessViews(0, 1, pUavs, (UINT *)(&pUavs[0]));
 }
 
 

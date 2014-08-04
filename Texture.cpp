@@ -19,7 +19,7 @@ Texture::~Texture()
 }
 
 
-bool Texture::Create2DTextureAndViews(ID3D11Device* device,
+bool Texture::Create2DTextureAndViews(ID3D11Device *device,
                                       UINT width,
                                       UINT height,
                                       DXGI_FORMAT format)
@@ -48,35 +48,35 @@ bool Texture::Create2DTextureAndViews(ID3D11Device* device,
 
     // Create shader resource view
     m_pTex2D->GetDesc(&texDesc);
-    if (m_pSrv)
-    {
-        D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-        srvDesc.Format = format;
-        srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-        srvDesc.Texture2D.MipLevels = texDesc.MipLevels;
-        srvDesc.Texture2D.MostDetailedMip = 0;
+    //if (m_pSrv)
+    //{
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+    srvDesc.Format = format;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MipLevels = texDesc.MipLevels;
+    srvDesc.Texture2D.MostDetailedMip = 0;
 
-        result = device->CreateShaderResourceView(m_pTex2D, &srvDesc, &m_pSrv);
-        if (FAILED(result))
-        {
-            return false;
-        }
+    result = device->CreateShaderResourceView(m_pTex2D, &srvDesc, &m_pSrv);
+    if (FAILED(result))
+    {
+        return false;
     }
+    //}
 
     // Create render target view
-    if (m_pRtv)
-    {
-        D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
-        rtvDesc.Format = format;
-        rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-        rtvDesc.Texture2D.MipSlice = 0;
+    //if (m_pRtv)
+    //{
+    D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
+    rtvDesc.Format = format;
+    rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+    rtvDesc.Texture2D.MipSlice = 0;
 
-        result = device->CreateRenderTargetView(m_pTex2D, &rtvDesc, &m_pRtv);
-        if (FAILED(result))
-        {
-            return false;
-        }
+    result = device->CreateRenderTargetView(m_pTex2D, &rtvDesc, &m_pRtv);
+    if (FAILED(result))
+    {
+        return false;
     }
+    //}
     return true;
 }
 
@@ -122,19 +122,19 @@ void Texture::Shutdown()
 }
 
 
-ID3D11Texture2D* Texture::GetTex2D()
+ID3D11Texture2D *Texture::GetTex2D()
 {
     return m_pTex2D;
 }
 
 
-ID3D11ShaderResourceView* Texture::GetSrv()
+ID3D11ShaderResourceView *Texture::GetSrv()
 {
     return m_pSrv;
 }
 
 
-ID3D11RenderTargetView* Texture::GetRtv()
+ID3D11RenderTargetView *Texture::GetRtv()
 {
     return m_pRtv;
 }

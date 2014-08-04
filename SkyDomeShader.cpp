@@ -25,7 +25,6 @@ bool SkyDomeShader::Render(ID3D11DeviceContext *deviceContext,
                            const XMFLOAT4 &apexColor,
                            const XMFLOAT4 &centerColor)
 {
-    // Set the shader parameters that will be used for rendering.
     if (!SetShaderParameters(deviceContext,
                              worldMatrix,
                              viewMatrix,
@@ -36,7 +35,6 @@ bool SkyDomeShader::Render(ID3D11DeviceContext *deviceContext,
         return false;
     }
 
-    // Now render the prepared buffers with the shader.
     RenderShader(deviceContext, indexCount);
 
     return true;

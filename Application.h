@@ -65,10 +65,12 @@ private:
     bool m_fullScreen;
     bool m_vSync;
     bool m_lockSurfaceCamera;
+    bool m_stopAnimation;
 
     float m_screenDepth;
     float m_screenNear;
     float m_spectatorHeight;
+    float m_elapsedTime;
 
     HWND m_hwnd;
 
@@ -91,4 +93,6 @@ private:
     SkyDomeShader *m_pSkyDomeShader;
     Ocean *m_pOcean;
     OceanShader *m_pOceanShader;
+
+    ID3D11RenderTargetView *pNullRTV;
 };

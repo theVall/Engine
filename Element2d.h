@@ -8,9 +8,14 @@ public:
     Element2d(const Element2d &);
     ~Element2d();
 
-    bool Initialize(ID3D11Device*, int, int, WCHAR*, int, int);
+    bool Initialize(ID3D11Device *pDevice,
+                    int screenWidth,
+                    int screenHeight,
+                    WCHAR *textureFilename,
+                    int bitmapWidth,
+                    int bitmapHeight);
     void Shutdown();
-    bool Render(ID3D11DeviceContext*, int, int);
+    bool Render(ID3D11DeviceContext *pContext, int positionX, int positionY);
 
 private:
 
@@ -20,10 +25,10 @@ private:
         XMFLOAT2 texture;
     };
 
-    bool InitializeBuffers(ID3D11Device *);
+    bool InitializeBuffers(ID3D11Device *pDevice);
     void ShutdownBuffers();
-    bool UpdateBuffers(ID3D11DeviceContext *, int, int);
-    void RenderBuffers(ID3D11DeviceContext *);
+    bool UpdateBuffers(ID3D11DeviceContext *pContext, int, int);
+    void RenderBuffers(ID3D11DeviceContext *pContext);
 
 private:
 

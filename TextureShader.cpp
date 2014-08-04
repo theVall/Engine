@@ -17,12 +17,12 @@ TextureShader::~TextureShader(void)
 }
 
 
-bool TextureShader::Render(ID3D11DeviceContext* deviceContext,
+bool TextureShader::Render(ID3D11DeviceContext *deviceContext,
                            int indexCount,
                            const XMMATRIX &worldMatrix,
                            const XMMATRIX &viewMatrix,
                            const XMMATRIX &projectionMatrix,
-                           ID3D11ShaderResourceView* texture)
+                           ID3D11ShaderResourceView *texture)
 {
     bool result;
 
@@ -40,15 +40,15 @@ bool TextureShader::Render(ID3D11DeviceContext* deviceContext,
 }
 
 
-bool TextureShader::InitializeShader(ID3D11Device* device,
+bool TextureShader::InitializeShader(ID3D11Device *device,
                                      HWND hwnd,
-                                     WCHAR* vsFilename,
-                                     WCHAR* psFilename)
+                                     WCHAR *vsFilename,
+                                     WCHAR *psFilename)
 {
     HRESULT result;
-    ID3D10Blob* errorMessage;
-    ID3D10Blob* vertexShaderBuffer;
-    ID3D10Blob* pixelShaderBuffer;
+    ID3D10Blob *errorMessage;
+    ID3D10Blob *vertexShaderBuffer;
+    ID3D10Blob *pixelShaderBuffer;
     D3D11_INPUT_ELEMENT_DESC polygonLayout[2];
     unsigned int numElements;
     D3D11_BUFFER_DESC matrixBufferDesc;
@@ -159,7 +159,6 @@ bool TextureShader::InitializeShader(ID3D11Device* device,
         return false;
     }
 
-    // Release the vertex shader buffer and pixel shader buffer since they are no longer needed.
     vertexShaderBuffer->Release();
     vertexShaderBuffer = 0;
 
@@ -208,15 +207,15 @@ bool TextureShader::InitializeShader(ID3D11Device* device,
 }
 
 
-bool TextureShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
+bool TextureShader::SetShaderParameters(ID3D11DeviceContext *deviceContext,
                                         const XMMATRIX &worldMatrix,
                                         const XMMATRIX &viewMatrix,
                                         const XMMATRIX &projectionMatrix,
-                                        ID3D11ShaderResourceView* texture)
+                                        ID3D11ShaderResourceView *texture)
 {
     HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedResource;
-    MatrixBufferType* transformDataBuffer;
+    MatrixBufferType *transformDataBuffer;
     unsigned int bufferNumber;
 
     // Lock the constant buffer so it can be written to.
@@ -230,7 +229,7 @@ bool TextureShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
         return false;
     }
 
-    transformDataBuffer = (MatrixBufferType*)mappedResource.pData;
+    transformDataBuffer = (MatrixBufferType *)mappedResource.pData;
 
     // Transpose the matrices for shader and copy them into the constant buffer.
     transformDataBuffer->world = XMMatrixTranspose(worldMatrix);
@@ -283,7 +282,7 @@ void TextureShader::ShutdownShader()
 }
 
 
-void TextureShader::RenderShader(ID3D11DeviceContext* deviceContext, int indexCount)
+void TextureShader::RenderShader(ID3D11DeviceContext *deviceContext, int indexCount)
 {
     deviceContext->IASetInputLayout(m_layout);
 
@@ -293,6 +292,10 @@ void TextureShader::RenderShader(ID3D11DeviceContext* deviceContext, int indexCo
     deviceContext->PSSetSamplers(0, 1, &m_sampleState);
 
     deviceContext->DrawIndexed(indexCount, 0, 0);
+
+    // Unbind
+    ID3D11ShaderResourceView *pNullSrv[1] = { NULL };
+    deviceContext->PSSetShaderResources(0, 1, pNullSrv);
 
     return;
 }

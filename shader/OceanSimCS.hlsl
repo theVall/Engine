@@ -1,7 +1,6 @@
 
 //  Compute shader for ocean simulation.
 
-#define PI 3.1415926536
 #define BLOCK_SIZE_X 16
 #define BLOCK_SIZE_Y 16
 
@@ -17,19 +16,19 @@ cbuffer PerFrameConstBuf : register(b1)
 {
     float time;
     float choppyScale;
-    // float gridLength;
 };
 
-StructuredBuffer<float2>	inputH0Buf		: register(t0);
-StructuredBuffer<float>		inputOmegaBuf	: register(t1);
-RWStructuredBuffer<float2>	outputHtBuf		: register(u0);
-RWStructuredBuffer<float2>	outputDxBuf		: register(u1);
-RWStructuredBuffer<float2>	outputDyBuf		: register(u2);
+StructuredBuffer<float2> inputH0Buf		: register(t0);
+StructuredBuffer<float>  inputOmegaBuf	: register(t1);
+
+RWStructuredBuffer<float2> outputHtBuf	: register(u0);
+RWStructuredBuffer<float2> outputDxBuf	: register(u1);
+RWStructuredBuffer<float2> outputDyBuf	: register(u2);
 
 [numthreads(BLOCK_SIZE_X, BLOCK_SIZE_Y, 1)]
 void Main(uint3 threadId : SV_DispatchThreadID)
 {
-    int inputId  = threadId.y * inWidth + threadId.x;
+    int inputId = threadId.y * inWidth + threadId.x;
     int inputMId = (actualDim - threadId.y) * inWidth + (actualDim - threadId.x);
     int outputId = threadId.y * outWidth + threadId.x;
 

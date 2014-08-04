@@ -6,8 +6,21 @@ class OceanShader :
     public ShaderProgram
 {
 
+private:
+    struct OceanVertex
+    {
+        float indexX;
+        float indexY;
+    };
+
+    struct PerFrameBufferType
+    {
+        XMFLOAT3 eyeVec;
+        XMFLOAT3 lightDir;
+    };
+
 public:
-    OceanShader();
+    OceanShader(int meshDim);
     OceanShader(const OceanShader &);
     ~OceanShader();
 
@@ -23,7 +36,11 @@ public:
     bool Render(ID3D11DeviceContext *pContext,
                 const XMMATRIX &worldMatrix,
                 const XMMATRIX &viewMatrix,
-                const XMMATRIX &projectionMatrix);
+                const XMMATRIX &projectionMatrix,
+                const XMFLOAT3 &eyeVec,
+                const XMFLOAT3 &lightDir,
+                ID3D11ShaderResourceView *displacementTex,
+                ID3D11ShaderResourceView *gradientTex);
 
 
 private:
@@ -36,11 +53,38 @@ private:
     bool SetShaderParameters(ID3D11DeviceContext *peContext,
                              const XMMATRIX &worldMatrix,
                              const XMMATRIX &viewMatrix,
-                             const XMMATRIX &projectionMatrix);
+                             const XMMATRIX &projectionMatrix,
+                             const XMFLOAT3 &eyeVec,
+                             const XMFLOAT3 &lightDir,
+                             ID3D11ShaderResourceView *displacementTex,
+                             ID3D11ShaderResourceView *gradientTex);
 
-    void RenderShader(ID3D11DeviceContext *pContext, int indexCount);
+    void RenderShader(ID3D11DeviceContext *pContext);
+
+    // Create vertices for the ocean surface mesh
+    bool CreateSurfaceVertices(ID3D11Device *pDevice);
 
 private:
+    int m_meshDim;
+    int m_numIndices;
 
+    ID3D11Buffer *m_pMeshVB;
+    ID3D11Buffer *m_pMeshIB;
+
+    // Shaders
+    ID3D11VertexShader *m_pOceanSurfaceVS;
+    ID3D11PixelShader *m_pOceanSurfacePS;
+    ID3D11PixelShader *m_pWireframePS;
+
+    // Buffers
+    ID3D11Buffer *m_perFameBuffer;
+
+    // Samplers
+    ID3D11SamplerState *m_pHeightSampler;
+    ID3D11SamplerState *m_pGradientSampler;
+
+    // State blocks
+    ID3D11RasterizerState *m_pRsStateSolid;
+    ID3D11RasterizerState *m_pRsStateWireframe;
 };
 

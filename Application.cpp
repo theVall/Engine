@@ -7,10 +7,12 @@ Application::Application()
     m_fullScreen = false;
     m_vSync = true;
     m_lockSurfaceCamera = false;
+    m_stopAnimation = false;
 
-    m_screenDepth = 1000.0f;
+    m_screenDepth = 2000.0f;
     m_screenNear = 0.1f;
     m_spectatorHeight = 10.0f;
+    m_elapsedTime = 0;
 
     m_pInput = 0;
     m_pDirect3D = 0;
@@ -160,7 +162,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     }
     m_pLight->SetAmbientColor(0.05f, 0.05f, 0.05f, 1.0f);
     m_pLight->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
-    m_pLight->SetDirection(-0.5f, -1.0f, 0.0f);
+    m_pLight->SetDirection(0.9f, -0.3f, 0.1f);
 
     // Create the __frustum__ for culling
     m_pFrustum = new Frustum;
@@ -180,7 +182,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
 
     m_pDirect3D->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
     m_pFont->drawText(m_pDirect3D->GetDeviceContext(),
-                      L"Loading Terrain Data...\n",
+                      L"Loading...\n",
                       20.0f,
                       50.0f,
                       50.0f,
@@ -189,17 +191,17 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     m_pDirect3D->EndScene();
 
     // Create and initialize the __quad tree__.
-    m_pQuadTree = new QuadTree;
-    if (!m_pQuadTree)
-    {
-        return false;
-    }
-    result = m_pQuadTree->Initialize(m_pTerrain, m_pDirect3D->GetDevice());
-    if (!result)
-    {
-        MessageBox(hwnd, L"Could not initialize the quad tree object.", L"Error", MB_OK);
-        return false;
-    }
+    //m_pQuadTree = new QuadTree;
+    //if (!m_pQuadTree)
+    //{
+    //    return false;
+    //}
+    //result = m_pQuadTree->Initialize(m_pTerrain, m_pDirect3D->GetDevice());
+    //if (!result)
+    //{
+    //    MessageBox(hwnd, L"Could not initialize the quad tree object.", L"Error", MB_OK);
+    //    return false;
+    //}
 
     // Create and initialize __texture__.
     m_pGroundTex = new Texture;
@@ -274,13 +276,13 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     {
         return false;
     }
-    Ocean::OceanParameter oceanParams = { 512,
-                                          0.8f,
-                                          0.35f,
-                                          Vec2f(0.8f, 0.6f),
-                                          600.0f,
-                                          0.07f,
-                                          1.3f
+    Ocean::OceanParameter oceanParams = { 512,                  // map dim
+                                          0.0003f,              // time factor
+                                          0.5f,                 // amplitude
+                                          Vec2f(0.3f, 0.6f),    // wind direction
+                                          400.0f,               // wind speed
+                                          0.07f,                // wind dependency
+                                          1.3f                  // choppy
                                         };
     if (!m_pOcean->Initialize(oceanParams,
                               m_pDirect3D->GetDevice(),
@@ -293,7 +295,23 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
         MessageBox(hwnd, L"Could not initialize the ocean object.", L"Error", MB_OK);
         return false;
     }
-    // TODO: Ocean shading
+    // generate ocean height map for the first time
+    m_pOcean->UpdateDisplacement(0.0f, m_pDirect3D->GetDeviceContext());
+
+    // Create and initialize the __ocean shader__ object.
+    m_pOceanShader = new OceanShader(oceanParams.displacementMapDim);
+    if (!m_pOceanShader)
+    {
+        return false;
+    }
+    if (!m_pOceanShader->Initialize(m_pDirect3D->GetDevice(),
+                                    hwnd,
+                                    L"../Engine/shader/OceanVS.hlsl",
+                                    L"../Engine/shader/OceanPS.hlsl"))
+    {
+        MessageBox(hwnd, L"Could not initialize the ocean shader object.", L"Error", MB_OK);
+        return false;
+    }
 
     return true;
 }
@@ -416,6 +434,8 @@ bool Application::ProcessFrame()
     m_pTimer->Frame();
     m_pProfiler->Frame();
 
+    m_elapsedTime += m_pTimer->GetTime();
+
     // Do the frame input processing.
     if (!HandleInput(m_pTimer->GetTime()))
     {
@@ -435,8 +455,10 @@ bool Application::ProcessFrame()
     }
 
     // Ocean displacement
-    m_pOcean->UpdateDisplacement(m_pTimer->GetTime(), m_pDirect3D->GetDeviceContext());
-
+    if (!m_stopAnimation)
+    {
+        m_pOcean->UpdateDisplacement(m_elapsedTime, m_pDirect3D->GetDeviceContext());
+    }
     // Render the graphics.
     if (!RenderGraphics())
     {
@@ -499,11 +521,18 @@ bool Application::HandleInput(float frameTime)
     m_pPosition->MoveDownward(keyDown != 0, sensitivity);
 
     // TODO
-    keyDown = GetAsyncKeyState(VK_F1);
+    keyDown = GetAsyncKeyState('U');
     if (keyDown)
     {
         m_pDirect3D->ToggleWireframe();
     }
+
+    keyDown = GetAsyncKeyState('B');
+    if (keyDown)
+    {
+        m_stopAnimation = !m_stopAnimation;
+    }
+
 
     // Yaw and pitch with __mouse__ movement.
     if (moveCamOnDrag)
@@ -567,12 +596,22 @@ bool Application::RenderGraphics()
                              projectionMatrix,
                              m_pSkyDome->GetApexColor(),
                              m_pSkyDome->GetCenterColor());
-
-    m_pDirect3D->TurnOnCulling();
     m_pDirect3D->TurnZBufferOn();
 
     // Reset the world matrix.
     m_pDirect3D->GetWorldMatrix(worldMatrix);
+
+    // Render the ocean geometry
+    m_pOceanShader->Render(m_pDirect3D->GetDeviceContext(),
+                           worldMatrix,
+                           viewMatrix,
+                           projectionMatrix,
+                           cameraPosition,
+                           m_pLight->GetDirection(),
+                           m_pOcean->GetDisplacementMap(),
+                           m_pOcean->GetGradientMap());
+
+    m_pDirect3D->TurnOnCulling();
 
     m_pFrustum->ConstructFrustum(projectionMatrix, viewMatrix, m_screenDepth);
 
@@ -588,15 +627,8 @@ bool Application::RenderGraphics()
         return false;
     }
 
-    // Render the ocean geometry
-    //m_pOceanShader->Render(m_pDirect3D->GetDeviceContext(),
-    //                       worldMatrix,
-    //                       viewMatrix,
-    //                       projectionMatrix);
-
     // Render the terrain using the quad tree and terrain shader.
-    m_pQuadTree->Render(m_pFrustum, m_pDirect3D->GetDeviceContext(), m_pTerrainShader);
-
+    //m_pQuadTree->Render(m_pFrustum, m_pDirect3D->GetDeviceContext(), m_pTerrainShader);
 
 // profiling/debug output
 #ifdef DEBUG
@@ -613,15 +645,15 @@ bool Application::RenderGraphics()
                       0xff8cc63e,
                       0);
 
-    std::wostringstream triangleswchar;
-    triangleswchar << m_pQuadTree->GetDrawCount() << " Tris";
-    m_pFont->drawText(m_pDirect3D->GetDeviceContext(),
-                      (WCHAR *)triangleswchar.str().c_str(),
-                      13.0f,
-                      20.0f,
-                      38.0f,
-                      0xff8cc63e,
-                      0);
+    //std::wostringstream triangleswchar;
+    //triangleswchar << m_pQuadTree->GetDrawCount() << " Tris";
+    //m_pFont->drawText(m_pDirect3D->GetDeviceContext(),
+    //                  (WCHAR *)triangleswchar.str().c_str(),
+    //                  13.0f,
+    //                  20.0f,
+    //                  38.0f,
+    //                  0xff8cc63e,
+    //                  0);
 #endif
 
 

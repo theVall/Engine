@@ -1,112 +1,163 @@
+// FFT from the NVIDIA DirectX 11 SDK
 
-#define SQRT_1_2 0.707106781186
-#define PI 3.141592653
+#define COS_PI_4_16 0.70710678118654752440084436210485f
+#define TWIDDLE_1_8 COS_PI_4_16, -COS_PI_4_16
+#define TWIDDLE_3_8 -COS_PI_4_16, -COS_PI_4_16
 
-#define MUL_RE(a, b) (a.y*b.y - a.x*b.x)
-#define MUL_IM(a, b) (a.y*b.x + a.x*b.y)
+#define COHERENCY_GRANULARITY 128
 
-#define mul_p0q1(a) (a)
-#define mul_p0q2 mul_p0q1
-#define mul_p0q4 mul_p0q2
-#define mul_p2q4 mul_p1q2
-
-// Constant buffer, called on per frame basis.
-cbuffer PerFrameConstBuf : register(b0)
+cbuffer cbChangePerCall
 {
-    uint threadCnt;
-    uint outStride;
-    uint inStride;
-    uint phaseStride;
-    float phase;
+    uint thread_count;
+    uint ostride;
+    uint istride;
+    uint pstride;
+    float phase_base;
 };
 
 
-float2 mul_1(float2 a, float2 b)
+void FT2(inout float2 a, inout float2 b)
 {
-    float2 x;
-    x.y = MUL_RE(a, b);
-    x.x  = MUL_IM(a, b);
-    return x;
+    float t;
+
+    t = a.x;
+    a.x += b.x;
+    b.x = t - b.x;
+
+    t = a.y;
+    a.y += b.y;
+    b.y = t - b.y;
 }
 
-float2 mul_p1q2(float2 a)
+void CMUL_forward(inout float2 a, float bx, float by)
 {
-    return float2(a.y, -a.x);
+    float t = a.x;
+    a.x = t * bx - a.y * by;
+    a.y = t * by + a.y * bx;
 }
 
-float2 mul_p1q4(float2 a)
+void UPD_forward(inout float2 a, inout float2 b)
 {
-    return (float2)(SQRT_1_2)*(float2)(a.x + a.y, -a.x + a.y);
+    float A = a.x;
+    float B = b.y;
+
+    a.x += b.y;
+    b.y = a.y + b.x;
+    a.y -= b.x;
+    b.x = A - B;
 }
 
-float2 mul_p3q4(float2 a)
+void FFT_forward_4(inout float2 D[8])
 {
-    return (float2)(SQRT_1_2)*(float2)(-a.x + a.y, -a.x - a.y);
+    FT2(D[0], D[2]);
+    FT2(D[1], D[3]);
+    FT2(D[0], D[1]);
+
+    UPD_forward(D[2], D[3]);
 }
 
-float2 exp_alpha_1(float alpha)
+void FFT_forward_8(inout float2 D[8])
 {
-    float cs;
-    float sn;
-    sincos(alpha, sn, cs);
-    return float2(cs, sn);
+    FT2(D[0], D[4]);
+    FT2(D[1], D[5]);
+    FT2(D[2], D[6]);
+    FT2(D[3], D[7]);
+
+    UPD_forward(D[4], D[6]);
+    UPD_forward(D[5], D[7]);
+
+    CMUL_forward(D[5], TWIDDLE_1_8);
+    CMUL_forward(D[7], TWIDDLE_3_8);
+
+    FFT_forward_4(D);
+    FT2(D[4], D[5]);
+    FT2(D[6], D[7]);
 }
 
-// Input and output data buffers.
-StructuredBuffer<float2>	inputBuf : register(t0);
-RWStructuredBuffer<float2>	outputBuf : register(u0);
-
-[numthreads(128, 1, 1)]
-void Main(uint3 threadId : SV_DispatchThreadID)
+void TWIDDLE(inout float2 d, float phase)
 {
-    uint t = threadCnt;
-    uint p = inStride;
-    uint q = outStride;
+    float tx, ty;
 
-    // id magic...
-    uint k = threadId.x & (p - 1);
-    uint inAddr = threadId.x;
-    uint outAddr = ((threadId.x - k) << 3) + k;
+    sincos(phase, ty, tx);
+    float t = d.x;
+    d.x = t * tx - d.y * ty;
+    d.y = t * ty + d.y * tx;
+}
 
-    float alpha = -PI*(float)k / (float)(4 * p);
+void TWIDDLE_8(inout float2 D[8], float phase)
+{
+    TWIDDLE(D[4], 1 * phase);
+    TWIDDLE(D[2], 2 * phase);
+    TWIDDLE(D[6], 3 * phase);
+    TWIDDLE(D[1], 4 * phase);
+    TWIDDLE(D[5], 5 * phase);
+    TWIDDLE(D[3], 6 * phase);
+    TWIDDLE(D[7], 7 * phase);
+}
 
-    float2 u[8];
-    float2 v[8];
+StructuredBuffer<float2>	g_SrcData : register(t0);
+RWStructuredBuffer<float2>	g_DstData : register(u0);
 
-    // twiddle and calculations
-    u[0] =                               inputBuf[inAddr + 0*t];
-    u[1] = mul_1(exp_alpha_1(1 * alpha), inputBuf[inAddr + 1*t]);
-    u[2] = mul_1(exp_alpha_1(2 * alpha), inputBuf[inAddr + 2*t]);
-    u[3] = mul_1(exp_alpha_1(3 * alpha), inputBuf[inAddr + 3*t]);
-    u[4] = mul_1(exp_alpha_1(4 * alpha), inputBuf[inAddr + 4*t]);
-    u[5] = mul_1(exp_alpha_1(5 * alpha), inputBuf[inAddr + 5*t]);
-    u[6] = mul_1(exp_alpha_1(6 * alpha), inputBuf[inAddr + 6*t]);
-    u[7] = mul_1(exp_alpha_1(7 * alpha), inputBuf[inAddr + 7*t]);
+[numthreads(COHERENCY_GRANULARITY, 1, 1)]
+void Main(uint3 thread_id : SV_DispatchThreadID)
+{
+    if (thread_id.x >= thread_count)
+        return;
 
-    v[0] = u[0] + u[4];
-    v[4] = mul_p0q4(u[0] - u[4]);
-    v[1] = u[1] + u[5];
-    v[5] = mul_p1q4(u[1] - u[5]);
-    v[2] = u[2] + u[6];
-    v[6] = mul_p2q4(u[2] - u[6]);
-    v[3] = u[3] + u[7];
-    v[7] = mul_p3q4(u[3] - u[7]);
+    // Fetch 8 complex numbers
+    float2 D[8];
 
-    u[0] = v[0] + v[2];
-    u[2] = mul_p0q2(v[0] - v[2]);
-    u[1] = v[1] + v[3];
-    u[3] = mul_p1q2(v[1] - v[3]);
-    u[4] = v[4] + v[6];
-    u[6] = mul_p0q2(v[4] - v[6]);
-    u[5] = v[5] + v[7];
-    u[7] = mul_p1q2(v[5] - v[7]);
+    uint i;
+    uint imod = thread_id & (istride - 1);
+    uint iaddr = ((thread_id - imod) << 3) + imod;
+    for (i = 0; i < 8; i++)
+        D[i] = g_SrcData[iaddr + i * istride];
 
-    outputBuf[outAddr + 0*q] = u[0] + u[1];
-    outputBuf[outAddr + 1*q] = u[4] + u[5];
-    outputBuf[outAddr + 2*q] = u[2] + u[3];
-    outputBuf[outAddr + 3*q] = u[6] + u[7];
-    outputBuf[outAddr + 4*q] = u[0] - u[1];
-    outputBuf[outAddr + 5*q] = u[4] - u[5];
-    outputBuf[outAddr + 6*q] = u[2] - u[3];
-    outputBuf[outAddr + 7*q] = u[6] - u[7];
+    // Math
+    FFT_forward_8(D);
+    uint p = thread_id & (istride - pstride);
+    float phase = phase_base * (float)p;
+    TWIDDLE_8(D, phase);
+
+    // Store the result
+    uint omod = thread_id & (ostride - 1);
+    uint oaddr = ((thread_id - omod) << 3) + omod;
+    g_DstData[oaddr + 0 * ostride] = D[0];
+    g_DstData[oaddr + 1 * ostride] = D[4];
+    g_DstData[oaddr + 2 * ostride] = D[2];
+    g_DstData[oaddr + 3 * ostride] = D[6];
+    g_DstData[oaddr + 4 * ostride] = D[1];
+    g_DstData[oaddr + 5 * ostride] = D[5];
+    g_DstData[oaddr + 6 * ostride] = D[3];
+    g_DstData[oaddr + 7 * ostride] = D[7];
+}
+
+
+[numthreads(COHERENCY_GRANULARITY, 1, 1)]
+void Radix8_1(uint3 thread_id : SV_DispatchThreadID)
+{
+    if(thread_id.x >= thread_count)
+        return;
+
+    // Fetch 8 complex numbers
+    uint i;
+    float2 D[8];
+    uint iaddr = thread_id << 3;
+    for (i = 0; i < 8; i++)
+        D[i] = g_SrcData[iaddr + i];
+
+    // Math
+    FFT_forward_8(D);
+
+    // Store the result
+    uint omod = thread_id & (ostride - 1);
+    uint oaddr = ((thread_id - omod) << 3) + omod;
+    g_DstData[oaddr + 0 * ostride] = D[0];
+    g_DstData[oaddr + 1 * ostride] = D[4];
+    g_DstData[oaddr + 2 * ostride] = D[2];
+    g_DstData[oaddr + 3 * ostride] = D[6];
+    g_DstData[oaddr + 4 * ostride] = D[1];
+    g_DstData[oaddr + 5 * ostride] = D[5];
+    g_DstData[oaddr + 6 * ostride] = D[3];
+    g_DstData[oaddr + 7 * ostride] = D[7];
 }

@@ -80,7 +80,7 @@ void Terrain::Shutdown()
 }
 
 
-ID3D11ShaderResourceView* Terrain::GetTexture()
+ID3D11ShaderResourceView *Terrain::GetTexture()
 {
     return m_pTexture->GetSrv();
 }
@@ -183,7 +183,7 @@ bool Terrain::CalculateNormals()
         }
     }
 
-    // Go through all the vertices and take an average of each face normal 	
+    // Go through all the vertices and take an average of each face normal
     // that the vertex touches to get the averaged normal for that vertex.
     for (int j = 0; j < m_terrainHeight; j++)
     {
@@ -274,7 +274,7 @@ void Terrain::CalculateTextureCoordinates()
             // Store the texture coordinate in the height map.
             m_heightMap[(m_terrainHeight * j) + i].texture.u = tuCoordinate;
             m_heightMap[(m_terrainHeight * j) + i].texture.v = tvCoordinate;
-            // 3dr texture coordinate empty yet
+            // 3rd texture coordinate empty yet
             //m_heightMap[(m_terrainHeight * j) + i].texture.z = 1.0f;
 
             tuCoordinate += incrementValue;
@@ -303,7 +303,7 @@ void Terrain::CalculateTextureCoordinates()
 }
 
 
-bool Terrain::LoadTexture(ID3D11Device* device, WCHAR* filename)
+bool Terrain::LoadTexture(ID3D11Device *device, WCHAR *filename)
 {
     bool result;
 
@@ -406,7 +406,10 @@ bool Terrain::InitializeBuffers()
             // Upper left.
             // Modify the texture coordinates to cover the top edge.
             tv = m_heightMap[index3].texture.v;
-            if (tv == 1.0f) { tv = 0.0f; }
+            if (tv == 1.0f)
+            {
+                tv = 0.0f;
+            }
             m_vertices[index] = m_heightMap[index3];
             m_vertices[index++].texture.v = tv;
 
@@ -414,8 +417,14 @@ bool Terrain::InitializeBuffers()
             // Modify the texture coordinates to cover the top and right edge.
             tu = m_heightMap[index4].texture.u;
             tv = m_heightMap[index4].texture.v;
-            if (tu == 0.0f) { tu = 1.0f; }
-            if (tv == 1.0f) { tv = 0.0f; }
+            if (tu == 0.0f)
+            {
+                tu = 1.0f;
+            }
+            if (tv == 1.0f)
+            {
+                tv = 0.0f;
+            }
             m_vertices[index] = m_heightMap[index4];
             m_vertices[index].texture.u = tu;
             m_vertices[index++].texture.v = tv;
@@ -430,8 +439,14 @@ bool Terrain::InitializeBuffers()
             // Modify the texture coordinates to cover the top and right edge.
             tu = m_heightMap[index4].texture.u;
             tv = m_heightMap[index4].texture.v;
-            if (tu == 0.0f) { tu = 1.0f; }
-            if (tv == 1.0f) { tv = 0.0f; }
+            if (tu == 0.0f)
+            {
+                tu = 1.0f;
+            }
+            if (tv == 1.0f)
+            {
+                tv = 0.0f;
+            }
             m_vertices[index] = m_heightMap[index4];
             m_vertices[index].texture.u = tu;
             m_vertices[index++].texture.v = tv;
@@ -439,7 +454,10 @@ bool Terrain::InitializeBuffers()
             // Bottom right.
             // Modify the texture coordinates to cover the right edge.
             tu = m_heightMap[index2].texture.u;
-            if (tu == 0.0f) { tu = 1.0f; }
+            if (tu == 0.0f)
+            {
+                tu = 1.0f;
+            }
             m_vertices[index] = m_heightMap[index2];
             m_vertices[index++].texture.u = tu;
         }
