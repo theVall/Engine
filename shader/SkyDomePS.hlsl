@@ -28,22 +28,9 @@ float4 Main(PixelInputType input) : SV_TARGET
 
     height = clamp(height, 0.0f, 1.0f);
 
-    float2 tex = input.domePosition.xy;
-    //tex.x += 1.0;
-    //tex.y += 1.0;
-    tex.x /= 12.0f;
-    tex.y /= 6.0f;
+    //outputColor = lerp(centerColor, apexColor, height);
 
-    tex.x += 0.55;
-    tex.y += 0.55;
-
-
-    // Determine the gradient color by interpolating between the apex and center
-    // based on the height of the pixel in the sky dome.
-    outputColor = lerp(centerColor, apexColor, height);
-
-    //outputColor = texSkyDome.Sample(samplerType, tex);
-
+    outputColor = texSkyDome.Sample(samplerType, input.tex);
     outputColor.a = 1.0f;
 
     return outputColor;

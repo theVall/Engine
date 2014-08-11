@@ -342,6 +342,20 @@ void Application::Shutdown()
         m_pSkyDome = 0;
     }
 
+    if (m_pOceanShader)
+    {
+        m_pOceanShader->Shutdown();
+        delete m_pOceanShader;
+        m_pOceanShader = 0;
+    }
+
+    if (m_pOcean)
+    {
+        m_pOcean->Shutdown();
+        delete m_pOcean;
+        m_pOcean = 0;
+    }
+
     if (m_pFont)
     {
         m_pFont->Shutdown();
@@ -419,14 +433,14 @@ void Application::Shutdown()
 
     if (m_pCamera)
     {
-        //delete m_pCamera;
+        delete m_pCamera;
         m_pCamera = 0;
     }
-    // TODO
+
     if (m_pDirect3D)
     {
-        //m_pDirect3D->Shutdown();
-        //delete m_pDirect3D;
+        m_pDirect3D->Shutdown();
+        delete m_pDirect3D;
         m_pDirect3D = 0;
     }
 
@@ -612,6 +626,7 @@ bool Application::RenderGraphics()
                              m_pSkyDome->GetCenterColor(),
                              m_pSkyDomeTex->GetSrv());
     m_pDirect3D->TurnZBufferOn();
+    m_pDirect3D->TurnOnCulling();
 
     // Reset the world matrix.
     m_pDirect3D->GetWorldMatrix(worldMatrix);
@@ -624,8 +639,8 @@ bool Application::RenderGraphics()
                            cameraPosition,
                            m_pLight->GetDirection(),
                            m_pOcean->GetDisplacementMap(),
-                           m_pOcean->GetGradientMap());
-    m_pDirect3D->TurnOnCulling();
+                           m_pOcean->GetGradientMap(),
+                           m_pSkyDomeTex->GetSrv());
 
     m_pFrustum->ConstructFrustum(projectionMatrix, viewMatrix, m_screenDepth);
 

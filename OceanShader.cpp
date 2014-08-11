@@ -228,6 +228,12 @@ bool OceanShader::InitializeShader(ID3D11Device *pDevice,
         return false;
     }
 
+    result = pDevice->CreateSamplerState(&samplerDesc, &m_pSkyDomeSampler);
+    if (FAILED(result))
+    {
+        return false;
+    }
+
     // State blocks
     D3D11_RASTERIZER_DESC rasterDesc;
     rasterDesc.FillMode = D3D11_FILL_SOLID;
@@ -308,6 +314,11 @@ void OceanShader::ShutdownShader()
         m_pGradientSampler->Release();
         m_pGradientSampler = 0;
     }
+    if (m_pSkyDomeSampler)
+    {
+        m_pSkyDomeSampler->Release();
+        m_pSkyDomeSampler = 0;
+    }
     // State blocks
     if (m_pRsStateSolid)
     {
@@ -335,7 +346,8 @@ bool OceanShader::SetShaderParameters(ID3D11DeviceContext *pContext,
                                       const XMFLOAT3 &eyeVec,
                                       const XMFLOAT3 &lightDir,
                                       ID3D11ShaderResourceView *displacementTex,
-                                      ID3D11ShaderResourceView *gradientTex)
+                                      ID3D11ShaderResourceView *gradientTex,
+                                      ID3D11ShaderResourceView *skyDomeTex)
 {
     HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -379,11 +391,11 @@ bool OceanShader::SetShaderParameters(ID3D11DeviceContext *pContext,
     pContext->Unmap(m_perFameBuffer, 0);
     pContext->PSSetConstantBuffers(1, 1, &m_perFameBuffer);
 
-    // Set displacement textures.
-    ID3D11ShaderResourceView *pSrvs[2] = { displacementTex, gradientTex };
+    // Set textures.
+    ID3D11ShaderResourceView *pSrvs[3] = { displacementTex, gradientTex, skyDomeTex };
 
-    pContext->VSSetShaderResources(0, 2, &pSrvs[0]);
-    pContext->PSSetShaderResources(0, 2, &pSrvs[0]);
+    pContext->VSSetShaderResources(0, 3, &pSrvs[0]);
+    pContext->PSSetShaderResources(0, 3, &pSrvs[0]);
 
     return true;
 }
@@ -396,7 +408,8 @@ bool OceanShader::Render(ID3D11DeviceContext *pContext,
                          const XMFLOAT3 &eyeVec,
                          const XMFLOAT3 &lightDir,
                          ID3D11ShaderResourceView *displacementTex,
-                         ID3D11ShaderResourceView *gradientTex)
+                         ID3D11ShaderResourceView *gradientTex,
+                         ID3D11ShaderResourceView *skyDomeTex)
 {
     if (!SetShaderParameters(pContext,
                              worldMatrix,
@@ -405,7 +418,8 @@ bool OceanShader::Render(ID3D11DeviceContext *pContext,
                              eyeVec,
                              lightDir,
                              displacementTex,
-                             gradientTex))
+                             gradientTex,
+                             skyDomeTex))
     {
         return false;
     }
@@ -439,10 +453,16 @@ void OceanShader::RenderShader(ID3D11DeviceContext *pContext)
     //pContext->PSSetShader(m_pWireframePS, NULL, 0);
 
     // Sampler
-    ID3D11SamplerState *vs_samplers[2] = { m_pHeightSampler, m_pGradientSampler };
-    pContext->VSSetSamplers(0, 2, &vs_samplers[0]);
-    ID3D11SamplerState *ps_samplers[2] = { m_pHeightSampler, m_pGradientSampler };
-    pContext->PSSetSamplers(1, 2, &ps_samplers[0]);
+    ID3D11SamplerState *vs_samplers[3] = { m_pHeightSampler,
+                                           m_pGradientSampler,
+                                           m_pSkyDomeSampler
+                                         };
+    pContext->VSSetSamplers(0, 3, &vs_samplers[0]);
+    ID3D11SamplerState *ps_samplers[3] = { m_pHeightSampler,
+                                           m_pGradientSampler,
+                                           m_pSkyDomeSampler
+                                         };
+    pContext->PSSetSamplers(1, 3, &ps_samplers[0]);
 
     // draw call
     pContext->DrawIndexed(m_numIndices, 0, 0);

@@ -148,7 +148,7 @@ bool SkyDomeShader::InitializeShader(ID3D11Device *device,
 
     polygonLayout[1].SemanticName = "TEXCOORD";
     polygonLayout[1].SemanticIndex = 0;
-    polygonLayout[1].Format = DXGI_FORMAT_R32G32_FLOAT;
+    polygonLayout[1].Format = DXGI_FORMAT_R32G32B32_FLOAT;
     polygonLayout[1].InputSlot = 0;
     polygonLayout[1].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
     polygonLayout[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
@@ -190,7 +190,7 @@ bool SkyDomeShader::InitializeShader(ID3D11Device *device,
         return false;
     }
 
-// Setup the description of the gradient constant buffer that is in the pixel shader.
+    // Setup the description of the gradient constant buffer that is in the pixel shader.
     gradientBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
     gradientBufferDesc.ByteWidth = sizeof(GradientBufferType);
     gradientBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;

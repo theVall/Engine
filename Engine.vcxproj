@@ -168,6 +168,9 @@
     <None Include="d3dcompiler_46.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="res\tex\sky1.dds" />
+    <Image Include="res\tex\sky2.dds" />
+    <Image Include="res\tex\sky3.dds" />
     <Image Include="seafloor.dds" />
   </ItemGroup>
   <ItemGroup>

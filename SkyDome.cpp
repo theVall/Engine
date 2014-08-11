@@ -124,10 +124,11 @@ bool SkyDome::InitializeBuffers(ID3D11Device *device)
         vertices[i].position = XMFLOAT4(m_model[i].position.x,
                                         m_model[i].position.y,
                                         m_model[i].position.z,
-                                        1.0);
+                                        1.0f);
         // tex coordinates
-        vertices[i].tex = XMFLOAT2(m_model[i].texture.x,
-                                   m_model[i].texture.y);
+        vertices[i].tex = XMFLOAT3(m_model[i].texture.x,
+                                   m_model[i].texture.y,
+                                   0.0f);
         indices[i] = i;
     }
 

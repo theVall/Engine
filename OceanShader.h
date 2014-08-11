@@ -40,7 +40,8 @@ public:
                 const XMFLOAT3 &eyeVec,
                 const XMFLOAT3 &lightDir,
                 ID3D11ShaderResourceView *displacementTex,
-                ID3D11ShaderResourceView *gradientTex);
+                ID3D11ShaderResourceView *gradientTex,
+                ID3D11ShaderResourceView *skyDomeTex);
 
 
 private:
@@ -57,7 +58,8 @@ private:
                              const XMFLOAT3 &eyeVec,
                              const XMFLOAT3 &lightDir,
                              ID3D11ShaderResourceView *displacementTex,
-                             ID3D11ShaderResourceView *gradientTex);
+                             ID3D11ShaderResourceView *gradientTex,
+                             ID3D11ShaderResourceView *skyDomeTex);
 
     void RenderShader(ID3D11DeviceContext *pContext);
 
@@ -82,6 +84,7 @@ private:
     // Samplers
     ID3D11SamplerState *m_pHeightSampler;
     ID3D11SamplerState *m_pGradientSampler;
+    ID3D11SamplerState *m_pSkyDomeSampler;
 
     // State blocks
     ID3D11RasterizerState *m_pRsStateSolid;

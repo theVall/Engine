@@ -18,7 +18,7 @@ private:
     struct VertexCombined
     {
         XMFLOAT4 position;
-        XMFLOAT2 tex;
+        XMFLOAT3 tex;
     };
 
 public:

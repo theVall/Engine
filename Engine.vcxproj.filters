@@ -244,6 +244,15 @@
     <Image Include="seafloor.dds">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="res\tex\sky2.dds">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\tex\sky1.dds">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\tex\sky3.dds">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Text Include="cube.txt">
