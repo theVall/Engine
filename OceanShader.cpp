@@ -219,7 +219,7 @@ bool OceanShader::InitializeShader(ID3D11Device *pDevice,
         return false;
     }
 
-    samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samplerDesc.Filter = D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
     samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
     samplerDesc.MaxAnisotropy = 8;
     result = pDevice->CreateSamplerState(&samplerDesc, &m_pGradientSampler);
@@ -465,7 +465,7 @@ void OceanShader::RenderShader(ID3D11DeviceContext *pContext)
     pContext->PSSetSamplers(1, 3, &ps_samplers[0]);
 
     // draw call
-    pContext->DrawIndexed(m_numIndices, 0, 0);
+    pContext->DrawIndexedInstanced(m_numIndices, 36, 0, 0, 0);
 
     // Unbind SRVs
     ID3D11ShaderResourceView *pNullSrvs[2] = { NULL, NULL };

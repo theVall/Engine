@@ -163,7 +163,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     }
     m_pLight->SetAmbientColor(0.05f, 0.05f, 0.05f, 1.0f);
     m_pLight->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
-    m_pLight->SetDirection(0.9f, -0.3f, 0.1f);
+    m_pLight->SetDirection(0.83f, -0.35f, 0.38f);
 
     // Create the __frustum__ for culling
     m_pFrustum = new Frustum;
