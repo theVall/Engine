@@ -465,7 +465,7 @@ void OceanShader::RenderShader(ID3D11DeviceContext *pContext)
     pContext->PSSetSamplers(1, 3, &ps_samplers[0]);
 
     // draw call
-    pContext->DrawIndexedInstanced(m_numIndices, 36, 0, 0, 0);
+    pContext->DrawIndexedInstanced(m_numIndices, 49, 0, 0, 0);
 
     // Unbind SRVs
     ID3D11ShaderResourceView *pNullSrvs[2] = { NULL, NULL };

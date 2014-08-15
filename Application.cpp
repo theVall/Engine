@@ -9,7 +9,7 @@ Application::Application()
     m_lockSurfaceCamera = false;
     m_stopAnimation = false;
 
-    m_screenDepth = 2000.0f;
+    m_screenDepth = 2500.0f;
     m_screenNear = 0.1f;
     m_spectatorHeight = 10.0f;
     m_elapsedTime = 0;
@@ -163,9 +163,9 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     }
     m_pLight->SetAmbientColor(0.05f, 0.05f, 0.05f, 1.0f);
     m_pLight->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
-    m_pLight->SetDirection(0.83f, -0.35f, 0.38f);
+    m_pLight->SetDirection(0.2f, -0.33f, 0.3f);
 
-    // Create the __frustum__ for culling
+    // Create the __frustum__ for view frustum culling
     m_pFrustum = new Frustum;
     if (!m_pFrustum)
     {
@@ -287,7 +287,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     }
     Ocean::OceanParameter oceanParams = { 512,                  // map dim
                                           0.0003f,              // time factor
-                                          0.5f,                 // amplitude
+                                          0.4f,                 // amplitude
                                           Vec2f(0.3f, 0.6f),    // wind direction
                                           400.0f,               // wind speed
                                           0.07f,                // wind dependency
@@ -610,7 +610,7 @@ bool Application::RenderGraphics()
 
     // Sky dome calculations
     cameraPosition = m_pCamera->GetPosition();
-    worldMatrix = XMMatrixTranslation(cameraPosition.x, cameraPosition.y, cameraPosition.z);
+    worldMatrix = XMMatrixTranslation(cameraPosition.x, cameraPosition.y - 0.25f, cameraPosition.z);
 
     m_pDirect3D->TurnOffCulling();
     m_pDirect3D->TurnZBufferOff();
