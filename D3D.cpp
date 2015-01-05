@@ -3,13 +3,13 @@
 
 D3D::D3D(void)
 {
-    m_swapChain                 = 0;
-    m_device                    = 0;
-    m_deviceContext             = 0;
-    m_renderTargetView          = 0;
-    m_depthStencilBuffer        = 0;
-    m_depthStencilState         = 0;
-    m_depthStencilView          = 0;
+    m_swapChain            = 0;
+    m_device               = 0;
+    m_deviceContext        = 0;
+    m_renderTargetView     = 0;
+    m_depthStencilBuffer   = 0;
+    m_depthStencilState    = 0;
+    m_depthStencilView     = 0;
 
     m_rasterStateSolid     = 0;
     m_rasterStateWireFrame = 0;
@@ -423,71 +423,17 @@ void D3D::Shutdown()
         m_swapChain->SetFullscreenState(false, NULL);
     }
 
-    if (m_depthDisabledStencilState)
-    {
-        m_depthDisabledStencilState->Release();
-        m_depthDisabledStencilState = 0;
-    }
-
-    if (m_rasterStateSolid)
-    {
-        m_rasterStateSolid->Release();
-        m_rasterStateSolid = 0;
-    }
-
-    if (m_rasterStateWireFrame)
-    {
-        m_rasterStateWireFrame->Release();
-        m_rasterStateWireFrame = 0;
-    }
-
-    if (m_rasterStateNoCulling)
-    {
-        m_rasterStateNoCulling->Release();
-        m_rasterStateNoCulling = 0;
-    }
-
-    if (m_depthStencilView)
-    {
-        m_depthStencilView->Release();
-        m_depthStencilView = 0;
-    }
-
-    if (m_depthStencilState)
-    {
-        m_depthStencilState->Release();
-        m_depthStencilState = 0;
-    }
-
-    if (m_depthStencilBuffer)
-    {
-        m_depthStencilBuffer->Release();
-        m_depthStencilBuffer = 0;
-    }
-
-    if (m_renderTargetView)
-    {
-        m_renderTargetView->Release();
-        m_renderTargetView = 0;
-    }
-
-    if (m_deviceContext)
-    {
-        m_deviceContext->Release();
-        m_deviceContext = 0;
-    }
-
-    if (m_device)
-    {
-        m_device->Release();
-        m_device = 0;
-    }
-
-    if (m_swapChain)
-    {
-        m_swapChain->Release();
-        m_swapChain = 0;
-    }
+    SafeRelease(m_depthDisabledStencilState);
+    SafeRelease(m_rasterStateSolid);
+    SafeRelease(m_rasterStateWireFrame);
+    SafeRelease(m_rasterStateNoCulling);
+    SafeRelease(m_depthStencilView);
+    SafeRelease(m_depthStencilState);
+    SafeRelease(m_depthStencilBuffer);
+    SafeRelease(m_renderTargetView);
+    SafeRelease(m_deviceContext);
+    SafeRelease(m_device);
+    SafeRelease(m_swapChain);
 
     return;
 }
@@ -623,4 +569,17 @@ void D3D::TurnOffCulling()
     m_deviceContext->RSSetState(m_rasterStateNoCulling);
 
     return;
+}
+
+
+void D3D::SetFullscreen(bool fullscreen)
+{
+    if (fullscreen)
+    {
+        m_swapChain->SetFullscreenState(true, NULL);
+    }
+    else
+    {
+        m_swapChain->SetFullscreenState(false, NULL);
+    }
 }

@@ -270,75 +270,23 @@ bool OceanShader::InitializeShader(ID3D11Device *pDevice,
 void OceanShader::ShutdownShader()
 {
     // D3D Buffer
-    if (m_pMeshIB)
-    {
-        m_pMeshIB->Release();
-        m_pMeshIB = 0;
-    }
-    if (m_pMeshVB)
-    {
-        m_pMeshVB->Release();
-        m_pMeshVB = 0;
-    }
-    if (m_matrixBuffer)
-    {
-        m_matrixBuffer->Release();
-        m_matrixBuffer = 0;
-    }
-    if (m_perFameBuffer)
-    {
-        m_perFameBuffer->Release();
-        m_perFameBuffer = 0;
-    }
+    SafeRelease(m_pMeshIB);
+    SafeRelease(m_pMeshVB);
+    SafeRelease(m_matrixBuffer);
+    SafeRelease(m_perFameBuffer);
     // Shader
-    if (m_pOceanSurfaceVS)
-    {
-        m_pOceanSurfaceVS->Release();
-        m_pOceanSurfaceVS = 0;
-    }
-    if (m_pOceanSurfacePS)
-    {
-        m_pOceanSurfacePS->Release();
-        m_pOceanSurfacePS = 0;
-    }
-    if (m_pWireframePS)
-    {
-        m_pWireframePS->Release();
-        m_pWireframePS = 0;
-    }
+    SafeRelease(m_pOceanSurfaceVS);
+    SafeRelease(m_pOceanSurfacePS);
+    SafeRelease(m_pWireframePS);
     // Sampler
-    if (m_pHeightSampler)
-    {
-        m_pHeightSampler->Release();
-        m_pHeightSampler = 0;
-    }
-    if (m_pGradientSampler)
-    {
-        m_pGradientSampler->Release();
-        m_pGradientSampler = 0;
-    }
-    if (m_pSkyDomeSampler)
-    {
-        m_pSkyDomeSampler->Release();
-        m_pSkyDomeSampler = 0;
-    }
+    SafeRelease(m_pHeightSampler);
+    SafeRelease(m_pGradientSampler);
+    SafeRelease(m_pSkyDomeSampler);
     // State blocks
-    if (m_pRsStateSolid)
-    {
-        m_pRsStateSolid->Release();
-        m_pRsStateSolid = 0;
-    }
-    if (m_pRsStateWireframe)
-    {
-        m_pRsStateWireframe->Release();
-        m_pRsStateWireframe = 0;
-    }
+    SafeRelease(m_pRsStateSolid);
+    SafeRelease(m_pRsStateWireframe);
     // Layout
-    if (m_layout)
-    {
-        m_layout->Release();
-        m_layout = 0;
-    }
+    SafeRelease(m_layout);
 }
 
 

@@ -67,6 +67,26 @@ public:
 private:
     bool SetGuiParams();
 
+    // Safe shutdown/delete handler
+    template<typename T> void SafeShutdown(T *&obj)
+    {
+        if (obj)
+        {
+            obj->Shutdown();
+            delete obj;
+            obj = NULL;
+        }
+    }
+
+    template<typename T> void SafeDelete(T *&obj)
+    {
+        if (obj)
+        {
+            delete obj;
+            obj = NULL;
+        }
+    }
+
 private:
     //  Member variables
     bool m_fullScreen;

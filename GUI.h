@@ -19,6 +19,7 @@ public:
 
     bool AddFloatVar(const char *name, float &var, const char *params);
     bool AddBoolVar(const char *name, bool &var);
+    bool AddSeperator(const char *name, const char *params);
 
     void RenderGUI();
 

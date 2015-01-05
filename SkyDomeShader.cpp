@@ -233,41 +233,12 @@ bool SkyDomeShader::InitializeShader(ID3D11Device *device,
 
 void SkyDomeShader::ShutdownShader()
 {
-    if (m_pSkySampler)
-    {
-        m_pSkySampler->Release();
-        m_pSkySampler = 0;
-    }
-
-    if (m_gradientBuffer)
-    {
-        m_gradientBuffer->Release();
-        m_gradientBuffer = 0;
-    }
-
-    if (m_matrixBuffer)
-    {
-        m_matrixBuffer->Release();
-        m_matrixBuffer = 0;
-    }
-
-    if (m_layout)
-    {
-        m_layout->Release();
-        m_layout = 0;
-    }
-
-    if (m_pixelShader)
-    {
-        m_pixelShader->Release();
-        m_pixelShader = 0;
-    }
-
-    if (m_vertexShader)
-    {
-        m_vertexShader->Release();
-        m_vertexShader = 0;
-    }
+    SafeRelease(m_pSkySampler);
+    SafeRelease(m_gradientBuffer);
+    SafeRelease(m_matrixBuffer);
+    SafeRelease(m_layout);
+    SafeRelease(m_pixelShader);
+    SafeRelease(m_vertexShader);
 
     return;
 }

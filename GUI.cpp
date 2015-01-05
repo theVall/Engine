@@ -69,6 +69,19 @@ bool GUI::AddBoolVar(const char *name, bool &var)
 }
 
 
+bool GUI::AddSeperator(const char *name, const char *params)
+{
+    if (!m_pTweakBar)
+    {
+        return false;
+    }
+
+    TwAddSeparator(m_pTweakBar, name, params);
+
+    return true;
+}
+
+
 void GUI::RenderGUI()
 {
     TwDraw();

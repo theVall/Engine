@@ -220,47 +220,13 @@ bool TerrainShader::InitializeShader(ID3D11Device *device,
 
 void TerrainShader::ShutdownShader()
 {
-    if (m_pLightBuffer)
-    {
-        m_pLightBuffer->Release();
-        m_pLightBuffer = 0;
-    }
-
-    if (m_pCameraBuffer)
-    {
-        m_pCameraBuffer->Release();
-        m_pCameraBuffer = 0;
-    }
-
-    if (m_matrixBuffer)
-    {
-        m_matrixBuffer->Release();
-        m_matrixBuffer = 0;
-    }
-
-    if (m_sampleState)
-    {
-        m_sampleState->Release();
-        m_sampleState = 0;
-    }
-
-    if (m_layout)
-    {
-        m_layout->Release();
-        m_layout = 0;
-    }
-
-    if (m_pixelShader)
-    {
-        m_pixelShader->Release();
-        m_pixelShader = 0;
-    }
-
-    if (m_vertexShader)
-    {
-        m_vertexShader->Release();
-        m_vertexShader = 0;
-    }
+    SafeRelease(m_pLightBuffer);
+    SafeRelease(m_pCameraBuffer);
+    SafeRelease(m_matrixBuffer);
+    SafeRelease(m_sampleState);
+    SafeRelease(m_layout);
+    SafeRelease(m_pixelShader);
+    SafeRelease(m_vertexShader);
 
     return;
 }

@@ -58,6 +58,15 @@ protected:
                                   WCHAR *psFilename) = 0;
     virtual void ShutdownShader() = 0;
 
+    template<typename T> void SafeRelease(T *&obj)
+    {
+        if (obj)
+        {
+            obj->Release();
+            obj = NULL;
+        }
+    }
+
 protected:
     ID3D11VertexShader *m_vertexShader;
     ID3D11PixelShader *m_pixelShader;

@@ -105,7 +105,6 @@
     <ClInclude Include="Frustum.h" />
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="GUI.h" />
-    <ClInclude Include="GuiFloat.h" />
     <ClInclude Include="include\AntTweakBar.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="Ocean.h" />
@@ -148,7 +147,6 @@
     <ClCompile Include="Frustum.cpp" />
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="GUI.cpp" />
-    <ClCompile Include="GuiFloat.cpp" />
     <ClCompile Include="Ocean.cpp" />
     <ClCompile Include="OceanShader.cpp" />
     <ClCompile Include="ShaderProgram.cpp" />

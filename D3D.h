@@ -51,6 +51,8 @@ public:
     void TurnOnCulling();
     void TurnOffCulling();
 
+    void SetFullscreen(bool fullscreen);
+
     // guarantee align 16 for heap allocations
     void *operator new(size_t size) throw()
     {
@@ -63,6 +65,15 @@ public:
     }
 
 private:
+
+    template<typename T> void SafeRelease(T *&obj)
+    {
+        if (obj)
+        {
+            obj->Release();
+            obj = NULL;
+        }
+    }
 
     bool m_vSyncEnabled;
     bool m_wireFrameEnabled;

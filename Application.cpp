@@ -348,135 +348,27 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
 
 void Application::Shutdown()
 {
-    if (m_pSkyDomeShader)
-    {
-        m_pSkyDomeShader->Shutdown();
-        delete m_pSkyDomeShader;
-        m_pSkyDomeShader = 0;
-    }
+    SafeShutdown(m_pSkyDomeShader);
+    SafeShutdown(m_pSkyDome);
+    SafeShutdown(m_pOceanShader);
+    SafeShutdown(m_pOcean);
+    SafeShutdown(m_pFont);
+    SafeShutdown(m_pQuadTree);
+    SafeShutdown(m_pTerrainShader);
+    SafeShutdown(m_pTerrain);
+    SafeShutdown(m_pDirect3D);
+    SafeShutdown(m_pInput);
+    SafeShutdown(m_pGUI);
 
-    if (m_pSkyDome)
-    {
-        m_pSkyDome->Shutdown();
-        delete m_pSkyDome;
-        m_pSkyDome = 0;
-    }
-
-    if (m_pOceanShader)
-    {
-        m_pOceanShader->Shutdown();
-        delete m_pOceanShader;
-        m_pOceanShader = 0;
-    }
-
-    if (m_pOcean)
-    {
-        m_pOcean->Shutdown();
-        delete m_pOcean;
-        m_pOcean = 0;
-    }
-
-    if (m_pFont)
-    {
-        m_pFont->Shutdown();
-        delete m_pFont;
-        m_pFont = 0;
-    }
-
-    if (m_pProfiler)
-    {
-        delete m_pProfiler;
-        m_pProfiler = 0;
-    }
-
-    if (m_pPosition)
-    {
-        delete m_pPosition;
-        m_pPosition = 0;
-    }
-
-    if (m_pTimer)
-    {
-        delete m_pTimer;
-        m_pTimer = 0;
-    }
-
-    if (m_pGroundTex)
-    {
-        delete m_pGroundTex;
-        m_pGroundTex = 0;
-    }
-    if (m_pSkyDomeTex)
-    {
-        delete m_pSkyDomeTex;
-        m_pSkyDomeTex = 0;
-    }
-
-    if (m_pQuadTree)
-    {
-        m_pQuadTree->Shutdown();
-        delete m_pQuadTree;
-        m_pQuadTree = 0;
-    }
-
-    if (m_pFrustum)
-    {
-        delete m_pFrustum;
-        m_pFrustum = 0;
-    }
-
-    if (m_pLight)
-    {
-        delete m_pLight;
-        m_pLight = 0;
-    }
-
-    if (m_pTerrainShader)
-    {
-        m_pTerrainShader->Shutdown();
-        delete m_pTerrainShader;
-        m_pTerrainShader = 0;
-    }
-
-    if (m_pTerrain)
-    {
-        m_pTerrain->Shutdown();
-        delete m_pTerrain;
-        m_pTerrain = 0;
-    }
-
-    if (m_pUtil)
-    {
-        delete m_pUtil;
-        m_pUtil = 0;
-    }
-
-    if (m_pCamera)
-    {
-        delete m_pCamera;
-        m_pCamera = 0;
-    }
-
-    if (m_pDirect3D)
-    {
-        m_pDirect3D->Shutdown();
-        delete m_pDirect3D;
-        m_pDirect3D = 0;
-    }
-
-    if (m_pInput)
-    {
-        m_pInput->Shutdown();
-        delete m_pInput;
-        m_pInput = 0;
-    }
-
-    if (m_pGUI)
-    {
-        m_pGUI->Shutdown();
-        delete m_pGUI;
-        m_pGUI = 0;
-    }
+    SafeDelete(m_pProfiler);
+    SafeDelete(m_pPosition);
+    SafeDelete(m_pTimer);
+    SafeDelete(m_pGroundTex);
+    SafeDelete(m_pSkyDomeTex);
+    SafeDelete(m_pFrustum);
+    SafeDelete(m_pLight);
+    SafeDelete(m_pUtil);
+    SafeDelete(m_pCamera);
 
     return;
 }
@@ -614,6 +506,7 @@ bool Application::HandleInput(float frameTime)
     // Handle GUI parameters
     m_pDirect3D->SetWireframe(m_wireframe);
     m_pOcean->SetTimeScale(m_oceanTimeScale);
+    m_pDirect3D->SetFullscreen(m_fullScreen);
 
     return true;
 }
@@ -771,13 +664,23 @@ bool Application::SetGuiParams()
 {
     // not working yet, re-initialization of D3D required??
     //m_pGUI->AddBoolVar("vSync", m_vSync);
-    //m_pGUI->AddBoolVar("FullScreen", m_fullScreen);
+
+    // TODO: Does not make sense as long as window is not resizable
+    //if (!m_pGUI->AddBoolVar("FullScreen", m_fullScreen))
+    //{
+    //    return false;
+    //}
 
     if (!m_pGUI->AddBoolVar("Pause", m_stopAnimation))
     {
         return false;
     }
     if (!m_pGUI->AddBoolVar("Wireframe", m_wireframe))
+    {
+        return false;
+    }
+
+    if (!m_pGUI->AddSeperator(NULL, NULL))
     {
         return false;
     }
@@ -791,11 +694,16 @@ bool Application::SetGuiParams()
         return false;
     }
 
-    if (!m_pGUI->AddFloatVar("AnimationSpeed", m_oceanTimeScale, " min=0 max=0.005 step=0.00001 "))
+    // Ocean Settings
+    if (!m_pGUI->AddFloatVar("AnimationSpeed",
+                             m_oceanTimeScale,
+                             "min=0 max=0.005 step=0.00001 group='OceanSettings'"))
     {
         return false;
     }
-    if (!m_pGUI->AddFloatVar("SeaLevel", m_oceanHeightOffset, " min=-150 max=150 step=1 "))
+    if (!m_pGUI->AddFloatVar("SeaLevel",
+                             m_oceanHeightOffset,
+                             "min=-150 max=150 step=1 group='OceanSettings'"))
     {
         return false;
     }
