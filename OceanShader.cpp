@@ -161,14 +161,9 @@ bool OceanShader::InitializeShader(ID3D11Device *pDevice,
     }
 
     // clean up shader buffers
-    pBufferVS->Release();
-    pBufferVS = 0;
-
-    pBufferPS->Release();
-    pBufferPS = 0;
-
-    pBufferWireframePS->Release();
-    pBufferWireframePS = 0;
+    SafeRelease(pBufferVS);
+    SafeRelease(pBufferPS);
+    SafeRelease(pBufferWireframePS);
 
     // Constant buffer
     // Constants
@@ -411,16 +406,16 @@ void OceanShader::RenderShader(ID3D11DeviceContext *pContext, bool wireframe)
     }
 
     // Sampler
-    ID3D11SamplerState *vs_samplers[3] = { m_pHeightSampler,
-                                           m_pGradientSampler,
-                                           m_pSkyDomeSampler
-                                         };
-    pContext->VSSetSamplers(0, 3, &vs_samplers[0]);
-    ID3D11SamplerState *ps_samplers[3] = { m_pHeightSampler,
-                                           m_pGradientSampler,
-                                           m_pSkyDomeSampler
-                                         };
-    pContext->PSSetSamplers(1, 3, &ps_samplers[0]);
+    ID3D11SamplerState *vsSamplers[3] = { m_pHeightSampler,
+                                          m_pGradientSampler,
+                                          m_pSkyDomeSampler
+                                        };
+    pContext->VSSetSamplers(0, 3, &vsSamplers[0]);
+    ID3D11SamplerState *psSamplers[3] = { m_pHeightSampler,
+                                          m_pGradientSampler,
+                                          m_pSkyDomeSampler
+                                        };
+    pContext->PSSetSamplers(1, 3, &psSamplers[0]);
 
     // draw call
     pContext->DrawIndexedInstanced(m_numIndices, m_tileCount, 0, 0, 0);
