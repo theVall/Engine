@@ -50,7 +50,7 @@ void System::Run()
 {
     MSG msg;
     bool isRunning = true;
-    
+
     ZeroMemory(&msg, sizeof(msg));
 
     while (isRunning)
@@ -95,9 +95,31 @@ void System::Shutdown()
 }
 
 
-LRESULT CALLBACK System::MessageHandler(HWND hwnd, UINT umsg, WPARAM wparam, LPARAM lparam)
+LRESULT CALLBACK System::MessageHandler(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
 {
-    return DefWindowProc(hwnd, umsg, wparam, lparam);
+    // first handle AntTweakBar events
+    if (TwEventWin(hwnd, umsg, wParam, lParam))
+    {
+        return 0;
+    }
+
+    switch (umsg)
+    {
+    case WM_LBUTTONDOWN:
+    {
+        m_Application->SetLeftMouseDown(true);
+        while (ShowCursor(false) >= 0);
+        break;
+    }
+    case WM_LBUTTONUP:
+    {
+        m_Application->SetLeftMouseDown(false);
+        ShowCursor(true);
+        break;
+    }
+    }
+
+    return DefWindowProc(hwnd, umsg, wParam, lParam);
 }
 
 
@@ -116,7 +138,7 @@ bool System::ProcessFrame()
 }
 
 
-void System::InitializeWindows(int& screenWidth, int& screenHeight)
+void System::InitializeWindows(int &screenWidth, int &screenHeight)
 {
     WNDCLASSEX wc;
     DEVMODE dmScreenSettings;
@@ -178,24 +200,24 @@ void System::InitializeWindows(int& screenWidth, int& screenHeight)
 
     //  Create the window with the screen settings and get the handle to it.
     m_hwnd = CreateWindowEx(WS_EX_APPWINDOW,
-                m_applicationName, 
-                m_applicationName, 
-                WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP | WS_CAPTION | WS_SYSMENU,
-                posX,
-                posY,
-                screenWidth,
-                screenHeight,
-                NULL,
-                NULL,
-                m_hinstance,
-                NULL);
+                            m_applicationName,
+                            m_applicationName,
+                            WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP | WS_CAPTION | WS_SYSMENU,
+                            posX,
+                            posY,
+                            screenWidth,
+                            screenHeight,
+                            NULL,
+                            NULL,
+                            m_hinstance,
+                            NULL);
 
     //  Bring the window up on the screen and set it as main focus.
     ShowWindow(m_hwnd, SW_SHOW);
     SetForegroundWindow(m_hwnd);
     SetFocus(m_hwnd);
 
-    ShowCursor(false);
+    ShowCursor(true);
 
     return;
 }
@@ -229,22 +251,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM lparam)
 {
     switch(umessage)
     {
-        case WM_DESTROY:
-        {
-            PostQuitMessage(0);
-            return 0;
-        }
+    case WM_DESTROY:
+    {
+        PostQuitMessage(0);
+        return 0;
+    }
 
-        case WM_CLOSE:
-        {
-            PostQuitMessage(0);
-            return 0;
-        }
+    case WM_CLOSE:
+    {
+        PostQuitMessage(0);
+        return 0;
+    }
 
-        //  Pass all other messages to the message handler in the system class.
-        default:
-        {
-            return ApplicationHandle->MessageHandler(hwnd, umessage, wparam, lparam);
-        }
+    //  Pass all other messages to the message handler in the system class.
+    default:
+    {
+        return ApplicationHandle->MessageHandler(hwnd, umessage, wparam, lparam);
+    }
     }
 }

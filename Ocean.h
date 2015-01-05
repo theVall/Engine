@@ -59,6 +59,8 @@ public:
     ID3D11ShaderResourceView *GetGradientMap();
 
     const OceanParameter &GetParameters();
+    void SetTimeScale(float newTimeScale);
+    void SetChoppyScale(float newScale);
 
 private:
 
@@ -178,9 +180,5 @@ private:
     // constant buffers
     ID3D11Buffer *m_pImmutableConstBuf;
     ID3D11Buffer *m_pPerFrameConstBuf;
-
-    // FFT
-    //
-    // CSFFT512x512_Plan m_fftPlan;
 };
 

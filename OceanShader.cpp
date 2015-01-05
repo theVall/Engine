@@ -27,6 +27,9 @@ bool OceanShader::InitializeShader(ID3D11Device *pDevice,
     D3D11_INPUT_ELEMENT_DESC polygonLayout[1];
     unsigned int numElements;
 
+    // number of ocean tiles to be drawn instanced
+    m_tileCount = 49;
+
     // D3D buffers
     if (!CreateSurfaceVertices(pDevice))
     {
@@ -409,7 +412,8 @@ bool OceanShader::Render(ID3D11DeviceContext *pContext,
                          const XMFLOAT3 &lightDir,
                          ID3D11ShaderResourceView *displacementTex,
                          ID3D11ShaderResourceView *gradientTex,
-                         ID3D11ShaderResourceView *skyDomeTex)
+                         ID3D11ShaderResourceView *skyDomeTex,
+                         bool wireframe)
 {
     if (!SetShaderParameters(pContext,
                              worldMatrix,
@@ -434,23 +438,29 @@ bool OceanShader::Render(ID3D11DeviceContext *pContext,
     pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
     // Render
-    RenderShader(pContext);
+    RenderShader(pContext, wireframe);
 
     return true;
 }
 
 
-void OceanShader::RenderShader(ID3D11DeviceContext *pContext)
+void OceanShader::RenderShader(ID3D11DeviceContext *pContext, bool wireframe)
 {
-    //pContext->RSSetState(m_pRsStateWireframe);
 
     // Set the vertex input layout.
     pContext->IASetInputLayout(m_layout);
 
     // Set the vertex and pixel shaders.
     pContext->VSSetShader(m_pOceanSurfaceVS, NULL, 0);
-    pContext->PSSetShader(m_pOceanSurfacePS, NULL, 0);
-    //pContext->PSSetShader(m_pWireframePS, NULL, 0);
+    if (!wireframe)
+    {
+        pContext->PSSetShader(m_pOceanSurfacePS, NULL, 0);
+    }
+    else
+    {
+        pContext->RSSetState(m_pRsStateWireframe);
+        pContext->PSSetShader(m_pWireframePS, NULL, 0);
+    }
 
     // Sampler
     ID3D11SamplerState *vs_samplers[3] = { m_pHeightSampler,
@@ -465,7 +475,7 @@ void OceanShader::RenderShader(ID3D11DeviceContext *pContext)
     pContext->PSSetSamplers(1, 3, &ps_samplers[0]);
 
     // draw call
-    pContext->DrawIndexedInstanced(m_numIndices, 49, 0, 0, 0);
+    pContext->DrawIndexedInstanced(m_numIndices, m_tileCount, 0, 0, 0);
 
     // Unbind SRVs
     ID3D11ShaderResourceView *pNullSrvs[2] = { NULL, NULL };

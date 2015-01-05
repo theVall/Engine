@@ -587,6 +587,19 @@ void D3D::ToggleWireframe()
 {
     if (!m_wireFrameEnabled)
     {
+        SetWireframe(true);
+    }
+    else
+    {
+        SetWireframe(false);
+    }
+}
+
+
+void D3D::SetWireframe(bool wireframe)
+{
+    if (wireframe)
+    {
         m_deviceContext->RSSetState(m_rasterStateWireFrame);
         m_wireFrameEnabled = true;
     }
@@ -596,7 +609,6 @@ void D3D::ToggleWireframe()
         m_wireFrameEnabled = false;
     }
 }
-
 
 void D3D::TurnOnCulling()
 {

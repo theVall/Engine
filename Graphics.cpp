@@ -32,14 +32,9 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 {
     bool success = false;
 
-    // setup for 16 bit alignment used by XMMATH for SSE instruction support
-    void* ptr = 0;
-    size_t alignment = 16;
-    size_t objSize = sizeof(D3D);
 
     // Create D3D window object.
-    ptr = _aligned_malloc(objSize, alignment);
-    m_D3D = new(ptr) D3D();
+    m_D3D = new D3D();
     if(!m_D3D)
     {
         return false;
@@ -58,8 +53,7 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd)
     }
 
     // Create camera and set initial position.
-    ptr = _aligned_malloc(objSize, alignment);
-    m_Camera = new(ptr) Camera();
+    m_Camera = new Camera();
     if (!m_Camera)
     {
         return false;
@@ -197,7 +191,7 @@ bool Graphics::Render(float rotation)
     m_Camera->GetViewMatrix(viewMatrix);
     m_D3D->GetProjectionMatrix(projectionMatrix);
 
-    // Rotation 
+    // Rotation
     worldMatrix = XMMatrixMultiply(XMMatrixRotationY(rotation), worldMatrix);
     worldMatrix = XMMatrixMultiply(XMMatrixRotationX(rotation), worldMatrix);
 

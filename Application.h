@@ -21,6 +21,7 @@
 #include "SkyDomeShader.h"
 #include "Ocean.h"
 #include "OceanShader.h"
+#include "GUI.h"
 
 //
 // Wrapper class for terrain application.
@@ -38,7 +39,7 @@ public:
     ~Application(void);
 
     //  Initialization
-    bool Initialize(HWND, int, int);
+    bool Initialize(HWND hwnd, int screenWidth, int screenHeight);
 
     //  Safely destroy graphics class.
     void Shutdown();
@@ -52,13 +53,19 @@ public:
     // Handle user input.
     bool HandleInput(float);
 
-    bool drawText(ID3D11Device *, ID3D11DeviceContext *, IDXGISwapChain *);
+    bool drawText(ID3D11Device *pDevice, ID3D11DeviceContext *pContext, IDXGISwapChain *pSwapChain);
 
-    //  Getter methods
+    // Getter methods
     bool IsFullScreen();
     bool IsVsync();
     float GetScreenDepth();
     float GetScreenNear();
+
+    // Setter
+    void SetLeftMouseDown(bool state);
+
+private:
+    bool SetGuiParams();
 
 private:
     //  Member variables
@@ -66,6 +73,16 @@ private:
     bool m_vSync;
     bool m_lockSurfaceCamera;
     bool m_stopAnimation;
+    bool m_leftMouseDown;
+    bool m_wireframe;
+
+    // draw object bools
+    bool m_drawSkyDome;
+    bool m_drawOcean;
+    bool m_drawTerrain;
+
+    float m_oceanTimeScale;
+    float m_oceanHeightOffset;
 
     float m_screenDepth;
     float m_screenNear;
@@ -94,6 +111,7 @@ private:
     SkyDomeShader *m_pSkyDomeShader;
     Ocean *m_pOcean;
     OceanShader *m_pOceanShader;
+    GUI *m_pGUI;
 
     ID3D11RenderTargetView *pNullRTV;
 };

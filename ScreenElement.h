@@ -22,13 +22,13 @@ public:
     virtual void Shutdown() = 0;
 
     int GetIndexCount();
-    ID3D11ShaderResourceView* GetTexture();
+    ID3D11ShaderResourceView *GetTexture();
 
 protected:
     //
     // Methods to load a texture from file.
     //
-    bool LoadTexture(ID3D11Device *, WCHAR *);
+    bool LoadTexture(ID3D11Device *pDevice, WCHAR *pName);
     //
     // Methods to release a texture safely.
     //
@@ -36,7 +36,7 @@ protected:
     //
     // Method for setting an index buffer.
     //
-    bool SetIndexBuffer(ID3D11Device *, unsigned long *);
+    bool SetIndexBuffer(ID3D11Device *pDevice, unsigned long *pIndices);
 
 
 private:

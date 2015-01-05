@@ -15,11 +15,11 @@ public:
 
     bool Initialize(HWND, int, int);
     void Shutdown();
-    
+
     // Get addresses to absolute mouse positions.
     void GetMouseLocation(int &mouseX, int &mouseY);
     // Get addresses to mouse movement delta, relative to last frame.
-    void GetMouseLocationChage(int &dX, int &dY);
+    void GetMouseLocationChange(int &dX, int &dY);
     // Get the mouse coordinates as POINT struct.
     POINT GetMousePoint();
 

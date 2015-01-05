@@ -4,7 +4,6 @@
 
 //  own includes
 #include <windows.h>
-#include "Input.h"
 #include "Graphics.h"
 #include "Application.h"
 
@@ -19,14 +18,14 @@ public:
     System(void);
 
     //  Copy constructor: Nothing done here.
-    System(const System&);
+    System(const System &);
 
     //  Destructor: Nothing done here.
     ~System(void);
 
-    //  
+    //
     bool Initialize(void);
-    
+
     //  Calls application processing in a loop.
     void Run(void);
 
@@ -43,7 +42,7 @@ private:
     bool ProcessFrame();
 
     //  Build the Window for rendering to.
-    void InitializeWindows(int&, int&);
+    void InitializeWindows(int &, int &);
 
     //  Safely destroy windows.
     void ShutdownWindows();

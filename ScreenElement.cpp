@@ -20,13 +20,13 @@ int ScreenElement::GetIndexCount()
 }
 
 
-ID3D11ShaderResourceView* ScreenElement::GetTexture()
+ID3D11ShaderResourceView *ScreenElement::GetTexture()
 {
     return m_pTexture->GetSrv();
 }
 
 
-bool ScreenElement::LoadTexture(ID3D11Device* device, WCHAR* filename)
+bool ScreenElement::LoadTexture(ID3D11Device *device, WCHAR *filename)
 {
     bool result;
 
@@ -59,7 +59,7 @@ void ScreenElement::ReleaseTexture()
 }
 
 
-bool ScreenElement::SetIndexBuffer(ID3D11Device* device, unsigned long* indices)
+bool ScreenElement::SetIndexBuffer(ID3D11Device *device, unsigned long *indices)
 {
     D3D11_BUFFER_DESC indexBufferDesc;
     D3D11_SUBRESOURCE_DATA indexData;

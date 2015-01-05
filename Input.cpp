@@ -23,8 +23,8 @@ bool Input::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     m_screenWidth = screenWidth;
     m_screenHeight = screenHeight;
 
-    m_mousePoint.x = 400;
-    m_mousePoint.y = 300;
+    m_mousePoint.x = screenWidth / 2;
+    m_mousePoint.y = screenHeight / 2;
 
     return true;
 }
@@ -43,7 +43,7 @@ bool Input::ReadKeyboard()
 
 bool Input::ReadMouse()
 {
-    bool result;
+    BOOL result;
     result = GetCursorPos(&m_mousePoint);
     if (!result)
     {
@@ -54,6 +54,14 @@ bool Input::ReadMouse()
     {
         return false;
     }
+
+    RECT rc;
+    GetWindowRect(m_hwnd, &rc);
+
+    // Clip cursor to DX window
+    RECT *pRc = &rc;
+    ClipCursor(pRc);
+
     return true;
 }
 
@@ -66,7 +74,7 @@ void Input::GetMouseLocation(int &mouseX, int &mouseY)
 }
 
 
-void Input::GetMouseLocationChage(int &dX, int &dY)
+void Input::GetMouseLocationChange(int &dX, int &dY)
 {
     POINT lastMousePoint = m_mousePoint;
 
@@ -80,5 +88,6 @@ void Input::GetMouseLocationChage(int &dX, int &dY)
 
 POINT Input::GetMousePoint()
 {
+    ReadMouse();
     return m_mousePoint;
 }

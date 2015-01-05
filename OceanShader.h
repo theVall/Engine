@@ -41,7 +41,8 @@ public:
                 const XMFLOAT3 &lightDir,
                 ID3D11ShaderResourceView *displacementTex,
                 ID3D11ShaderResourceView *gradientTex,
-                ID3D11ShaderResourceView *skyDomeTex);
+                ID3D11ShaderResourceView *skyDomeTex,
+                bool wireframe);
 
 
 private:
@@ -59,9 +60,10 @@ private:
                              const XMFLOAT3 &lightDir,
                              ID3D11ShaderResourceView *displacementTex,
                              ID3D11ShaderResourceView *gradientTex,
-                             ID3D11ShaderResourceView *skyDomeTex);
+                             ID3D11ShaderResourceView *skyDomeTex
+                            );
 
-    void RenderShader(ID3D11DeviceContext *pContext);
+    void RenderShader(ID3D11DeviceContext *pContext, bool wireframe);
 
     // Create vertices for the ocean surface mesh
     bool CreateSurfaceVertices(ID3D11Device *pDevice);
@@ -69,6 +71,7 @@ private:
 private:
     int m_meshDim;
     int m_numIndices;
+    int m_tileCount;
 
     ID3D11Buffer *m_pMeshVB;
     ID3D11Buffer *m_pMeshIB;

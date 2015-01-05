@@ -5,9 +5,18 @@
 Application::Application()
 {
     m_fullScreen = false;
-    m_vSync = true;
+    m_vSync = false;
     m_lockSurfaceCamera = false;
     m_stopAnimation = false;
+    m_leftMouseDown = false;
+    m_wireframe = false;
+
+    m_drawSkyDome = true;
+    m_drawOcean = true;
+    m_drawTerrain = false;
+
+    m_oceanTimeScale = 0.0003f;
+    m_oceanHeightOffset = 0.0f;
 
     m_screenDepth = 2500.0f;
     m_screenNear = 0.1f;
@@ -72,15 +81,8 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
         return false;
     }
 
-    // setup for 16 bit alignment used by XMMATH for SSE instruction support
-    // TODO: overload <new> and <delete> operators
-    void *ptr = 0;
-    size_t alignment = 16;
-    size_t objSize = sizeof(D3D);
-
     // Create and initialize _D3D_ window object.
-    ptr = _aligned_malloc(objSize, alignment);
-    m_pDirect3D = new(ptr)D3D();
+    m_pDirect3D = new D3D();
     if (!m_pDirect3D)
     {
         return false;
@@ -99,8 +101,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     }
 
     // Create and initialize the __camera__ object.
-    ptr = _aligned_malloc(objSize, alignment);
-    m_pCamera = new(ptr)Camera();
+    m_pCamera = new Camera();
     if (!m_pCamera)
     {
         return false;
@@ -286,7 +287,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
         return false;
     }
     Ocean::OceanParameter oceanParams = { 512,                  // map dim
-                                          0.0003f,              // time factor
+                                          m_oceanTimeScale,     // time factor
                                           0.4f,                 // amplitude
                                           Vec2f(0.3f, 0.6f),    // wind direction
                                           400.0f,               // wind speed
@@ -319,6 +320,25 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
                                     L"../Engine/shader/OceanPS.hlsl"))
     {
         MessageBox(hwnd, L"Could not initialize the ocean shader object.", L"Error", MB_OK);
+        return false;
+    }
+
+    // Create the __GUI__ for text output and GUI elements
+    m_pGUI = new GUI;
+    if (!m_pGUI)
+    {
+        return false;
+    }
+    if (!m_pGUI->Initialize(m_pDirect3D->GetDevice(), "Settings", screenWidth, screenHeight))
+    {
+        MessageBox(hwnd, L"Could not initialize the GUI object.", L"Error", MB_OK);
+        return false;
+    }
+
+    // Create GUI variables
+    if (!SetGuiParams())
+    {
+        MessageBox(hwnd, L"Could not initialize all GUI parameters.", L"Error", MB_OK);
         return false;
     }
 
@@ -451,6 +471,13 @@ void Application::Shutdown()
         m_pInput = 0;
     }
 
+    if (m_pGUI)
+    {
+        m_pGUI->Shutdown();
+        delete m_pGUI;
+        m_pGUI = 0;
+    }
+
     return;
 }
 
@@ -500,7 +527,7 @@ bool Application::ProcessFrame()
 bool Application::HandleInput(float frameTime)
 {
     short keyDown = false;
-    bool moveCamOnDrag = false;
+    bool moveCamOnDrag = true;
 
     int mouseX = 0;
     int mouseY = 0;
@@ -565,17 +592,16 @@ bool Application::HandleInput(float frameTime)
     // Yaw and pitch with __mouse__ movement.
     if (moveCamOnDrag)
     {
-        // not working properly yet
-        if (DragDetect(m_hwnd, m_pInput->GetMousePoint()))
+        if (m_leftMouseDown)
         {
-            m_pInput->GetMouseLocationChage(mouseX, mouseY);
-            m_pPosition->TurnOnMouseMovement(mouseX, mouseY, 0.2f);
+            m_pInput->GetMouseLocationChange(mouseX, mouseY);
+            m_pPosition->TurnOnMouseMovement(mouseX, mouseY, 0.5f);
         }
     }
     else
     {
-        m_pInput->GetMouseLocationChage(mouseX, mouseY);
-        m_pPosition->TurnOnMouseMovement(mouseX, mouseY, 0.2f);
+        m_pInput->GetMouseLocationChange(mouseX, mouseY);
+        m_pPosition->TurnOnMouseMovement(mouseX, mouseY, 0.5f);
     }
     // Get the view point position/rotation.
     m_pPosition->GetPosition(posX, posY, posZ);
@@ -584,6 +610,10 @@ bool Application::HandleInput(float frameTime)
     // Set the position of the camera.
     m_pCamera->SetPosition(posX, posY, posZ);
     m_pCamera->SetRotation(rotX, rotY, rotZ);
+
+    // Handle GUI parameters
+    m_pDirect3D->SetWireframe(m_wireframe);
+    m_pOcean->SetTimeScale(m_oceanTimeScale);
 
     return true;
 }
@@ -612,35 +642,44 @@ bool Application::RenderGraphics()
     cameraPosition = m_pCamera->GetPosition();
     worldMatrix = XMMatrixTranslation(cameraPosition.x, cameraPosition.y - 0.25f, cameraPosition.z);
 
-    m_pDirect3D->TurnOffCulling();
-    m_pDirect3D->TurnZBufferOff();
-
     // Render the sky dome.
-    m_pSkyDome->Render(m_pDirect3D->GetDeviceContext());
-    m_pSkyDomeShader->Render(m_pDirect3D->GetDeviceContext(),
-                             m_pSkyDome->GetIndexCount(),
-                             worldMatrix,
-                             viewMatrix,
-                             projectionMatrix,
-                             m_pSkyDome->GetApexColor(),
-                             m_pSkyDome->GetCenterColor(),
-                             m_pSkyDomeTex->GetSrv());
+    if (m_drawSkyDome)
+    {
+        m_pDirect3D->TurnOffCulling();
+        m_pDirect3D->TurnZBufferOff();
+
+        m_pSkyDome->Render(m_pDirect3D->GetDeviceContext());
+        m_pSkyDomeShader->Render(m_pDirect3D->GetDeviceContext(),
+                                 m_pSkyDome->GetIndexCount(),
+                                 worldMatrix,
+                                 viewMatrix,
+                                 projectionMatrix,
+                                 m_pSkyDome->GetApexColor(),
+                                 m_pSkyDome->GetCenterColor(),
+                                 m_pSkyDomeTex->GetSrv());
+    }
     m_pDirect3D->TurnZBufferOn();
     m_pDirect3D->TurnOnCulling();
 
     // Reset the world matrix.
     m_pDirect3D->GetWorldMatrix(worldMatrix);
+    worldMatrix = XMMatrixTranslation(0.0f, m_oceanHeightOffset, 0.0f);
+
 
     // Render the ocean geometry
-    m_pOceanShader->Render(m_pDirect3D->GetDeviceContext(),
-                           worldMatrix,
-                           viewMatrix,
-                           projectionMatrix,
-                           cameraPosition,
-                           m_pLight->GetDirection(),
-                           m_pOcean->GetDisplacementMap(),
-                           m_pOcean->GetGradientMap(),
-                           m_pSkyDomeTex->GetSrv());
+    if (m_drawOcean)
+    {
+        m_pOceanShader->Render(m_pDirect3D->GetDeviceContext(),
+                               worldMatrix,
+                               viewMatrix,
+                               projectionMatrix,
+                               cameraPosition,
+                               m_pLight->GetDirection(),
+                               m_pOcean->GetDisplacementMap(),
+                               m_pOcean->GetGradientMap(),
+                               m_pSkyDomeTex->GetSrv(),
+                               m_wireframe);
+    }
 
     m_pFrustum->ConstructFrustum(projectionMatrix, viewMatrix, m_screenDepth);
 
@@ -685,6 +724,7 @@ bool Application::RenderGraphics()
     //                  0);
 #endif
 
+    m_pGUI->RenderGUI();
 
     // Present the rendered scene to the screen.
     m_pDirect3D->EndScene();
@@ -714,4 +754,51 @@ float Application::GetScreenDepth()
 float Application::GetScreenNear()
 {
     return m_screenNear;
+}
+
+void Application::SetLeftMouseDown(bool state)
+{
+    m_leftMouseDown = state;
+
+    if (state)
+    {
+        m_pInput->GetMousePoint();
+    }
+}
+
+
+bool Application::SetGuiParams()
+{
+    // not working yet, re-initialization of D3D required??
+    //m_pGUI->AddBoolVar("vSync", m_vSync);
+    //m_pGUI->AddBoolVar("FullScreen", m_fullScreen);
+
+    if (!m_pGUI->AddBoolVar("Pause", m_stopAnimation))
+    {
+        return false;
+    }
+    if (!m_pGUI->AddBoolVar("Wireframe", m_wireframe))
+    {
+        return false;
+    }
+
+    if (!m_pGUI->AddBoolVar("RenderSky", m_drawSkyDome))
+    {
+        return false;
+    }
+    if (!m_pGUI->AddBoolVar("RenderOcean", m_drawOcean))
+    {
+        return false;
+    }
+
+    if (!m_pGUI->AddFloatVar("AnimationSpeed", m_oceanTimeScale, " min=0 max=0.005 step=0.00001 "))
+    {
+        return false;
+    }
+    if (!m_pGUI->AddFloatVar("SeaLevel", m_oceanHeightOffset, " min=-150 max=150 step=1 "))
+    {
+        return false;
+    }
+
+    return true;
 }

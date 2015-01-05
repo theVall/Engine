@@ -33,8 +33,8 @@ public:
     void EndScene();
 
     //  Getter functions.
-    ID3D11Device * GetDevice();
-    ID3D11DeviceContext * GetDeviceContext();
+    ID3D11Device *GetDevice();
+    ID3D11DeviceContext *GetDeviceContext();
 
     void GetProjectionMatrix(XMMATRIX &);
     void GetWorldMatrix(XMMATRIX &);
@@ -46,9 +46,21 @@ public:
     void TurnZBufferOff();
 
     void ToggleWireframe();
+    void SetWireframe(bool wireframe);
 
     void TurnOnCulling();
     void TurnOffCulling();
+
+    // guarantee align 16 for heap allocations
+    void *operator new(size_t size) throw()
+    {
+        return _aligned_malloc(size, 16);
+    }
+
+    void operator delete(void *ptr) throw()
+    {
+        _aligned_free(ptr);
+    }
 
 private:
 

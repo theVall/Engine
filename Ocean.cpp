@@ -828,6 +828,18 @@ const Ocean::OceanParameter &Ocean::GetParameters()
 }
 
 
+void Ocean::SetTimeScale(float newTimeScale)
+{
+    m_params.timeScale = newTimeScale;
+}
+
+
+void Ocean::SetChoppyScale(float newScale)
+{
+    m_params.choppyScale = newScale;
+}
+
+
 int Ocean::CalcPad16(int n)
 {
     return ((n + 15) / 16*16);

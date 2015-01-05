@@ -28,6 +28,9 @@
     <Filter Include="ExternalDLL">
       <UniqueIdentifier>{62bfff0a-6b81-4b26-ac3f-ba24d6414d82}</UniqueIdentifier>
     </Filter>
+    <Filter Include="External Header">
+      <UniqueIdentifier>{a68e0d2b-c953-4f14-8590-51ff2db78d4e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="System.h">
@@ -52,9 +55,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Texture.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="D:\dev\libs\DirectXTex\DDSTextureLoader\DDSTextureLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Light.h">
@@ -144,6 +144,18 @@
     <ClInclude Include="OceanShader.h">
       <Filter>Header Files\ShaderProgram</Filter>
     </ClInclude>
+    <ClInclude Include="GUI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\AntTweakBar.h">
+      <Filter>External Header</Filter>
+    </ClInclude>
+    <ClInclude Include="DDSTextureLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GuiFloat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="System.cpp">
@@ -168,9 +180,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Texture.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="D:\dev\libs\DirectXTex\DDSTextureLoader\DDSTextureLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Light.cpp">
@@ -239,6 +248,15 @@
     <ClCompile Include="OceanShader.cpp">
       <Filter>Source Files\ShaderProgram</Filter>
     </ClCompile>
+    <ClCompile Include="GUI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DDSTextureLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GuiFloat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="seafloor.dds">
@@ -251,6 +269,12 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="res\tex\sky3.dds">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="DXUT\Media\UI\Font.dds">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="DXUT\Media\UI\dxutcontrols.dds">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
@@ -316,6 +340,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="d3dcompiler_46.dll">
+      <Filter>ExternalDLL</Filter>
+    </None>
+    <None Include="AntTweakBar.dll">
       <Filter>ExternalDLL</Filter>
     </None>
   </ItemGroup>

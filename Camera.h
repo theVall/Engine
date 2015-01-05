@@ -23,6 +23,17 @@ public:
 
     void Render();
 
+    // guarantee align 16 for heap allocations
+    void *operator new(size_t size) throw()
+    {
+        return _aligned_malloc(size, 16);
+    }
+
+    void operator delete(void *ptr) throw()
+    {
+        _aligned_free(ptr);
+    }
+
 private:
     XMFLOAT3 m_position;
     XMFLOAT3 m_rotation;

@@ -55,13 +55,13 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(WindowsSDK_LibraryPath_x86);$(DXSDK_DIR)include</AdditionalIncludeDirectories>
       <OpenMPSupport>true</OpenMPSupport>
+      <AdditionalIncludeDirectories>include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3d11.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>user32.lib;gdi32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
     </Link>
@@ -83,12 +83,14 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>user32.lib;gdi32.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -96,12 +98,15 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="ColorShader.h" />
     <ClInclude Include="D3D.h" />
-    <ClInclude Include="D:\dev\libs\DirectXTex\DDSTextureLoader\DDSTextureLoader.h" />
+    <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="Element2d.h" />
     <ClInclude Include="FFT.h" />
     <ClInclude Include="Font.h" />
     <ClInclude Include="Frustum.h" />
     <ClInclude Include="Graphics.h" />
+    <ClInclude Include="GUI.h" />
+    <ClInclude Include="GuiFloat.h" />
+    <ClInclude Include="include\AntTweakBar.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="Ocean.h" />
     <ClInclude Include="OceanShader.h" />
@@ -136,12 +141,14 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="ColorShader.cpp" />
     <ClCompile Include="D3D.cpp" />
-    <ClCompile Include="D:\dev\libs\DirectXTex\DDSTextureLoader\DDSTextureLoader.cpp" />
+    <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="Element2d.cpp" />
     <ClCompile Include="FFT.cpp" />
     <ClCompile Include="Font.cpp" />
     <ClCompile Include="Frustum.cpp" />
     <ClCompile Include="Graphics.cpp" />
+    <ClCompile Include="GUI.cpp" />
+    <ClCompile Include="GuiFloat.cpp" />
     <ClCompile Include="Ocean.cpp" />
     <ClCompile Include="OceanShader.cpp" />
     <ClCompile Include="ShaderProgram.cpp" />
@@ -165,9 +172,12 @@
     <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="AntTweakBar.dll" />
     <None Include="d3dcompiler_46.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="DXUT\Media\UI\dxutcontrols.dds" />
+    <Image Include="DXUT\Media\UI\Font.dds" />
     <Image Include="res\tex\sky1.dds" />
     <Image Include="res\tex\sky2.dds" />
     <Image Include="res\tex\sky3.dds" />
