@@ -5,7 +5,7 @@ Terrain::Terrain()
 {
     m_Util = 0;
     m_pTexture = 0;
-    m_scaling = 2.0f;
+    m_scaling = 1.0f;
 }
 
 
@@ -46,7 +46,7 @@ bool Terrain::Initialize(ID3D11Device *device,
         return false;
     }
 
-    // Load in the color map.
+    // Load the color map.
     result = LoadColorMap(colorMapFilename);
     if (!result)
     {

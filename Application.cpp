@@ -193,25 +193,25 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     m_pDirect3D->EndScene();
 
     // Create and initialize the __quad tree__.
-    //m_pQuadTree = new QuadTree;
-    //if (!m_pQuadTree)
-    //{
-    //    return false;
-    //}
-    //result = m_pQuadTree->Initialize(m_pTerrain, m_pDirect3D->GetDevice());
-    //if (!result)
-    //{
-    //    MessageBox(hwnd, L"Could not initialize the quad tree object.", L"Error", MB_OK);
-    //    return false;
-    //}
+    m_pQuadTree = new QuadTree;
+    if (!m_pQuadTree)
+    {
+        return false;
+    }
+    result = m_pQuadTree->Initialize(m_pTerrain, m_pDirect3D->GetDevice());
+    if (!result)
+    {
+        MessageBox(hwnd, L"Could not initialize the quad tree object.", L"Error", MB_OK);
+        return false;
+    }
 
     // Create and initialize __textures__.
-    /*   m_pGroundTex = new Texture;
-       if (!m_pGroundTex)
-       {
-           return false;
-       }
-       result = m_pGroundTex->LoadFromDDS(m_pDirect3D->GetDevice(), L"../Engine/res/tex/dirt.dds");*/
+    m_pGroundTex = new Texture;
+    if (!m_pGroundTex)
+    {
+        return false;
+    }
+    result = m_pGroundTex->LoadFromDDS(m_pDirect3D->GetDevice(), L"../Engine/res/tex/dirt.dds");
 
     m_pSkyDomeTex = new Texture;
     if (!m_pSkyDomeTex)
@@ -554,14 +554,12 @@ bool Application::RenderGraphics()
     m_pDirect3D->TurnZBufferOn();
     m_pDirect3D->TurnOnCulling();
 
-    // Reset the world matrix.
-    m_pDirect3D->GetWorldMatrix(worldMatrix);
-    worldMatrix = XMMatrixTranslation(0.0f, m_oceanHeightOffset, 0.0f);
-
-
     // Render the ocean geometry
     if (m_drawOcean)
     {
+        // enable variable sea level (GUI parameter)
+        worldMatrix = XMMatrixTranslation(0.0f, m_oceanHeightOffset, 0.0f);
+
         m_pOceanShader->Render(m_pDirect3D->GetDeviceContext(),
                                worldMatrix,
                                viewMatrix,
@@ -574,22 +572,28 @@ bool Application::RenderGraphics()
                                m_wireframe);
     }
 
+    // Reset the world matrix.
+    m_pDirect3D->GetWorldMatrix(worldMatrix);
+
     m_pFrustum->ConstructFrustum(projectionMatrix, viewMatrix, m_screenDepth);
 
-    //if (!m_pTerrainShader->SetShaderParameters(m_pDirect3D->GetDeviceContext(),
-    //                                           worldMatrix,
-    //                                           viewMatrix,
-    //                                           projectionMatrix,
-    //                                           m_pGroundTex->GetSrv(),
-    //                                           m_pLight->GetDirection(),
-    //                                           m_pLight->GetAmbientColor(),
-    //                                           m_pLight->GetDiffuseColor() ))
-    //{
-    //    return false;
-    //}
+    if (m_drawTerrain)
+    {
+        if (!m_pTerrainShader->SetShaderParameters(m_pDirect3D->GetDeviceContext(),
+                                                   worldMatrix,
+                                                   viewMatrix,
+                                                   projectionMatrix,
+                                                   m_pGroundTex->GetSrv(),
+                                                   m_pLight->GetDirection(),
+                                                   m_pLight->GetAmbientColor(),
+                                                   m_pLight->GetDiffuseColor()))
+        {
+            return false;
+        }
 
-    // Render the terrain using the quad tree and terrain shader.
-    //m_pQuadTree->Render(m_pFrustum, m_pDirect3D->GetDeviceContext(), m_pTerrainShader);
+        // Render the terrain using the quad tree and terrain shader.
+        m_pQuadTree->Render(m_pFrustum, m_pDirect3D->GetDeviceContext(), m_pTerrainShader);
+    }
 
 // profiling/debug output
 #ifdef DEBUG
@@ -690,6 +694,10 @@ bool Application::SetGuiParams()
         return false;
     }
     if (!m_pGUI->AddBoolVar("RenderOcean", m_drawOcean))
+    {
+        return false;
+    }
+    if (!m_pGUI->AddBoolVar("RenderTerrain", m_drawTerrain))
     {
         return false;
     }
