@@ -5,6 +5,7 @@
 #include <DirectXPackedVector.h>
 
 #include <vector>
+#include <random>
 
 #include "Util.h"
 #include "Texture.h"
@@ -28,11 +29,26 @@ public:
     Terrain(const Terrain &);
     ~Terrain();
 
+    // generate a fractal terrain with the diamond square algorithm (plasma terrain)
+    bool GenerateDiamondSquare(ID3D11Device *device,
+                               WCHAR *texFilename,
+                               WCHAR *colorMapFilename,
+                               Util  *util,
+                               int terrainSizeFactor,
+                               float hurst,
+                               float initialVariance);
+
+    // generate a terrain from a height map image file
+    bool GenerateFromFile(ID3D11Device *device,
+                          WCHAR *texFilename,
+                          WCHAR *colorMapFilename,
+                          Util  *util,
+                          WCHAR *heightmapFilename);
+
     bool Initialize(ID3D11Device *device,
-                    WCHAR *hightmapFilename,
                     WCHAR *texFilename,
-                    WCHAR *colorMapFilename,
-                    Util  *util);
+                    WCHAR *colorMapFilename);
+
     void Shutdown();
 
     int GetVertexCount();
@@ -49,6 +65,13 @@ private:
 
     // Height map
     bool LoadHeightMap(WCHAR *heightmapFilename);
+
+    // Diamond square
+    bool BuildTerrainDiamondSquare(int terrainSizeFactor,
+                                   float hurst,
+                                   float initialVariance);
+
+    // Initialization helper methods
     bool LoadColorMap(WCHAR *colorMapFilename);
     void NormalizeHeightMap();
     bool CalculateNormals();

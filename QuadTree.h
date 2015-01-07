@@ -17,7 +17,7 @@ using namespace std;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
-const int MAX_TRIANGLES = 10000;
+const int MAX_TRIANGLES = 1000000;
 const int MAX_CHILDREN = 4;
 
 class QuadTree
@@ -45,12 +45,12 @@ private:
 
         ID3D11Buffer *vertexBuffer;
         ID3D11Buffer *indexBuffer;
-        NodeType* nodes[MAX_CHILDREN];
+        NodeType *nodes[MAX_CHILDREN];
     };
 
 public:
     QuadTree();
-    QuadTree(const QuadTree&);
+    QuadTree(const QuadTree &);
     ~QuadTree();
 
     bool Initialize(Terrain *, ID3D11Device *);
@@ -58,7 +58,7 @@ public:
     void Render(Frustum *, ID3D11DeviceContext *, TerrainShader *);
 
     int GetDrawCount();
-    bool GetHeightAtPosition(float posX, float posZ, float& height);
+    bool GetHeightAtPosition(float posX, float posZ, float &height);
 
 private:
     void CalculateMeshDimensions(int vertexCount,
@@ -66,24 +66,24 @@ private:
                                  float &centerZ,
                                  float &width);
 
-    void CreateTreeNode(NodeType* parent,
+    void CreateTreeNode(NodeType *parent,
                         float centerX,
                         float centerZ,
                         float width,
-                        ID3D11Device* device);
+                        ID3D11Device *device);
 
     int CountTriangles(float, float, float);
     bool IsTriangleContained(int, float, float, float);
-    void ReleaseNode(NodeType*);
-    void RenderNode(NodeType*, Frustum*, ID3D11DeviceContext*, TerrainShader*);
+    void ReleaseNode(NodeType *);
+    void RenderNode(NodeType *, Frustum *, ID3D11DeviceContext *, TerrainShader *);
 
-    void FindNode(NodeType* node, float x, float z, float& height);
+    void FindNode(NodeType *node, float x, float z, float &height);
 
     // Checks if the y-parallel line with posX and posZ intersects the triangle (v0, v1, v2).
     // <param> posX x-position of the point which height is to be determined.
     // <param> posZ z-position of the point which height is to be determined.
-    // <returns> height the height value of the triangle on the position. 
-    bool CheckHeightOfTriangle(float posX, float posZ, float& height, Vec3f v0, Vec3f v1, Vec3f v2);
+    // <returns> height the height value of the triangle on the position.
+    bool CheckHeightOfTriangle(float posX, float posZ, float &height, Vec3f v0, Vec3f v1, Vec3f v2);
 
 // member
 private:
@@ -91,6 +91,6 @@ private:
     int m_drawCount;
 
     vector<VertexType> m_vertexList;
-    NodeType* m_parentNode;
+    NodeType *m_parentNode;
 };
 

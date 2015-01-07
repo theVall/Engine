@@ -129,11 +129,13 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     {
         return false;
     }
-    result = m_pTerrain->Initialize(m_pDirect3D->GetDevice(),
-                                    L"../Engine/res/terrain/heightmap01.bmp",
-                                    L"../Engine/res/tex/dirt.dds",
-                                    L"../Engine/res/terrain/colormap01.bmp",
-                                    m_pUtil);
+    result = m_pTerrain->GenerateDiamondSquare(m_pDirect3D->GetDevice(),
+                                               L"../Engine/res/tex/dirt.dds",
+                                               L"../Engine/res/terrain/colormap01.bmp",
+                                               m_pUtil,
+                                               6,
+                                               0.2f,
+                                               1.0f);
     if (!result)
     {
         MessageBox(m_hwnd, L"Could not initialize the terrain object.", L"Error", MB_OK);

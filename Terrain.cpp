@@ -19,18 +19,52 @@ Terrain::~Terrain()
 }
 
 
-bool Terrain::Initialize(ID3D11Device *device,
-                         WCHAR *heightmapFilename,
-                         WCHAR *texFilename,
-                         WCHAR *colorMapFilename,
-                         Util  *util)
+bool Terrain::GenerateDiamondSquare(ID3D11Device *device,
+                                    WCHAR *texFilename,
+                                    WCHAR *colorMapFilename,
+                                    Util  *util,
+                                    int terrainSizeFactor,
+                                    float hurst,
+                                    float initialVariance)
 {
-    bool result;
-    m_Util = util;
+    if (!m_Util)
+    {
+        m_Util = util;
+    }
 
-    // Load in the height map for the terrain from file.
-    result = LoadHeightMap(heightmapFilename);
-    if (!result)
+    // generate the height-map with the diamond-squares algorithm
+    if (!BuildTerrainDiamondSquare(terrainSizeFactor, hurst, initialVariance))
+    {
+        return false;
+    }
+
+    if (!Initialize(device, texFilename, colorMapFilename))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+
+bool Terrain::GenerateFromFile(ID3D11Device *device,
+                               WCHAR *texFilename,
+                               WCHAR *colorMapFilename,
+                               Util  *util,
+                               WCHAR *heightmapFilename)
+{
+    if (!m_Util)
+    {
+        m_Util = util;
+    }
+
+    // Load in the height-map for the terrain from file.
+    if (!LoadHeightMap(heightmapFilename))
+    {
+        return false;
+    }
+
+    if (!Initialize(device, texFilename, colorMapFilename))
     {
         return false;
     }
@@ -38,30 +72,35 @@ bool Terrain::Initialize(ID3D11Device *device,
     // Normalize the height of the height map. Scaling is negative proportional.
     NormalizeHeightMap();
 
+    return true;
+}
+
+
+bool Terrain::Initialize(ID3D11Device *device,
+                         WCHAR *texFilename,
+                         WCHAR *colorMapFilename)
+{
     // Calculate texture coordinates and load the texture from file.
     CalculateTextureCoordinates();
-    result = LoadTexture(device, texFilename);
-    if (!result)
+    if (!LoadTexture(device, texFilename))
     {
         return false;
     }
 
     // Load the color map.
-    result = LoadColorMap(colorMapFilename);
-    if (!result)
-    {
-        return false;
-    }
+    //if (!LoadColorMap(colorMapFilename))
+    //{
+    //    return false;
+    //}
 
     // Calculate the normals for the terrain data.
-    result = CalculateNormals();
-    if (!result)
+    if (!CalculateNormals())
     {
         return false;
     }
 
-    result = InitializeBuffers();
-    if (!result)
+    // Initialize buffers
+    if (!InitializeBuffers())
     {
         return false;
     }
@@ -98,17 +137,192 @@ void Terrain::SetScalingFactor(float scaling)
 }
 
 
+bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
+                                        float hurst,
+                                        float initialVariance)
+{
+    // size and length of the terrain is 3 to the power of the sizeFactor (3^factor)
+    m_terrainHeight = (int)(1 << terrainSizeFactor) + 1;
+    m_terrainWidth = m_terrainHeight;
+
+    m_heightMap.resize(m_terrainWidth * m_terrainHeight);
+
+    float heightValue = 0.0f;
+
+    // initially set the four corner points
+    int index = 0;
+    m_heightMap[index].position = Vec3f(0.0f, heightValue, 0.0f);
+    index = m_terrainWidth - 1;
+    m_heightMap[index].position = Vec3f(0.0f,
+                                        heightValue,
+                                        (float)(m_terrainWidth - 1));
+    index = m_terrainWidth * (m_terrainHeight - 2);
+    m_heightMap[index].position = Vec3f((float)(m_terrainHeight - 1),
+                                        heightValue,
+                                        0.0f);
+    index = m_terrainWidth * (m_terrainHeight - 1);
+    m_heightMap[index].position = Vec3f((float)(m_terrainHeight - 1),
+                                        heightValue,
+                                        (float)(m_terrainWidth - 1));
+
+    int idWidth = m_terrainWidth;// -1;
+
+    // terrain height offset
+    float D = 0.0f;
+    float height = 0.0f;
+    float variance = initialVariance;
+    // random generator
+    mt19937 gen(1337);
+
+    int changed = 0;
+
+    for (int i = 0; i < terrainSizeFactor; ++i)
+    {
+        // calculate division segment length
+        int divSegment = m_terrainWidth / (2 * (1 << i));
+
+        // variance
+        variance = (variance*variance) / pow(2.0f, i * hurst);
+        // generate normal distribution with new variance
+        normal_distribution<float> distr(0.0f, variance);
+
+        int modDiv = (1 << i)*2;
+
+        // first step: generate diamonds: 2^n * 2^n midpoints
+        for (int j = 0; j < ((1 << i) * (1 << i)); ++j)
+        {
+            index = divSegment*((2 * j + 1) % modDiv) + divSegment*idWidth*((2 * j + 1) % modDiv);
+
+            // interpolate between neighboring points
+            height = 0.0f;
+            // upper left
+            int tmpIndex = index - (divSegment + divSegment*idWidth);
+            height += m_heightMap[tmpIndex].position.y;
+            // upper right
+            tmpIndex += 2 * divSegment;
+            height += m_heightMap[tmpIndex].position.y;
+            // lower right
+            tmpIndex = index + (divSegment + divSegment*idWidth);
+            height += m_heightMap[tmpIndex].position.y;
+            // lower left
+            tmpIndex -= 2 * divSegment;
+            height += m_heightMap[tmpIndex].position.y;
+            // normalize
+            height /= 4.0f;
+
+#undef min
+            // generate random value in range [0,1]
+            D = (distr(gen) / distr.min() + 1.0f) / 2.0f;
+
+            m_heightMap[index].position = Vec3f((float)(index % m_terrainWidth),
+                                                height + D,
+                                                (float)(index / m_terrainHeight));
+            changed++;
+        }
+
+        // second step: generate squares
+        // even rows part 0, 2, 4, ...
+        for (int j = 0; j < ((1 << i) * ((1 << i) + 1)); ++j)
+        {
+            //index = divSegment*((2 * j + 1) % modDiv) + divSegment*((((j + 1) * 2) - 2) % (modDiv + 1));
+            index = divSegment*((2 * j + 1) % modDiv) + divSegment*(((j + 1) * 2) - 2);
+
+            // interpolate between neighboring points
+            // special cases: boarder points (!) -> assume 0.0
+            height = 0.0f;
+            // upper
+            int tmpIndex = index - (divSegment*idWidth);
+            if (!(tmpIndex < 0))
+            {
+                height += m_heightMap[tmpIndex].position.y;
+            }
+            // lower
+            tmpIndex = index + (divSegment*idWidth);
+            if (!(tmpIndex > idWidth * idWidth))
+            {
+                height += m_heightMap[tmpIndex].position.y;
+            }
+            // right
+            if (!(index + divSegment) >= (m_terrainWidth*m_terrainHeight))
+            {
+                tmpIndex = index + divSegment;
+                height += m_heightMap[tmpIndex].position.y;
+            }
+            // left
+            if (!(index % (idWidth + 1)) == 0)
+            {
+                tmpIndex = index - divSegment;
+                height += m_heightMap[tmpIndex].position.y;
+            }
+            // normalize
+            height /= 4.0f;
+
+            // generate random value in range [0,1]
+            D = (distr(gen) / distr.min() + 1.0f) / 2.0f;
+
+            m_heightMap[index].position = Vec3f((float)(index % m_terrainWidth),
+                                                height + D,
+                                                (float)(index / m_terrainHeight));
+            changed++;
+        }
+
+        // odd rows part 1, 3, 5,...
+        for (int j = 0; j < ((1 << i) * ((1 << i) + 1)); ++j)
+        {
+            index = divSegment*((((j + 1) * 2) - 2) % (modDiv + 1)) + divSegment*idWidth*((2 * j + 1) % modDiv);
+
+            // interpolate between neighboring points
+            // special cases: boarder points (!)
+            height = 0.0f;
+            // upper
+            int tmpIndex = index - (divSegment*idWidth);
+            if (!(tmpIndex < 0))
+            {
+                height += m_heightMap[tmpIndex].position.y;
+            }
+            // lower
+            tmpIndex = index + (divSegment*idWidth);
+            if (!(tmpIndex > idWidth * m_terrainHeight))
+            {
+                height += m_heightMap[tmpIndex].position.y;
+            }
+            // right
+            if (!(index % idWidth) == 0)
+            {
+                tmpIndex = index + divSegment;
+                height += m_heightMap[tmpIndex].position.y;
+            }
+            // left
+            if (!(index % (idWidth + 1)) == 0)
+            {
+                tmpIndex = index - divSegment;
+                height += m_heightMap[tmpIndex].position.y;
+            }
+            // normalize
+            height /= 4.0f;
+
+            // generate random value in range [0,1]
+            D = (distr(gen) / distr.min() + 1.0f) / 2.0f;
+
+            m_heightMap[index].position = Vec3f((float)(index % m_terrainWidth),
+                                                height + D,
+                                                (float)(index / m_terrainHeight));
+            changed++;
+        }
+    }
+
+    return true;
+}
+
+
 bool Terrain::LoadHeightMap(WCHAR *hightmapFilename)
 {
-    bool result = false;
-
     int k = 0;
     int index;
 
     unsigned char *pixelData = nullptr;
 
-    result = m_Util->LoadBMP(hightmapFilename, pixelData, &m_terrainHeight, &m_terrainWidth);
-    if (!result)
+    if (!m_Util->LoadBMP(hightmapFilename, pixelData, &m_terrainHeight, &m_terrainWidth))
     {
         return false;
     }
@@ -128,6 +342,7 @@ bool Terrain::LoadHeightMap(WCHAR *hightmapFilename)
             k += 3;
         }
     }
+
     // Release the bitmap image data.
     delete[] pixelData;
     pixelData = 0;
