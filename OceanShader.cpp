@@ -154,7 +154,7 @@ bool OceanShader::InitializeShader(ID3D11Device *pDevice,
                                         numElements,
                                         pBufferVS->GetBufferPointer(),
                                         pBufferVS->GetBufferSize(),
-                                        &m_layout);
+                                        &m_pLayout);
     if (FAILED(result))
     {
         return false;
@@ -175,7 +175,7 @@ bool OceanShader::InitializeShader(ID3D11Device *pDevice,
     matrixBufferDesc.MiscFlags = 0;
     matrixBufferDesc.StructureByteStride = 0;
 
-    result = pDevice->CreateBuffer(&matrixBufferDesc, NULL, &m_matrixBuffer);
+    result = pDevice->CreateBuffer(&matrixBufferDesc, NULL, &m_pMatrixBuffer);
     if (FAILED(result))
     {
         return false;
@@ -276,12 +276,12 @@ bool OceanShader::InitializeShader(ID3D11Device *pDevice,
         return false;
     }
 
-    rasterDesc.FillMode = D3D11_FILL_WIREFRAME;
-    result = pDevice->CreateRasterizerState(&rasterDesc, &m_pRsStateWireframe);
-    if (FAILED(result))
-    {
-        return false;
-    }
+    //rasterDesc.FillMode = D3D11_FILL_WIREFRAME;
+    //result = pDevice->CreateRasterizerState(&rasterDesc, &m_pRsStateWireframe);
+    //if (FAILED(result))
+    //{
+    //    return false;
+    //}
 
     return true;
 }
@@ -292,7 +292,7 @@ void OceanShader::ShutdownShader()
     // D3D Buffer
     SafeRelease(m_pMeshIB);
     SafeRelease(m_pMeshVB);
-    SafeRelease(m_matrixBuffer);
+    SafeRelease(m_pMatrixBuffer);
     SafeRelease(m_perFameBuffer);
     // Shader
     SafeRelease(m_pOceanSurfaceVS);
@@ -304,9 +304,7 @@ void OceanShader::ShutdownShader()
     SafeRelease(m_pSkyDomeSampler);
     // State blocks
     SafeRelease(m_pRsStateSolid);
-    SafeRelease(m_pRsStateWireframe);
-    // Layout
-    SafeRelease(m_layout);
+    //SafeRelease(m_pRsStateWireframe);
 }
 
 
@@ -325,7 +323,7 @@ bool OceanShader::SetShaderParameters(ID3D11DeviceContext *pContext,
     MatrixBufferType *pTransformDataBuffer;
 
     // Lock the constant buffer so it can be written to.
-    result = pContext->Map(m_matrixBuffer,
+    result = pContext->Map(m_pMatrixBuffer,
                            0,
                            D3D11_MAP_WRITE_DISCARD,
                            0,
@@ -342,8 +340,8 @@ bool OceanShader::SetShaderParameters(ID3D11DeviceContext *pContext,
     pTransformDataBuffer->view = XMMatrixTranspose(viewMatrix);
     pTransformDataBuffer->projection = XMMatrixTranspose(projectionMatrix);
 
-    pContext->Unmap(m_matrixBuffer, 0);
-    pContext->VSSetConstantBuffers(0, 1, &m_matrixBuffer);
+    pContext->Unmap(m_pMatrixBuffer, 0);
+    pContext->VSSetConstantBuffers(0, 1, &m_pMatrixBuffer);
 
     result = pContext->Map(m_perFameBuffer,
                            0,
@@ -416,7 +414,7 @@ void OceanShader::RenderShader(ID3D11DeviceContext *pContext, bool wireframe)
 {
 
     // Set the vertex input layout.
-    pContext->IASetInputLayout(m_layout);
+    pContext->IASetInputLayout(m_pLayout);
 
     // Set the vertex and pixel shaders.
     pContext->VSSetShader(m_pOceanSurfaceVS, NULL, 0);

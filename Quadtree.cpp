@@ -32,17 +32,17 @@ bool QuadTree::Initialize(Terrain *terrain, ID3D11Device *device)
     m_vertexList = terrain->GetVertices();
     CalculateMeshDimensions(vertexCount, centerX, centerZ, width);
 
-    // Create the parent node for the quad tree.
-    m_parentNode = new NodeType;
-    if (!m_parentNode)
+    // Create the parent pNode for the quad tree.
+    m_pParentNode = new NodeType;
+    if (!m_pParentNode)
     {
         return false;
     }
 
     // Recursively build the quad tree based on the vertex list data and mesh dimensions.
-    CreateTreeNode(m_parentNode, centerX, centerZ, width, device);
+    CreateTreeNode(m_pParentNode, centerX, centerZ, width, device);
 
-    // Release the vertex list since the quad tree now has the vertices in each node.
+    // Release the vertex list since the quad tree now has the vertices in each pNode.
     m_vertexList.clear();
 
     return true;
@@ -52,26 +52,27 @@ bool QuadTree::Initialize(Terrain *terrain, ID3D11Device *device)
 void QuadTree::Shutdown()
 {
     // Recursively release the quad tree data.
-    if (m_parentNode)
+    if (m_pParentNode)
     {
-        ReleaseNode(m_parentNode);
-        delete m_parentNode;
-        m_parentNode = 0;
+        ReleaseNode(m_pParentNode);
+        delete m_pParentNode;
+        m_pParentNode = 0;
     }
 
     return;
 }
 
 
-void QuadTree::Render(Frustum *frustum,
-                      ID3D11DeviceContext *deviceContext,
-                      TerrainShader *shader)
+void QuadTree::Render(Frustum *pFrustum,
+                      ID3D11DeviceContext *pContext,
+                      TerrainShader *pShader,
+                      bool wireframe)
 {
     // Reset the number of triangles that are drawn for this frame.
     m_drawCount = 0;
 
-    // Render each node that is visible.
-    RenderNode(m_parentNode, frustum, deviceContext, shader);
+    // Render each pNode that is visible.
+    RenderNode(m_pParentNode, pFrustum, pContext, pShader, wireframe);
 
     return;
 }
@@ -157,7 +158,7 @@ void QuadTree::CalculateMeshDimensions(int vertexCount,
 }
 
 
-void QuadTree::CreateTreeNode(NodeType *node, float positionX, float positionZ, float width, ID3D11Device *device)
+void QuadTree::CreateTreeNode(NodeType *pNode, float positionX, float positionZ, float width, ID3D11Device *device)
 {
     int numTriangles;
     int count;
@@ -179,21 +180,21 @@ void QuadTree::CreateTreeNode(NodeType *node, float positionX, float positionZ, 
     D3D11_SUBRESOURCE_DATA vertexData;
     D3D11_SUBRESOURCE_DATA indexData;
 
-    node->positionX = positionX;
-    node->positionZ = positionZ;
-    node->width = width;
+    pNode->positionX = positionX;
+    pNode->positionZ = positionZ;
+    pNode->width = width;
 
-    node->triangleCount = 0;
-    node->vertexBuffer = 0;
-    node->indexBuffer = 0;
+    pNode->triangleCount = 0;
+    pNode->vertexBuffer = 0;
+    pNode->indexBuffer = 0;
 
     // initialize children
-    node->nodes[0] = 0;
-    node->nodes[1] = 0;
-    node->nodes[2] = 0;
-    node->nodes[3] = 0;
+    pNode->nodes[0] = 0;
+    pNode->nodes[1] = 0;
+    pNode->nodes[2] = 0;
+    pNode->nodes[3] = 0;
 
-    // Count the number of triangles inside this node.
+    // Count the number of triangles inside this pNode.
     numTriangles = CountTriangles(positionX, positionZ, width);
     if (numTriangles == 0)
     {
@@ -204,18 +205,18 @@ void QuadTree::CreateTreeNode(NodeType *node, float positionX, float positionZ, 
     {
         for (int i = 0; i < MAX_CHILDREN; i++)
         {
-            // Calculate the position offsets for the new child node.
+            // Calculate the position offsets for the new child pNode.
             offsetX = (((i % 2) < 1) ? -1.0f : 1.0f) * (width / 4.0f);
             offsetZ = (((i % 4) < 2) ? -1.0f : 1.0f) * (width / 4.0f);
 
-            // See if there are any triangles in the new node.
+            // See if there are any triangles in the new pNode.
             count = CountTriangles((positionX + offsetX), (positionZ + offsetZ), (width / 2.0f));
             if (count > 0)
             {
-                node->nodes[i] = new NodeType;
+                pNode->nodes[i] = new NodeType;
 
-                // Extend the tree, starting from this new child node now.
-                CreateTreeNode( node->nodes[i],
+                // Extend the tree, starting from this new child pNode now.
+                CreateTreeNode( pNode->nodes[i],
                                 (positionX + offsetX),
                                 (positionZ + offsetZ),
                                 (width / 2.0f),
@@ -225,10 +226,10 @@ void QuadTree::CreateTreeNode(NodeType *node, float positionX, float positionZ, 
 
         return;
     }
-    // We have a leaf node.
+    // We have a leaf pNode.
     else
     {
-        node->triangleCount = numTriangles;
+        pNode->triangleCount = numTriangles;
 
         vertexCount = numTriangles * 3;
 
@@ -241,7 +242,7 @@ void QuadTree::CreateTreeNode(NodeType *node, float positionX, float positionZ, 
 
         for (int i = 0; i < m_triangleCount; ++i)
         {
-            // If the triangle is inside this node then add it to the vertex array.
+            // If the triangle is inside this pNode then add it to the vertex array.
             result = IsTriangleContained(i, positionX, positionZ, width);
             if (result)
             {
@@ -259,7 +260,7 @@ void QuadTree::CreateTreeNode(NodeType *node, float positionX, float positionZ, 
                     // Store the vertex position information in the vertex list for
                     // intersection test (height based movement)
                     tmpVertex.Set(m_vertexList[vertexIndex].position);
-                    node->vertexList.push_back(tmpVertex);
+                    pNode->vertexList.push_back(tmpVertex);
                     index++;
                     vertexIndex++;
                 }
@@ -279,7 +280,7 @@ void QuadTree::CreateTreeNode(NodeType *node, float positionX, float positionZ, 
         vertexData.SysMemPitch = 0;
         vertexData.SysMemSlicePitch = 0;
 
-        device->CreateBuffer(&vertexBufferDesc, &vertexData, &node->vertexBuffer);
+        device->CreateBuffer(&vertexBufferDesc, &vertexData, &pNode->vertexBuffer);
 
         // Set up the description of the index buffer.
         indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -294,7 +295,7 @@ void QuadTree::CreateTreeNode(NodeType *node, float positionX, float positionZ, 
         indexData.SysMemPitch = 0;
         indexData.SysMemSlicePitch = 0;
 
-        device->CreateBuffer(&indexBufferDesc, &indexData, &node->indexBuffer);
+        device->CreateBuffer(&indexBufferDesc, &indexData, &pNode->indexBuffer);
 
         // clean-up
         delete[] vertices;
@@ -398,35 +399,35 @@ bool QuadTree::IsTriangleContained(int index, float positionX, float positionZ, 
 }
 
 
-void QuadTree::ReleaseNode(NodeType *node)
+void QuadTree::ReleaseNode(NodeType *pNode)
 {
     // Recursively go down the tree and release the bottom nodes first.
     for (int i = 0; i < MAX_CHILDREN; i++)
     {
-        if (node->nodes[i] != 0)
+        if (pNode->nodes[i] != 0)
         {
-            ReleaseNode(node->nodes[i]);
+            ReleaseNode(pNode->nodes[i]);
         }
     }
 
-    if (node->vertexBuffer)
+    if (pNode->vertexBuffer)
     {
-        node->vertexBuffer->Release();
-        node->vertexBuffer = 0;
+        pNode->vertexBuffer->Release();
+        pNode->vertexBuffer = 0;
     }
 
-    if (node->indexBuffer)
+    if (pNode->indexBuffer)
     {
-        node->indexBuffer->Release();
-        node->indexBuffer = 0;
+        pNode->indexBuffer->Release();
+        pNode->indexBuffer = 0;
     }
 
     for (int i = 0; i < MAX_CHILDREN; i++)
     {
-        if (node->nodes[i])
+        if (pNode->nodes[i])
         {
-            delete node->nodes[i];
-            node->nodes[i] = 0;
+            delete pNode->nodes[i];
+            pNode->nodes[i] = 0;
         }
     }
 
@@ -434,10 +435,11 @@ void QuadTree::ReleaseNode(NodeType *node)
 }
 
 
-void QuadTree::RenderNode(NodeType *node,
-                          Frustum *frustum,
-                          ID3D11DeviceContext *deviceContext,
-                          TerrainShader *shader)
+void QuadTree::RenderNode(NodeType *pNode,
+                          Frustum *pFrustum,
+                          ID3D11DeviceContext *pContext,
+                          TerrainShader *pShader,
+                          bool wireframe)
 {
     bool result;
 
@@ -447,10 +449,10 @@ void QuadTree::RenderNode(NodeType *node,
     unsigned int stride;
     unsigned int offset;
 
-    // Check to see if the node can be seen.
-    // ATTENTION: y-Center value is assumed to be 0!
+    // Check to see if the pNode can be seen.
+    // ATTENTION: y-Center value is assumed to be 0! (only 2D-quadtree)
     // -> Undefined behavior on "higher/lower" nodes.
-    result = frustum->CheckCube(node->positionX, 0.0f, node->positionZ, (node->width / 2.0f));
+    result = pFrustum->CheckCube(pNode->positionX, 0.0f, pNode->positionZ, (pNode->width / 2.0f));
     if (!result)
     {
         return;
@@ -459,10 +461,10 @@ void QuadTree::RenderNode(NodeType *node,
     count = 0;
     for (int i = 0; i < MAX_CHILDREN; ++i)
     {
-        if (node->nodes[i] != 0)
+        if (pNode->nodes[i] != 0)
         {
             count++;
-            RenderNode(node->nodes[i], frustum, deviceContext, shader);
+            RenderNode(pNode->nodes[i], pFrustum, pContext, pShader, wireframe);
         }
     }
     if (count != 0)
@@ -476,19 +478,19 @@ void QuadTree::RenderNode(NodeType *node,
     offset = 0;
 
     // Set the vertex and index buffers to active in the input assembler for rendered.
-    deviceContext->IASetVertexBuffers(0, 1, &node->vertexBuffer, &stride, &offset);
-    deviceContext->IASetIndexBuffer(node->indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+    pContext->IASetVertexBuffers(0, 1, &pNode->vertexBuffer, &stride, &offset);
+    pContext->IASetIndexBuffer(pNode->indexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
-    deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    // Determine the number of indices in this node.
-    indexCount = node->triangleCount * 3;
+    // Determine the number of indices in this pNode.
+    indexCount = pNode->triangleCount * 3;
 
-    // Render the polygons in this node.
-    shader->RenderShader(deviceContext, indexCount);
+    // Render the polygons in this pNode.
+    pShader->RenderShader(pContext, indexCount, wireframe);
 
     // Increase the count of the number of polygons that have been rendered during this frame.
-    m_drawCount += node->triangleCount;
+    m_drawCount += pNode->triangleCount;
 
     return;
 }
@@ -496,11 +498,11 @@ void QuadTree::RenderNode(NodeType *node,
 
 bool QuadTree::GetHeightAtPosition(float posX, float posZ, float &height)
 {
-    float meshMinX = m_parentNode->positionX - (m_parentNode->width / 2.0f);
-    float meshMaxX = m_parentNode->positionX + (m_parentNode->width / 2.0f);
+    float meshMinX = m_pParentNode->positionX - (m_pParentNode->width / 2.0f);
+    float meshMaxX = m_pParentNode->positionX + (m_pParentNode->width / 2.0f);
 
-    float meshMinZ = m_parentNode->positionZ - (m_parentNode->width / 2.0f);
-    float meshMaxZ = m_parentNode->positionZ + (m_parentNode->width / 2.0f);
+    float meshMinZ = m_pParentNode->positionZ - (m_pParentNode->width / 2.0f);
+    float meshMaxZ = m_pParentNode->positionZ + (m_pParentNode->width / 2.0f);
 
     // Make sure the coordinates are actually above a polygon.
     if ((posX < meshMinX) || (posX > meshMaxX) || (posZ < meshMinZ) || (posZ > meshMaxZ))
@@ -508,14 +510,14 @@ bool QuadTree::GetHeightAtPosition(float posX, float posZ, float &height)
         return false;
     }
 
-    // Find the node which contains the polygon for this position.
-    FindNode(m_parentNode, posX, posZ, height);
+    // Find the pNode which contains the polygon for this position.
+    FindNode(m_pParentNode, posX, posZ, height);
 
     return true;
 }
 
 
-void QuadTree::FindNode(NodeType *node, float x, float z, float &height)
+void QuadTree::FindNode(NodeType *pNode, float x, float z, float &height)
 {
     int count = 0;
     int index = 0;
@@ -526,14 +528,14 @@ void QuadTree::FindNode(NodeType *node, float x, float z, float &height)
 
     bool foundHeight = false;
 
-    // Calculate the dimensions of this node.
-    float xMin = node->positionX - (node->width / 2.0f);
-    float xMax = node->positionX + (node->width / 2.0f);
+    // Calculate the dimensions of this pNode.
+    float xMin = pNode->positionX - (pNode->width / 2.0f);
+    float xMax = pNode->positionX + (pNode->width / 2.0f);
 
-    float zMin = node->positionZ - (node->width / 2.0f);
-    float zMax = node->positionZ + (node->width / 2.0f);
+    float zMin = pNode->positionZ - (pNode->width / 2.0f);
+    float zMax = pNode->positionZ + (pNode->width / 2.0f);
 
-    // Check if the x and z coordinate are in this node.
+    // Check if the x and z coordinate are in this pNode.
     if ((x < xMin) || (x > xMax) || (z < zMin) || (z > zMax))
     {
         return;
@@ -542,11 +544,11 @@ void QuadTree::FindNode(NodeType *node, float x, float z, float &height)
     // Check nodes to see if children nodes exist.
     for (int i = 0; i < MAX_CHILDREN; i++)
     {
-        if (node->nodes[i] != 0)
+        if (pNode->nodes[i] != 0)
         {
             count++;
             // recursive call
-            FindNode(node->nodes[i], x, z, height);
+            FindNode(pNode->nodes[i], x, z, height);
         }
     }
 
@@ -556,13 +558,13 @@ void QuadTree::FindNode(NodeType *node, float x, float z, float &height)
         return;
     }
 
-    // If there are no children, the polygon must be in this node.
-    // Check all polygons in this node to find the height we are looking for.
-    for (int i = 0; i < node->triangleCount; i++)
+    // If there are no children, the polygon must be in this pNode.
+    // Check all polygons in this pNode to find the height we are looking for.
+    for (int i = 0; i < pNode->triangleCount; i++)
     {
-        v0 = node->vertexList.at(index++);
-        v1 = node->vertexList.at(index++);
-        v2 = node->vertexList.at(index++);
+        v0 = pNode->vertexList.at(index++);
+        v1 = pNode->vertexList.at(index++);
+        v2 = pNode->vertexList.at(index++);
 
         // Check if this is the polygon we are looking for.
         foundHeight = CheckHeightOfTriangle(x, z, height, v0, v1, v2);

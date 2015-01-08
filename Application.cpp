@@ -4,50 +4,47 @@
 
 Application::Application()
 {
-    m_fullScreen = false;
-    m_vSync = false;
+    m_fullScreen        = false;
+    m_vSync             = false;
     m_lockSurfaceCamera = false;
-    m_stopAnimation = false;
-    m_leftMouseDown = false;
-    m_wireframe = false;
+    m_stopAnimation     = false;
+    m_leftMouseDown     = false;
+    m_wireframe         = false;
 
-    m_drawSkyDome = true;
-    m_drawOcean = false;
-    m_drawTerrain = true;
+    m_drawSkyDome       = true;
+    m_drawOcean         = false;
+    m_drawTerrain       = true;
 
-    m_oceanTimeScale = 0.0003f;
+    m_oceanTimeScale    = 0.0003f;
     m_oceanHeightOffset = 0.0f;
 
-    m_terrainHurst = 0.5f;
-    m_terrainVariance = 1.35f;
-    m_terrainResolution = 8;
-    m_oldTerrainHurst = 0.5f;
-    m_oldTerrainVariance = 1.35f;
-    m_oldTerrainResolution = 8;
+    m_terrainHurst      = m_oldTerrainHurst         = 0.5f;
+    m_terrainVariance   = m_oldTerrainVariance      = 1.35f;
+    m_terrainResolution = m_oldTerrainResolution    = 8;
 
-    m_screenDepth = 2500.0f;
-    m_screenNear = 0.1f;
-    m_spectatorHeight = 10.0f;
-    m_elapsedTime = 0;
+    m_screenDepth       = 2500.0f;
+    m_screenNear        = 0.1f;
+    m_spectatorHeight   = 10.0f;
+    m_elapsedTime       = 0;
 
-    m_pInput = 0;
-    m_pDirect3D = 0;
-    m_pCamera = 0;
-    m_pTerrain = 0;
-    m_pColorShader = 0;
-    m_pTimer = 0;
-    m_pPosition = 0;
-    m_pUtil = 0;
-    m_pTerrainShader = 0;
-    m_pLight = 0;
-    m_pGroundTex = 0;
-    m_pSkyDomeTex = 0;
-    m_pFrustum = 0;
-    m_pQuadTree = 0;
-    m_pFont = 0;
-    m_pProfiler = 0;
-    m_pSkyDome = 0;
-    m_pSkyDomeShader = 0;
+    m_pInput            = nullptr;
+    m_pDirect3D         = nullptr;
+    m_pCamera           = nullptr;
+    m_pTerrain          = nullptr;
+    m_pColorShader      = nullptr;
+    m_pTimer            = nullptr;
+    m_pPosition         = nullptr;
+    m_pUtil             = nullptr;
+    m_pTerrainShader    = nullptr;
+    m_pLight            = nullptr;
+    m_pGroundTex        = nullptr;
+    m_pSkyDomeTex       = nullptr;
+    m_pFrustum          = nullptr;
+    m_pQuadTree         = nullptr;
+    m_pFont             = nullptr;
+    m_pProfiler         = nullptr;
+    m_pSkyDome          = nullptr;
+    m_pSkyDomeShader    = nullptr;
 }
 
 
@@ -118,9 +115,9 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     m_pCamera->Render();
     m_pCamera->GetViewMatrix(baseViewMatrix);
     // Set the initial position of the camera.
-    cameraX = 50.0f;
+    cameraX = 100.0f;
     cameraY = 200.0f;
-    cameraZ = 50.0f;
+    cameraZ = 100.0f;
     m_pCamera->SetPosition(cameraX, cameraY, cameraZ);
 
     // image loading utility object
@@ -297,7 +294,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     }
     Ocean::OceanParameter oceanParams = { 512,                  // map dim
                                           m_oceanTimeScale,     // time factor
-                                          0.4f,                 // amplitude
+                                          0.2f,                 // amplitude
                                           Vec2f(0.3f, 0.6f),    // wind direction
                                           400.0f,               // wind speed
                                           0.07f,                // wind dependency
@@ -338,7 +335,10 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     {
         return false;
     }
-    if (!m_pGUI->Initialize(m_pDirect3D->GetDevice(), "Settings", screenWidth, screenHeight))
+    if (!m_pGUI->Initialize(m_pDirect3D->GetDevice(),
+                            "Settings",
+                            screenWidth,
+                            screenHeight))
     {
         MessageBox(hwnd, L"Could not initialize the GUI object.", L"Error", MB_OK);
         return false;
@@ -630,7 +630,10 @@ bool Application::RenderGraphics()
         }
 
         // Render the terrain using the quad tree and terrain shader.
-        m_pQuadTree->Render(m_pFrustum, m_pDirect3D->GetDeviceContext(), m_pTerrainShader);
+        m_pQuadTree->Render(m_pFrustum,
+                            m_pDirect3D->GetDeviceContext(),
+                            m_pTerrainShader,
+                            m_wireframe);
     }
 
 // profiling/debug output
@@ -718,6 +721,11 @@ bool Application::SetGuiParams()
         return false;
     }
     if (!m_pGUI->AddBoolVar("Wireframe", m_wireframe))
+    {
+        return false;
+    }
+
+    if (!m_pGUI->AddBoolVar("WalkingMode", m_lockSurfaceCamera))
     {
         return false;
     }

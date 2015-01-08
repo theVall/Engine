@@ -156,19 +156,23 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
 
     // initially set the four corner points
     int index = 0;
+    // upper left
     m_heightMap[index].position = Vec3f(0.0f, heightValue, 0.0f);
+    // upper right
     index = m_terrainWidth - 1;
-    m_heightMap[index].position = Vec3f(0.0f,
-                                        heightValue,
-                                        (float)(m_terrainWidth - 1));
-    index = m_terrainWidth * (m_terrainHeight - 2);
-    m_heightMap[index].position = Vec3f((float)(m_terrainHeight - 1),
+    m_heightMap[index].position = Vec3f((float)(m_terrainWidth - 1)*terrainScale,
                                         heightValue,
                                         0.0f);
-    index = m_terrainWidth * (m_terrainHeight - 1);
-    m_heightMap[index].position = Vec3f((float)(m_terrainHeight - 1),
+    // lower left
+    index = m_terrainWidth*(m_terrainHeight - 1);
+    m_heightMap[index].position = Vec3f(0.0f,
                                         heightValue,
-                                        (float)(m_terrainWidth - 1));
+                                        (float)(m_terrainHeight - 1)*terrainScale);
+    // lower right
+    index = m_terrainWidth*m_terrainHeight - 1;
+    m_heightMap[index].position = Vec3f((float)(m_terrainHeight - 1)*terrainScale,
+                                        heightValue,
+                                        (float)(m_terrainWidth - 1)*terrainScale);
 
     int idWidth = m_terrainWidth;
 

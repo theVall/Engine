@@ -3,11 +3,12 @@
 
 ShaderProgram::ShaderProgram()
 {
-    m_vertexShader = 0;
-    m_pixelShader = 0;
-    m_layout = 0;
+    m_pVertexShader = 0;
+    m_pPixelShader = 0;
+    m_pLayout = 0;
+    m_pSamplerState = 0;
 
-    m_matrixBuffer = 0;
+    m_pMatrixBuffer = 0;
 }
 
 
@@ -21,14 +22,38 @@ ShaderProgram::~ShaderProgram()
 }
 
 
-bool ShaderProgram::Initialize(ID3D11Device *device, HWND hwnd, WCHAR *vsFilename, WCHAR *psFilename)
+bool ShaderProgram::Initialize(ID3D11Device *pDevice,
+                               HWND hwnd,
+                               WCHAR *pVsFilename,
+                               WCHAR *pPsFilename)
 {
     bool result;
+    HRESULT hres;
 
-    result = InitializeShader(device,
+    // Create wireframe state
+    D3D11_RASTERIZER_DESC rasterDesc;
+    rasterDesc.FillMode = D3D11_FILL_WIREFRAME;
+    rasterDesc.CullMode = D3D11_CULL_NONE;
+    rasterDesc.FrontCounterClockwise = FALSE;
+    rasterDesc.DepthBias = 0;
+    rasterDesc.SlopeScaledDepthBias = 0.0f;
+    rasterDesc.DepthBiasClamp = 0.0f;
+    rasterDesc.DepthClipEnable = TRUE;
+    rasterDesc.ScissorEnable = FALSE;
+    rasterDesc.MultisampleEnable = TRUE;
+    rasterDesc.AntialiasedLineEnable = FALSE;
+
+    hres = pDevice->CreateRasterizerState(&rasterDesc, &m_pRsStateWireframe);
+    if (FAILED(hres))
+    {
+        return false;
+    }
+
+    // Call object specific initialization method.
+    result = InitializeShader(pDevice,
                               hwnd,
-                              vsFilename,
-                              psFilename);
+                              pVsFilename,
+                              pPsFilename);
     if (!result)
     {
         return false;
@@ -40,7 +65,18 @@ bool ShaderProgram::Initialize(ID3D11Device *device, HWND hwnd, WCHAR *vsFilenam
 
 void ShaderProgram::Shutdown()
 {
-    // Shutdown the vertex and pixel shaders as well as the related objects.
+    // Release general shader program objects.
+    SafeRelease(m_pPixelShader);
+    SafeRelease(m_pVertexShader);
+
+    SafeRelease(m_pSamplerState);
+    SafeRelease(m_pLayout);
+
+    SafeRelease(m_pMatrixBuffer);
+
+    SafeRelease(m_pRsStateWireframe);
+
+    // Shutdown object specific objects.
     ShutdownShader();
 
     return;

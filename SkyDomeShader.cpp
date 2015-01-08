@@ -119,7 +119,7 @@ bool SkyDomeShader::InitializeShader(ID3D11Device *device,
     result = device->CreateVertexShader(vertexShaderBuffer->GetBufferPointer(),
                                         vertexShaderBuffer->GetBufferSize(),
                                         NULL,
-                                        &m_vertexShader);
+                                        &m_pVertexShader);
     if (FAILED(result))
     {
         return false;
@@ -129,7 +129,7 @@ bool SkyDomeShader::InitializeShader(ID3D11Device *device,
     result = device->CreatePixelShader(pixelShaderBuffer->GetBufferPointer(),
                                        pixelShaderBuffer->GetBufferSize(),
                                        NULL,
-                                       &m_pixelShader);
+                                       &m_pPixelShader);
     if (FAILED(result))
     {
         return false;
@@ -162,7 +162,7 @@ bool SkyDomeShader::InitializeShader(ID3D11Device *device,
                                        numElements,
                                        vertexShaderBuffer->GetBufferPointer(),
                                        vertexShaderBuffer->GetBufferSize(),
-                                       &m_layout);
+                                       &m_pLayout);
     if (FAILED(result))
     {
         return false;
@@ -184,7 +184,7 @@ bool SkyDomeShader::InitializeShader(ID3D11Device *device,
     matrixBufferDesc.StructureByteStride = 0;
 
     // Create the constant buffer pointer so we can access the vertex shader constant buffer from within this class.
-    result = device->CreateBuffer(&matrixBufferDesc, NULL, &m_matrixBuffer);
+    result = device->CreateBuffer(&matrixBufferDesc, NULL, &m_pMatrixBuffer);
     if (FAILED(result))
     {
         return false;
@@ -235,10 +235,6 @@ void SkyDomeShader::ShutdownShader()
 {
     SafeRelease(m_pSkySampler);
     SafeRelease(m_gradientBuffer);
-    SafeRelease(m_matrixBuffer);
-    SafeRelease(m_layout);
-    SafeRelease(m_pixelShader);
-    SafeRelease(m_vertexShader);
 
     return;
 }
@@ -259,7 +255,7 @@ bool SkyDomeShader::SetShaderParameters(ID3D11DeviceContext *deviceContext,
     unsigned int bufferNumber;
 
     // Lock the constant buffer so it can be written to.
-    result = deviceContext->Map(m_matrixBuffer,
+    result = deviceContext->Map(m_pMatrixBuffer,
                                 0,
                                 D3D11_MAP_WRITE_DISCARD,
                                 0,
@@ -278,9 +274,9 @@ bool SkyDomeShader::SetShaderParameters(ID3D11DeviceContext *deviceContext,
     pTransformDataBuffer->projection = XMMatrixTranspose(projectionMatrix);
 
     // Unlock the constant buffer.
-    deviceContext->Unmap(m_matrixBuffer, 0);
+    deviceContext->Unmap(m_pMatrixBuffer, 0);
     bufferNumber = 0;
-    deviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_matrixBuffer);
+    deviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_pMatrixBuffer);
 
 
     // Lock the gradient constant buffer so it can be written to.
@@ -314,10 +310,10 @@ bool SkyDomeShader::SetShaderParameters(ID3D11DeviceContext *deviceContext,
 void SkyDomeShader::RenderShader(ID3D11DeviceContext *deviceContext, int indexCount)
 {
     // Set the vertex input layout.
-    deviceContext->IASetInputLayout(m_layout);
+    deviceContext->IASetInputLayout(m_pLayout);
 
-    deviceContext->VSSetShader(m_vertexShader, NULL, 0);
-    deviceContext->PSSetShader(m_pixelShader, NULL, 0);
+    deviceContext->VSSetShader(m_pVertexShader, NULL, 0);
+    deviceContext->PSSetShader(m_pPixelShader, NULL, 0);
     deviceContext->PSSetSamplers(0, 1, &m_pSkySampler);
 
     deviceContext->DrawIndexed(indexCount, 0, 0);

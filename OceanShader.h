@@ -91,7 +91,7 @@ private:
 
     // State blocks
     ID3D11RasterizerState *m_pRsStateSolid;
-    ID3D11RasterizerState *m_pRsStateWireframe;
+    //ID3D11RasterizerState *m_pRsStateWireframe;
     ID3D11BlendState *m_pBlendState;
 };
 

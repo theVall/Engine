@@ -28,7 +28,7 @@ public:
                              const XMFLOAT4 &ambientColor,
                              const XMFLOAT4 &diffuseColor);
 
-    void RenderShader(ID3D11DeviceContext *pContext, int indexCount);
+    void RenderShader(ID3D11DeviceContext *pContext, int indexCount, bool wireframe);
 
 private:
     bool InitializeShader(ID3D11Device *pDevice,

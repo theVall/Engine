@@ -3,7 +3,6 @@
 
 TextureShader::TextureShader(void)
 {
-    m_sampleState = 0;
 }
 
 
@@ -115,7 +114,7 @@ bool TextureShader::InitializeShader(ID3D11Device *device,
     result = device->CreateVertexShader(vertexShaderBuffer->GetBufferPointer(),
                                         vertexShaderBuffer->GetBufferSize(),
                                         NULL,
-                                        &m_vertexShader);
+                                        &m_pVertexShader);
     if (FAILED(result))
     {
         return false;
@@ -124,7 +123,7 @@ bool TextureShader::InitializeShader(ID3D11Device *device,
     result = device->CreatePixelShader(pixelShaderBuffer->GetBufferPointer(),
                                        pixelShaderBuffer->GetBufferSize(),
                                        NULL,
-                                       &m_pixelShader);
+                                       &m_pPixelShader);
     if (FAILED(result))
     {
         return false;
@@ -153,7 +152,7 @@ bool TextureShader::InitializeShader(ID3D11Device *device,
                                        numElements,
                                        vertexShaderBuffer->GetBufferPointer(),
                                        vertexShaderBuffer->GetBufferSize(),
-                                       &m_layout);
+                                       &m_pLayout);
     if (FAILED(result))
     {
         return false;
@@ -175,7 +174,7 @@ bool TextureShader::InitializeShader(ID3D11Device *device,
 
     //  Create the constant buffer pointer so we can access the vertex shader constant buffer
     //  from within this class.
-    result = device->CreateBuffer(&matrixBufferDesc, NULL, &m_matrixBuffer);
+    result = device->CreateBuffer(&matrixBufferDesc, NULL, &m_pMatrixBuffer);
     if (FAILED(result))
     {
         return false;
@@ -197,7 +196,7 @@ bool TextureShader::InitializeShader(ID3D11Device *device,
     samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
     // Create the texture sampler state.
-    result = device->CreateSamplerState(&samplerDesc, &m_sampleState);
+    result = device->CreateSamplerState(&samplerDesc, &m_pSamplerState);
     if (FAILED(result))
     {
         return false;
@@ -219,7 +218,7 @@ bool TextureShader::SetShaderParameters(ID3D11DeviceContext *deviceContext,
     unsigned int bufferNumber;
 
     // Lock the constant buffer so it can be written to.
-    result = deviceContext->Map(m_matrixBuffer,
+    result = deviceContext->Map(m_pMatrixBuffer,
                                 0,
                                 D3D11_MAP_WRITE_DISCARD,
                                 0,
@@ -237,9 +236,9 @@ bool TextureShader::SetShaderParameters(ID3D11DeviceContext *deviceContext,
     transformDataBuffer->projection = XMMatrixTranspose(projectionMatrix);
 
     // Unlock the constant buffer.
-    deviceContext->Unmap(m_matrixBuffer, 0);
+    deviceContext->Unmap(m_pMatrixBuffer, 0);
     bufferNumber = 0;
-    deviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_matrixBuffer);
+    deviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_pMatrixBuffer);
     deviceContext->PSSetShaderResources(0, 1, &texture);
 
     return true;
@@ -248,48 +247,17 @@ bool TextureShader::SetShaderParameters(ID3D11DeviceContext *deviceContext,
 
 void TextureShader::ShutdownShader()
 {
-    if (m_sampleState)
-    {
-        m_sampleState->Release();
-        m_sampleState = 0;
-    }
-
-    if (m_matrixBuffer)
-    {
-        m_matrixBuffer->Release();
-        m_matrixBuffer = 0;
-    }
-
-    if (m_layout)
-    {
-        m_layout->Release();
-        m_layout = 0;
-    }
-
-    if (m_pixelShader)
-    {
-        m_pixelShader->Release();
-        m_pixelShader = 0;
-    }
-
-    if (m_vertexShader)
-    {
-        m_vertexShader->Release();
-        m_vertexShader = 0;
-    }
-
-    return;
 }
 
 
 void TextureShader::RenderShader(ID3D11DeviceContext *deviceContext, int indexCount)
 {
-    deviceContext->IASetInputLayout(m_layout);
+    deviceContext->IASetInputLayout(m_pLayout);
 
     // Set the vertex and pixel shader.
-    deviceContext->VSSetShader(m_vertexShader, NULL, 0);
-    deviceContext->PSSetShader(m_pixelShader, NULL, 0);
-    deviceContext->PSSetSamplers(0, 1, &m_sampleState);
+    deviceContext->VSSetShader(m_pVertexShader, NULL, 0);
+    deviceContext->PSSetShader(m_pPixelShader, NULL, 0);
+    deviceContext->PSSetSamplers(0, 1, &m_pSamplerState);
 
     deviceContext->DrawIndexed(indexCount, 0, 0);
 

@@ -3,7 +3,6 @@
 
 TerrainShader::TerrainShader()
 {
-    m_sampleState = 0;
     m_pLightBuffer = 0;
     m_pCameraBuffer = 0;
 }
@@ -96,7 +95,7 @@ bool TerrainShader::InitializeShader(ID3D11Device *device,
     result = device->CreateVertexShader(vertexShaderBuffer->GetBufferPointer(),
                                         vertexShaderBuffer->GetBufferSize(),
                                         NULL,
-                                        &m_vertexShader);
+                                        &m_pVertexShader);
     if (FAILED(result))
     {
         return false;
@@ -105,7 +104,7 @@ bool TerrainShader::InitializeShader(ID3D11Device *device,
     result = device->CreatePixelShader(pixelShaderBuffer->GetBufferPointer(),
                                        pixelShaderBuffer->GetBufferSize(),
                                        NULL,
-                                       &m_pixelShader);
+                                       &m_pPixelShader);
     if (FAILED(result))
     {
         return false;
@@ -151,7 +150,7 @@ bool TerrainShader::InitializeShader(ID3D11Device *device,
                                        numElements,
                                        vertexShaderBuffer->GetBufferPointer(),
                                        vertexShaderBuffer->GetBufferSize(),
-                                       &m_layout);
+                                       &m_pLayout);
     if (FAILED(result))
     {
         return false;
@@ -179,7 +178,7 @@ bool TerrainShader::InitializeShader(ID3D11Device *device,
     samplerDesc.MinLOD = 0;
     samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
     // Create the texture sampler state.
-    result = device->CreateSamplerState(&samplerDesc, &m_sampleState);
+    result = device->CreateSamplerState(&samplerDesc, &m_pSamplerState);
     if (FAILED(result))
     {
         return false;
@@ -193,7 +192,7 @@ bool TerrainShader::InitializeShader(ID3D11Device *device,
     matrixBufferDesc.MiscFlags = 0;
     matrixBufferDesc.StructureByteStride = 0;
     // Create the constant buffer pointer so we can access the vertex shader constant buffer from within this class.
-    result = device->CreateBuffer(&matrixBufferDesc, NULL, &m_matrixBuffer);
+    result = device->CreateBuffer(&matrixBufferDesc, NULL, &m_pMatrixBuffer);
     if (FAILED(result))
     {
         return false;
@@ -222,17 +221,12 @@ void TerrainShader::ShutdownShader()
 {
     SafeRelease(m_pLightBuffer);
     SafeRelease(m_pCameraBuffer);
-    SafeRelease(m_matrixBuffer);
-    SafeRelease(m_sampleState);
-    SafeRelease(m_layout);
-    SafeRelease(m_pixelShader);
-    SafeRelease(m_vertexShader);
 
     return;
 }
 
 
-bool TerrainShader::SetShaderParameters(ID3D11DeviceContext *deviceContext,
+bool TerrainShader::SetShaderParameters(ID3D11DeviceContext *pContext,
                                         const XMMATRIX &worldMatrix,
                                         const XMMATRIX &viewMatrix,
                                         const XMMATRIX &projectionMatrix,
@@ -248,11 +242,11 @@ bool TerrainShader::SetShaderParameters(ID3D11DeviceContext *deviceContext,
     unsigned int bufferNumber;
 
     // Lock the constant buffer so it can be written to.
-    result = deviceContext->Map(m_matrixBuffer,
-                                0,
-                                D3D11_MAP_WRITE_DISCARD,
-                                0,
-                                &mappedResource);
+    result = pContext->Map(m_pMatrixBuffer,
+                           0,
+                           D3D11_MAP_WRITE_DISCARD,
+                           0,
+                           &mappedResource);
     if (FAILED(result))
     {
         return false;
@@ -266,22 +260,22 @@ bool TerrainShader::SetShaderParameters(ID3D11DeviceContext *deviceContext,
     transformDataBuffer->projection = XMMatrixTranspose(projectionMatrix);
 
     // Unlock the constant buffer.
-    deviceContext->Unmap(m_matrixBuffer, 0);
+    pContext->Unmap(m_pMatrixBuffer, 0);
     bufferNumber = 0;
-    deviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_matrixBuffer);
+    pContext->VSSetConstantBuffers(bufferNumber, 1, &m_pMatrixBuffer);
 
     // Position of the camera constant buffer in the vertex shader.
     bufferNumber = 1;
-    deviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_pCameraBuffer);
+    pContext->VSSetConstantBuffers(bufferNumber, 1, &m_pCameraBuffer);
 
-    deviceContext->PSSetShaderResources(0, 1, &texture);
+    pContext->PSSetShaderResources(0, 1, &texture);
 
     // Lock the light constant buffer so it can be written to.
-    result = deviceContext->Map(m_pLightBuffer,
-                                0,
-                                D3D11_MAP_WRITE_DISCARD,
-                                0,
-                                &mappedResource);
+    result = pContext->Map(m_pLightBuffer,
+                           0,
+                           D3D11_MAP_WRITE_DISCARD,
+                           0,
+                           &mappedResource);
     if (FAILED(result))
     {
         return false;
@@ -296,28 +290,35 @@ bool TerrainShader::SetShaderParameters(ID3D11DeviceContext *deviceContext,
     lightDataBuffer->padding = 0.0f;
 
     // Unlock the constant buffer.
-    deviceContext->Unmap(m_pLightBuffer, 0);
+    pContext->Unmap(m_pLightBuffer, 0);
     bufferNumber = 0;
-    deviceContext->PSSetConstantBuffers(bufferNumber, 1, &m_pLightBuffer);
+    pContext->PSSetConstantBuffers(bufferNumber, 1, &m_pLightBuffer);
 
     return true;
 }
 
 
-void TerrainShader::RenderShader(ID3D11DeviceContext *deviceContext, int indexCount)
+void TerrainShader::RenderShader(ID3D11DeviceContext *pContext,
+                                 int indexCount,
+                                 bool wireframe)
 {
-    deviceContext->IASetInputLayout(m_layout);
+    pContext->IASetInputLayout(m_pLayout);
+
+    if (wireframe)
+    {
+        pContext->RSSetState(m_pRsStateWireframe);
+    }
 
     // Set the vertex and pixel shader.
-    deviceContext->VSSetShader(m_vertexShader, NULL, 0);
-    deviceContext->PSSetShader(m_pixelShader, NULL, 0);
-    deviceContext->PSSetSamplers(0, 1, &m_sampleState);
+    pContext->VSSetShader(m_pVertexShader, NULL, 0);
+    pContext->PSSetShader(m_pPixelShader, NULL, 0);
+    pContext->PSSetSamplers(0, 1, &m_pSamplerState);
 
-    deviceContext->DrawIndexed(indexCount, 0, 0);
+    pContext->DrawIndexed(indexCount, 0, 0);
 
     // Unbind SRV
     ID3D11ShaderResourceView *pNullSrv[1] = { NULL };
-    deviceContext->PSSetShaderResources(0, 1, pNullSrv);
+    pContext->PSSetShaderResources(0, 1, pNullSrv);
 
     return;
 }

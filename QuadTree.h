@@ -17,7 +17,7 @@ using namespace std;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
-const int MAX_TRIANGLES = 100000;
+const int MAX_TRIANGLES = 10000;
 const int MAX_CHILDREN = 4;
 
 class QuadTree
@@ -55,7 +55,10 @@ public:
 
     bool Initialize(Terrain *, ID3D11Device *);
     void Shutdown();
-    void Render(Frustum *, ID3D11DeviceContext *, TerrainShader *);
+    void Render(Frustum *pFrustum,
+                ID3D11DeviceContext *pContext,
+                TerrainShader *pShader,
+                bool wireframe);
 
     int GetDrawCount();
     bool GetHeightAtPosition(float posX, float posZ, float &height);
@@ -72,12 +75,16 @@ private:
                         float width,
                         ID3D11Device *device);
 
-    int CountTriangles(float, float, float);
-    bool IsTriangleContained(int, float, float, float);
-    void ReleaseNode(NodeType *);
-    void RenderNode(NodeType *, Frustum *, ID3D11DeviceContext *, TerrainShader *);
+    int CountTriangles(float posX, float posY, float width);
+    bool IsTriangleContained(int index, float posX, float posZ, float width);
+    void ReleaseNode(NodeType *pNode);
+    void RenderNode(NodeType *pNode,
+                    Frustum *pFrustum,
+                    ID3D11DeviceContext *pContext,
+                    TerrainShader *pShader,
+                    bool wireframe);
 
-    void FindNode(NodeType *node, float x, float z, float &height);
+    void FindNode(NodeType *node, float posX, float posZ, float &height);
 
     // Checks if the y-parallel line with posX and posZ intersects the triangle (v0, v1, v2).
     // <param> posX x-position of the point which height is to be determined.
@@ -91,6 +98,6 @@ private:
     int m_drawCount;
 
     vector<VertexType> m_vertexList;
-    NodeType *m_parentNode;
+    NodeType *m_pParentNode;
 };
 
