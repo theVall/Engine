@@ -22,6 +22,9 @@ public:
     void GetViewMatrix(XMMATRIX &viewMatrix);
 
     void Render();
+    // Orbital camera mode "trackball camera"
+    void RenderOrbital(float zoom);
+
 
     // guarantee align 16 for heap allocations
     void *operator new(size_t size) throw()

@@ -9,6 +9,7 @@ Application::Application()
     m_lockSurfaceCamera = false;
     m_stopAnimation     = false;
     m_leftMouseDown     = false;
+    m_rightMouseDown    = false;
     m_wireframe         = false;
 
     m_drawSkyDome       = true;
@@ -22,6 +23,8 @@ Application::Application()
     m_terrainVariance   = m_oldTerrainVariance      = 1.35f;
     m_terrainResolution = m_oldTerrainResolution    = 8;
 
+    m_orbitalCamera     = false;
+    m_zoom              = 1.0f;
     m_screenDepth       = 2500.0f;
     m_screenNear        = 0.1f;
     m_spectatorHeight   = 10.0f;
@@ -112,7 +115,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     }
     // Initialize a base view matrix with the camera for 2D user interface rendering.
     m_pCamera->SetPosition(0.0f, 0.0f, -1.0f);
-    m_pCamera->Render();
+    m_pCamera->RenderOrbital(1.0f);
     m_pCamera->GetViewMatrix(baseViewMatrix);
     // Set the initial position of the camera.
     cameraX = 100.0f;
@@ -476,20 +479,6 @@ bool Application::HandleInput(float frameTime)
     keyDown = GetAsyncKeyState('C');
     m_pPosition->MoveDownward(keyDown != 0, sensitivity);
 
-    // TODO
-    keyDown = GetAsyncKeyState('U');
-    if (keyDown)
-    {
-        m_pDirect3D->ToggleWireframe();
-    }
-
-    keyDown = GetAsyncKeyState('B');
-    if (keyDown)
-    {
-        m_stopAnimation = !m_stopAnimation;
-    }
-
-
     // Yaw and pitch with __mouse__ movement.
     if (moveCamOnDrag)
     {
@@ -504,6 +493,14 @@ bool Application::HandleInput(float frameTime)
         m_pInput->GetMouseLocationChange(mouseX, mouseY);
         m_pPosition->TurnOnMouseMovement(mouseX, mouseY, 0.5f);
     }
+
+    // TODO: zoom on both mouse buttons down
+    //if (m_leftMouseDown && m_rightMouseDown)
+    //{
+    //    m_pInput->GetMouseLocationChange(mouseX, mouseY);
+    //    m_zoom += mouseY * 1.001f;
+    //}
+
     // Get the view point position/rotation.
     m_pPosition->GetPosition(posX, posY, posZ);
     m_pPosition->GetRotation(rotX, rotY, rotZ);
@@ -562,7 +559,14 @@ bool Application::RenderGraphics()
     m_pDirect3D->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
 
     // Generate the view matrix based on the camera's position.
-    m_pCamera->Render();
+    if (m_orbitalCamera)
+    {
+        m_pCamera->RenderOrbital(m_zoom);
+    }
+    else
+    {
+        m_pCamera->Render();
+    }
 
     m_pDirect3D->GetWorldMatrix(worldMatrix);
     m_pCamera->GetViewMatrix(viewMatrix);
@@ -645,21 +649,21 @@ bool Application::RenderGraphics()
 
     m_pFont->drawText(m_pDirect3D->GetDeviceContext(),
                       (WCHAR *)fpswchar.str().c_str(),
-                      13.0f,
-                      20.0f,
+                      16.0f,
+                      700.0f,
                       20.0f,
                       0xff8cc63e,
                       0);
 
-    //std::wostringstream triangleswchar;
-    //triangleswchar << m_pQuadTree->GetDrawCount() << " Tris";
-    //m_pFont->drawText(m_pDirect3D->GetDeviceContext(),
-    //                  (WCHAR *)triangleswchar.str().c_str(),
-    //                  13.0f,
-    //                  20.0f,
-    //                  38.0f,
-    //                  0xff8cc63e,
-    //                  0);
+    std::wostringstream triangleswchar;
+    triangleswchar << m_pQuadTree->GetDrawCount() << " Tris";
+    m_pFont->drawText(m_pDirect3D->GetDeviceContext(),
+                      (WCHAR *)triangleswchar.str().c_str(),
+                      16.0f,
+                      700.0f,
+                      40.0f,
+                      0xff8cc63e,
+                      0);
 #endif
 
     m_pGUI->RenderGUI();
@@ -694,6 +698,7 @@ float Application::GetScreenNear()
     return m_screenNear;
 }
 
+
 void Application::SetLeftMouseDown(bool state)
 {
     m_leftMouseDown = state;
@@ -703,6 +708,13 @@ void Application::SetLeftMouseDown(bool state)
         m_pInput->GetMousePoint();
     }
 }
+
+
+void Application::SetRightMouseDown(bool state)
+{
+    m_rightMouseDown = state;
+}
+
 
 
 bool Application::SetGuiParams()
@@ -726,6 +738,11 @@ bool Application::SetGuiParams()
     }
 
     if (!m_pGUI->AddBoolVar("WalkingMode", m_lockSurfaceCamera))
+    {
+        return false;
+    }
+
+    if (!m_pGUI->AddBoolVar("OrbitalCamera", m_orbitalCamera))
     {
         return false;
     }

@@ -63,6 +63,7 @@ public:
 
     // Setter
     void SetLeftMouseDown(bool state);
+    void SetRightMouseDown(bool state);
 
 private:
     bool SetGuiParams();
@@ -94,6 +95,7 @@ private:
     bool m_lockSurfaceCamera;
     bool m_stopAnimation;
     bool m_leftMouseDown;
+    bool m_rightMouseDown;
     bool m_wireframe;
 
     // draw object bools
@@ -114,6 +116,9 @@ private:
     float m_oldTerrainVariance;
     int m_oldTerrainResolution;
 
+    // Camera settings
+    bool m_orbitalCamera;
+    float m_zoom;
     float m_screenDepth;
     float m_screenNear;
     float m_spectatorHeight;

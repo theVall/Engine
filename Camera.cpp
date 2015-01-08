@@ -52,42 +52,68 @@ void Camera::GetViewMatrix(XMMATRIX &viewMatrix)
 
 void Camera::Render()
 {
-    XMVECTOR upVec;
-    XMVECTOR positionVec;
-    XMVECTOR lookAtVec;
-
     XMFLOAT3 up = XMFLOAT3(0.0f, 1.0f, 0.0f);
     XMFLOAT3 lookAt = XMFLOAT3(0.0f, 0.0f, 1.0f);
 
-    float yaw;
-    float pitch;
-    float roll;
+    XMVECTOR upVec = XMLoadFloat3(&up);
+    XMVECTOR positionVec = XMLoadFloat3(&m_position);
 
-    XMMATRIX rotationMatrix;
-    
-    upVec = XMLoadFloat3(&up);
-    positionVec = XMLoadFloat3(&m_position);
-    
     //  Setup where the camera is looking by default.
-    lookAtVec = XMLoadFloat3(&lookAt);
+    XMVECTOR lookAtVec = XMLoadFloat3(&lookAt);
 
     //  Yaw, pitch and roll in radians.
-    pitch = m_rotation.x * 0.0174532925f;
-    yaw   = m_rotation.y * 0.0174532925f;
-    roll  = m_rotation.z * 0.0174532925f;
+    float pitch = m_rotation.x * 0.0174532925f;
+    float yaw = m_rotation.y * 0.0174532925f;
+    float roll = m_rotation.z * 0.0174532925f;
 
-    //  Create the rotation matrix from the yaw, pitch, and roll values.
-    rotationMatrix = XMMatrixRotationRollPitchYaw(pitch, yaw, roll);
+    // Create the rotation matrix from the yaw, pitch, and roll values.
+    XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYaw(pitch, yaw, roll);
 
-    //  Transform the look and up vectors with rotation matrix so the view is correctly rotated at the origin.
+    // Transform the look and up vectors with rotation matrix so the view is correctly rotated at the origin.
     lookAtVec = XMVector3TransformCoord(lookAtVec, rotationMatrix);
     upVec     = XMVector3TransformCoord(    upVec, rotationMatrix);
 
-    //  Translate the rotated camera position to the location of the viewer.
+    // Translate the rotated camera position to the location of the viewer.
     lookAtVec = positionVec + lookAtVec;
 
-    //  Finally create the view matrix from the three updated vectors.
+    // Create the view matrix from the three updated vectors.
     m_viewMatrix = XMMatrixLookAtLH(positionVec, lookAtVec, upVec);
+
+    return;
+}
+
+
+void Camera::RenderOrbital(float zoom)
+{
+    XMFLOAT3 up = XMFLOAT3(0.0f, 1.0f, 0.0f);
+    XMFLOAT3 lookAt = XMFLOAT3(0.0f, 0.0f, 1.0f);
+    XMFLOAT3 targetPoint = XMFLOAT3(1000.0f, 0.0f, 1000.0f);
+    XMFLOAT3 rot = XMFLOAT3();
+
+    XMVECTOR upVec = XMLoadFloat3(&up);
+    XMVECTOR positionVec = XMLoadFloat3(&m_position);
+    XMVECTOR targetVec = XMLoadFloat3(&targetPoint);
+
+    //  Setup where the camera is looking by default.
+    XMVECTOR lookAtVec = XMLoadFloat3(&lookAt) + targetVec;
+
+    //  Yaw, pitch and roll in radians.
+    float pitch = m_rotation.x * 0.0174532925f;
+    float yaw = m_rotation.y * 0.0174532925f;
+
+    // Create the rotation matrix from the yaw, pitch, and roll values.
+    XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYaw(pitch, yaw, 0);
+
+    // Transform the look and up vectors with rotation matrix so the view is correctly rotated at the origin.
+    positionVec = XMVector3TransformCoord(lookAtVec, rotationMatrix);
+
+    //Convert the relative position to the absolute position
+    positionVec *= zoom;
+    positionVec += lookAtVec;
+
+    // Create the view matrix from the three updated vectors.
+    m_viewMatrix = XMMatrixLookAtLH(positionVec, lookAtVec, upVec);
+    XMStoreFloat3(&m_position, positionVec);
 
     return;
 }

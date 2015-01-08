@@ -117,6 +117,16 @@ LRESULT CALLBACK System::MessageHandler(HWND hwnd, UINT umsg, WPARAM wParam, LPA
         ShowCursor(true);
         break;
     }
+    case WM_RBUTTONDOWN:
+    {
+        m_Application->SetRightMouseDown(true);
+        break;
+    }
+    case WM_RBUTTONUP:
+    {
+        m_Application->SetRightMouseDown(false);
+        break;
+    }
     }
 
     return DefWindowProc(hwnd, umsg, wParam, lParam);
