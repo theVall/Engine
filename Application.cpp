@@ -12,11 +12,18 @@ Application::Application()
     m_wireframe = false;
 
     m_drawSkyDome = true;
-    m_drawOcean = true;
-    m_drawTerrain = false;
+    m_drawOcean = false;
+    m_drawTerrain = true;
 
     m_oceanTimeScale = 0.0003f;
     m_oceanHeightOffset = 0.0f;
+
+    m_terrainHurst = 0.5f;
+    m_terrainVariance = 1.35f;
+    m_terrainResolution = 8;
+    m_oldTerrainHurst = 0.5f;
+    m_oldTerrainVariance = 1.35f;
+    m_oldTerrainResolution = 8;
 
     m_screenDepth = 2500.0f;
     m_screenNear = 0.1f;
@@ -133,9 +140,9 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
                                                L"../Engine/res/tex/dirt.dds",
                                                L"../Engine/res/terrain/colormap01.bmp",
                                                m_pUtil,
-                                               6,
-                                               0.2f,
-                                               1.0f);
+                                               m_terrainResolution,
+                                               m_terrainHurst,
+                                               m_terrainVariance);
     if (!result)
     {
         MessageBox(m_hwnd, L"Could not initialize the terrain object.", L"Error", MB_OK);
@@ -510,6 +517,35 @@ bool Application::HandleInput(float frameTime)
     m_pOcean->SetTimeScale(m_oceanTimeScale);
     m_pDirect3D->SetFullscreen(m_fullScreen);
 
+    // workaround, TODO: use callback methods...
+    if (m_oldTerrainHurst != m_terrainHurst ||
+            m_oldTerrainVariance != m_terrainVariance ||
+            m_oldTerrainResolution != m_terrainResolution)
+    {
+        m_pQuadTree->Shutdown();
+        m_pTerrain->Shutdown();
+
+        if (!m_pTerrain->GenerateDiamondSquare(m_pDirect3D->GetDevice(),
+                                               L"../Engine/res/tex/dirt.dds",
+                                               L"../Engine/res/terrain/colormap01.bmp",
+                                               m_pUtil,
+                                               m_terrainResolution,
+                                               m_terrainHurst,
+                                               m_terrainVariance))
+        {
+            MessageBox(m_hwnd, L"Something went wrong while generating the terrain.", L"Error", MB_OK);
+            return false;
+        }
+
+        // rebuild quadtree
+        m_pQuadTree->Initialize(m_pTerrain, m_pDirect3D->GetDevice());
+
+        // update memory values
+        m_oldTerrainHurst = m_terrainHurst;
+        m_oldTerrainVariance = m_terrainVariance;
+        m_oldTerrainResolution = m_terrainResolution;
+    }
+
     return true;
 }
 
@@ -700,6 +736,26 @@ bool Application::SetGuiParams()
         return false;
     }
     if (!m_pGUI->AddBoolVar("RenderTerrain", m_drawTerrain))
+    {
+        return false;
+    }
+
+    // Terrain Settings
+    if (!m_pGUI->AddIntVar("LODFactor",
+                           m_terrainResolution,
+                           "min=2 max=9 step=1 group='TerrainSettings'"))
+    {
+        return false;
+    }
+    if (!m_pGUI->AddFloatVar("HurstOperator",
+                             m_terrainHurst,
+                             "min=0 max=1.0 step=0.01 group='TerrainSettings'"))
+    {
+        return false;
+    }
+    if (!m_pGUI->AddFloatVar("Variance",
+                             m_terrainVariance,
+                             "min=0 max=1.5 step=0.01 group='TerrainSettings'"))
     {
         return false;
     }

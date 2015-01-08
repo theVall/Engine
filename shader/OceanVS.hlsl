@@ -32,7 +32,7 @@ PixelInputType Main(float2 pos : POSITION, uint instanceId : SV_InstanceID)
     uint tileDiv = 7;
     float3 offset = float3((instanceId % tileDiv) * 512.0f, 0.0f, (instanceId / tileDiv) * 512.0f);
 
-    float4 posLocal = float4(pos.x, 0.0f, pos.y * 1.0, 1.0f);
+    float4 posLocal = float4(pos.x, 0.0f, pos.y, 1.0f);
     float2 uvLocal = pos.xy / 512.0f + 0.00976f;
 
     float3 displacement = texDisplacement.SampleLevel(samplerDisplacement, uvLocal, 0).xyz;

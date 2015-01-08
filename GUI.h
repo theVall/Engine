@@ -18,6 +18,7 @@ public:
     void Shutdown();
 
     bool AddFloatVar(const char *name, float &var, const char *params);
+    bool AddIntVar(const char *name, int &var, const char *params);
     bool AddBoolVar(const char *name, bool &var);
     bool AddSeperator(const char *name, const char *params);
 

@@ -232,6 +232,31 @@ bool OceanShader::InitializeShader(ID3D11Device *pDevice,
         return false;
     }
 
+    // create blend state
+    D3D11_BLEND_DESC blendDesc;
+    ZeroMemory(&blendDesc, sizeof(blendDesc));
+
+    D3D11_RENDER_TARGET_BLEND_DESC rtbd;
+    ZeroMemory(&rtbd, sizeof(rtbd));
+
+    rtbd.BlendEnable = true;
+    rtbd.SrcBlend = D3D11_BLEND_SRC_COLOR;
+    rtbd.DestBlend = D3D11_BLEND_BLEND_FACTOR;
+    rtbd.BlendOp = D3D11_BLEND_OP_ADD;
+    rtbd.SrcBlendAlpha = D3D11_BLEND_ONE;
+    rtbd.DestBlendAlpha = D3D11_BLEND_ZERO;
+    rtbd.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+    rtbd.RenderTargetWriteMask = D3D10_COLOR_WRITE_ENABLE_ALL;
+
+    blendDesc.AlphaToCoverageEnable = false;
+    blendDesc.RenderTarget[0] = rtbd;
+
+    result = pDevice->CreateBlendState(&blendDesc, &m_pBlendState);
+    if (FAILED(result))
+    {
+        return false;
+    }
+
     // State blocks
     D3D11_RASTERIZER_DESC rasterDesc;
     rasterDesc.FillMode = D3D11_FILL_SOLID;
@@ -397,6 +422,8 @@ void OceanShader::RenderShader(ID3D11DeviceContext *pContext, bool wireframe)
     pContext->VSSetShader(m_pOceanSurfaceVS, NULL, 0);
     if (!wireframe)
     {
+        float blendFactor[] = { 0.2f, 0.2f, 0.2f, 1.0f };
+        pContext->OMSetBlendState(m_pBlendState, blendFactor, 0xffffffff);
         pContext->PSSetShader(m_pOceanSurfacePS, NULL, 0);
     }
     else
@@ -424,6 +451,7 @@ void OceanShader::RenderShader(ID3D11DeviceContext *pContext, bool wireframe)
     ID3D11ShaderResourceView *pNullSrvs[2] = { NULL, NULL };
     pContext->VSSetShaderResources(0, 2, pNullSrvs);
     pContext->PSSetShaderResources(0, 2, pNullSrvs);
+    pContext->OMSetBlendState(0, 0, 0xffffffff);
 
     return;
 }

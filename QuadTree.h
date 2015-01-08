@@ -17,7 +17,7 @@ using namespace std;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
-const int MAX_TRIANGLES = 1000000;
+const int MAX_TRIANGLES = 100000;
 const int MAX_CHILDREN = 4;
 
 class QuadTree

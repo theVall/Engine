@@ -101,8 +101,18 @@ private:
     bool m_drawOcean;
     bool m_drawTerrain;
 
+    // ocean settings
     float m_oceanTimeScale;
     float m_oceanHeightOffset;
+
+    // terrain settings
+    float m_terrainHurst;
+    float m_terrainVariance;
+    int m_terrainResolution;
+    // TODO: Callback methods
+    float m_oldTerrainHurst;
+    float m_oldTerrainVariance;
+    int m_oldTerrainResolution;
 
     float m_screenDepth;
     float m_screenNear;

@@ -141,10 +141,15 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
                                         float hurst,
                                         float initialVariance)
 {
-    // size and length of the terrain is 3 to the power of the sizeFactor (3^factor)
+    // size and length of the terrain is 2 to the power of the sizeFactor (2^factor) + 1
     m_terrainHeight = (int)(1 << terrainSizeFactor) + 1;
+    // terrain is always quadratic
     m_terrainWidth = m_terrainHeight;
 
+    // terrain scaling factor
+    float terrainScale = 8.0f;
+
+    m_heightMap.clear();
     m_heightMap.resize(m_terrainWidth * m_terrainHeight);
 
     float heightValue = 0.0f;
@@ -165,7 +170,7 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
                                         heightValue,
                                         (float)(m_terrainWidth - 1));
 
-    int idWidth = m_terrainWidth;// -1;
+    int idWidth = m_terrainWidth;
 
     // terrain height offset
     float D = 0.0f;
@@ -173,8 +178,6 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
     float variance = initialVariance;
     // random generator
     mt19937 gen(1337);
-
-    int changed = 0;
 
     for (int i = 0; i < terrainSizeFactor; ++i)
     {
@@ -191,7 +194,8 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
         // first step: generate diamonds: 2^n * 2^n midpoints
         for (int j = 0; j < ((1 << i) * (1 << i)); ++j)
         {
-            index = divSegment*((2 * j + 1) % modDiv) + divSegment*idWidth*((2 * j + 1) % modDiv);
+            int k = j / (1 << i);
+            index = divSegment*((2 * j + 1) % modDiv) + divSegment*idWidth*((2 * k + 1) % modDiv);
 
             // interpolate between neighboring points
             height = 0.0f;
@@ -212,23 +216,23 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
 
 #undef min
             // generate random value in range [0,1]
-            D = (distr(gen) / distr.min() + 1.0f) / 2.0f;
+            D = distr(gen);
 
-            m_heightMap[index].position = Vec3f((float)(index % m_terrainWidth),
-                                                height + D,
-                                                (float)(index / m_terrainHeight));
-            changed++;
+            m_heightMap[index].position = Vec3f((float)(index % m_terrainWidth)*terrainScale,
+                                                height + D*terrainScale,
+                                                (float)(index / m_terrainHeight)*terrainScale);
         }
 
         // second step: generate squares
         // even rows part 0, 2, 4, ...
         for (int j = 0; j < ((1 << i) * ((1 << i) + 1)); ++j)
         {
-            //index = divSegment*((2 * j + 1) % modDiv) + divSegment*((((j + 1) * 2) - 2) % (modDiv + 1));
-            index = divSegment*((2 * j + 1) % modDiv) + divSegment*(((j + 1) * 2) - 2);
+            int k = j / (1 << i);
+            index = divSegment*((2 * j + 1) % modDiv) + divSegment*(k * 2)*idWidth;
 
             // interpolate between neighboring points
-            // special cases: boarder points (!) -> assume 0.0
+            // special cases: border points (!) -> assume 0.0
+            // __TODO: test mirrored repeat
             height = 0.0f;
             // upper
             int tmpIndex = index - (divSegment*idWidth);
@@ -243,7 +247,7 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
                 height += m_heightMap[tmpIndex].position.y;
             }
             // right
-            if (!(index + divSegment) >= (m_terrainWidth*m_terrainHeight))
+            if (!((index + divSegment) >= (m_terrainWidth*m_terrainHeight)))
             {
                 tmpIndex = index + divSegment;
                 height += m_heightMap[tmpIndex].position.y;
@@ -258,21 +262,21 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
             height /= 4.0f;
 
             // generate random value in range [0,1]
-            D = (distr(gen) / distr.min() + 1.0f) / 2.0f;
+            D = distr(gen);
 
-            m_heightMap[index].position = Vec3f((float)(index % m_terrainWidth),
-                                                height + D,
-                                                (float)(index / m_terrainHeight));
-            changed++;
+            m_heightMap[index].position = Vec3f((float)(index % m_terrainWidth)*terrainScale,
+                                                height + D*terrainScale,
+                                                (float)(index / m_terrainHeight)*terrainScale);
         }
 
         // odd rows part 1, 3, 5,...
         for (int j = 0; j < ((1 << i) * ((1 << i) + 1)); ++j)
         {
-            index = divSegment*((((j + 1) * 2) - 2) % (modDiv + 1)) + divSegment*idWidth*((2 * j + 1) % modDiv);
+            int k = j / ((1 << i) + 1);
+            index = divSegment*((((j + 1) * 2) - 2) % (modDiv + 2)) + divSegment*(2 * k + 1)*idWidth;
 
             // interpolate between neighboring points
-            // special cases: boarder points (!)
+            // special cases: border points (!)
             height = 0.0f;
             // upper
             int tmpIndex = index - (divSegment*idWidth);
@@ -302,12 +306,11 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
             height /= 4.0f;
 
             // generate random value in range [0,1]
-            D = (distr(gen) / distr.min() + 1.0f) / 2.0f;
+            D = distr(gen);
 
-            m_heightMap[index].position = Vec3f((float)(index % m_terrainWidth),
-                                                height + D,
-                                                (float)(index / m_terrainHeight));
-            changed++;
+            m_heightMap[index].position = Vec3f((float)(index % m_terrainWidth)*terrainScale,
+                                                height + D*terrainScale,
+                                                (float)(index / m_terrainHeight)*terrainScale);
         }
     }
 

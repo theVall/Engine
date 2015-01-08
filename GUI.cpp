@@ -56,6 +56,19 @@ bool GUI::AddFloatVar(const char *name, float &var, const char *params)
 }
 
 
+bool GUI::AddIntVar(const char *name, int &var, const char *params)
+{
+    if (!m_pTweakBar)
+    {
+        return false;
+    }
+
+    TwAddVarRW(m_pTweakBar, name, TW_TYPE_INT32, &var, params);
+
+    return true;
+}
+
+
 bool GUI::AddBoolVar(const char *name, bool &var)
 {
     if (!m_pTweakBar)
