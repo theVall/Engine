@@ -198,10 +198,12 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
         // first step: generate diamonds: 2^n * 2^n midpoints
         for (int j = 0; j < ((1 << i) * (1 << i)); ++j)
         {
+            // index calculation: first part is the x-offset, second part is the y-offset
             int k = j / (1 << i);
+            // odd distances horizontal and vertical
             index = divSegment*((2 * j + 1) % modDiv) + divSegment*idWidth*((2 * k + 1) % modDiv);
 
-            // interpolate between neighboring points
+            // interpolate between neighboring corner points
             height = 0.0f;
             // upper left
             int tmpIndex = index - (divSegment + divSegment*idWidth);
@@ -227,43 +229,17 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
                                                 (float)(index / m_terrainHeight)*terrainScale);
         }
 
-        // second step: generate squares
-        // even rows part 0, 2, 4, ...
+        // Second step: generate squares.
+        // Divide into two parts: even and odd rows
+        // even rows 0, 2, 4, ...
         for (int j = 0; j < ((1 << i) * ((1 << i) + 1)); ++j)
         {
+            // index calculation: first part is the x-offset, second part is the y-offset
             int k = j / (1 << i);
+            // odd distances horizontally, even distances vertically
             index = divSegment*((2 * j + 1) % modDiv) + divSegment*(k * 2)*idWidth;
 
-            // interpolate between neighboring points
-            // special cases: border points (!) -> assume 0.0
-            // __TODO: test mirrored repeat
-            height = 0.0f;
-            // upper
-            int tmpIndex = index - (divSegment*idWidth);
-            if (!(tmpIndex < 0))
-            {
-                height += m_heightMap[tmpIndex].position.y;
-            }
-            // lower
-            tmpIndex = index + (divSegment*idWidth);
-            if (!(tmpIndex > idWidth * idWidth))
-            {
-                height += m_heightMap[tmpIndex].position.y;
-            }
-            // right
-            if (!((index + divSegment) >= (m_terrainWidth*m_terrainHeight)))
-            {
-                tmpIndex = index + divSegment;
-                height += m_heightMap[tmpIndex].position.y;
-            }
-            // left
-            if (!(index % (idWidth + 1)) == 0)
-            {
-                tmpIndex = index - divSegment;
-                height += m_heightMap[tmpIndex].position.y;
-            }
-            // normalize
-            height /= 4.0f;
+            InterpolateHightValues(index, divSegment, idWidth, height);
 
             // generate random value in range [0,1]
             D = distr(gen);
@@ -273,41 +249,16 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
                                                 (float)(index / m_terrainHeight)*terrainScale);
         }
 
-        // odd rows part 1, 3, 5,...
+        // odd rows 1, 3, 5,...
         for (int j = 0; j < ((1 << i) * ((1 << i) + 1)); ++j)
         {
+            // index calculation: first part is the x-offset, second part is the y-offset
             int k = j / ((1 << i) + 1);
-            index = divSegment*((((j + 1) * 2) - 2) % (modDiv + 2)) + divSegment*(2 * k + 1)*idWidth;
+            // even distances horizontally, odd distances vertically
+            index = divSegment*((j  * 2) % (modDiv + 2)) + divSegment*(2 * k + 1)*idWidth;
 
-            // interpolate between neighboring points
-            // special cases: border points (!)
             height = 0.0f;
-            // upper
-            int tmpIndex = index - (divSegment*idWidth);
-            if (!(tmpIndex < 0))
-            {
-                height += m_heightMap[tmpIndex].position.y;
-            }
-            // lower
-            tmpIndex = index + (divSegment*idWidth);
-            if (!(tmpIndex > idWidth * m_terrainHeight))
-            {
-                height += m_heightMap[tmpIndex].position.y;
-            }
-            // right
-            if (!(index % idWidth) == 0)
-            {
-                tmpIndex = index + divSegment;
-                height += m_heightMap[tmpIndex].position.y;
-            }
-            // left
-            if (!(index % (idWidth + 1)) == 0)
-            {
-                tmpIndex = index - divSegment;
-                height += m_heightMap[tmpIndex].position.y;
-            }
-            // normalize
-            height /= 4.0f;
+            InterpolateHightValues(index, divSegment, idWidth, height);
 
             // generate random value in range [0,1]
             D = distr(gen);
@@ -319,6 +270,46 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
     }
 
     return true;
+}
+
+
+void Terrain::InterpolateHightValues(int index, int divSegment, int idWidth, float &height)
+{
+    // interpolate between neighboring points (von Neumann)
+    // special cases: border points (!) -> set to 0.0
+    height = 0.0f;
+    int tmpIndex = 0;
+
+    // upper neighbor
+    tmpIndex = index - (divSegment*idWidth);;
+    if (!(tmpIndex < 0))
+    {
+        height += m_heightMap[tmpIndex].position.y;
+    }
+
+    // lower neighbor
+    tmpIndex = index + (divSegment*idWidth);
+    if (!(tmpIndex > idWidth * idWidth))
+    {
+        height += m_heightMap[tmpIndex].position.y;
+    }
+
+    // right neighbor
+    if (!((index + divSegment) >= (m_terrainWidth*m_terrainHeight)))
+    {
+        tmpIndex = index + divSegment;
+        height += m_heightMap[tmpIndex].position.y;
+    }
+
+    // left neighbor
+    if (!(index % (idWidth + 1)) == 0)
+    {
+        tmpIndex = index - divSegment;
+        height += m_heightMap[tmpIndex].position.y;
+    }
+
+    // normalize
+    height /= 4.0f;
 }
 
 

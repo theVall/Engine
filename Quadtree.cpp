@@ -194,7 +194,7 @@ void QuadTree::CreateTreeNode(NodeType *pNode, float positionX, float positionZ,
     pNode->nodes[2] = 0;
     pNode->nodes[3] = 0;
 
-    // Count the number of triangles inside this pNode.
+    // Count the number of triangles inside this node.
     numTriangles = CountTriangles(positionX, positionZ, width);
     if (numTriangles == 0)
     {
@@ -205,17 +205,17 @@ void QuadTree::CreateTreeNode(NodeType *pNode, float positionX, float positionZ,
     {
         for (int i = 0; i < MAX_CHILDREN; i++)
         {
-            // Calculate the position offsets for the new child pNode.
+            // Calculate the position offsets for the new child node.
             offsetX = (((i % 2) < 1) ? -1.0f : 1.0f) * (width / 4.0f);
             offsetZ = (((i % 4) < 2) ? -1.0f : 1.0f) * (width / 4.0f);
 
-            // See if there are any triangles in the new pNode.
+            // See if there are any triangles in the new node.
             count = CountTriangles((positionX + offsetX), (positionZ + offsetZ), (width / 2.0f));
             if (count > 0)
             {
                 pNode->nodes[i] = new NodeType;
 
-                // Extend the tree, starting from this new child pNode now.
+                // Extend the tree, starting from this new child node now.
                 CreateTreeNode( pNode->nodes[i],
                                 (positionX + offsetX),
                                 (positionZ + offsetZ),
@@ -226,7 +226,7 @@ void QuadTree::CreateTreeNode(NodeType *pNode, float positionX, float positionZ,
 
         return;
     }
-    // We have a leaf pNode.
+    // We have a leaf node.
     else
     {
         pNode->triangleCount = numTriangles;
@@ -242,7 +242,7 @@ void QuadTree::CreateTreeNode(NodeType *pNode, float positionX, float positionZ,
 
         for (int i = 0; i < m_triangleCount; ++i)
         {
-            // If the triangle is inside this pNode then add it to the vertex array.
+            // If the triangle is inside this node then add it to the vertex array.
             result = IsTriangleContained(i, positionX, positionZ, width);
             if (result)
             {
@@ -483,10 +483,10 @@ void QuadTree::RenderNode(NodeType *pNode,
 
     pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    // Determine the number of indices in this pNode.
+    // Determine the number of indices in this node.
     indexCount = pNode->triangleCount * 3;
 
-    // Render the polygons in this pNode.
+    // Render the polygons in this node.
     pShader->RenderShader(pContext, indexCount, wireframe);
 
     // Increase the count of the number of polygons that have been rendered during this frame.
