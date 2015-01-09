@@ -36,7 +36,8 @@ public:
                                Util  *util,
                                int terrainSizeFactor,
                                float hurst,
-                               float initialVariance);
+                               float initialVariance,
+                               float m_terrainScaling);
 
     // generate a terrain from a height map image file
     bool GenerateFromFile(ID3D11Device *device,
@@ -56,7 +57,7 @@ public:
     ID3D11ShaderResourceView *GetTexture();
     float GetScalingFactor();
     // Set the scaling for the terrain height.
-    void SetScalingFactor(float);
+    void SetScalingFactor(float scaling);
 
 
 private:

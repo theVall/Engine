@@ -449,9 +449,9 @@ void QuadTree::RenderNode(NodeType *pNode,
     unsigned int stride;
     unsigned int offset;
 
-    // Check to see if the pNode can be seen.
+    // Check to see if the node can be seen.
     // ATTENTION: y-Center value is assumed to be 0! (only 2D-quadtree)
-    // -> Undefined behavior on "higher/lower" nodes.
+    // -> Undefined behavior for "higher/lower" nodes.
     result = pFrustum->CheckCube(pNode->positionX, 0.0f, pNode->positionZ, (pNode->width / 2.0f));
     if (!result)
     {
@@ -510,7 +510,7 @@ bool QuadTree::GetHeightAtPosition(float posX, float posZ, float &height)
         return false;
     }
 
-    // Find the pNode which contains the polygon for this position.
+    // Find the node which contains the polygon for this position.
     FindNode(m_pParentNode, posX, posZ, height);
 
     return true;
@@ -558,8 +558,8 @@ void QuadTree::FindNode(NodeType *pNode, float x, float z, float &height)
         return;
     }
 
-    // If there are no children, the polygon must be in this pNode.
-    // Check all polygons in this pNode to find the height we are looking for.
+    // If there are no children, the polygon must be in this node.
+    // Check all polygons in this node to find the height we are looking for.
     for (int i = 0; i < pNode->triangleCount; i++)
     {
         v0 = pNode->vertexList.at(index++);
@@ -603,7 +603,7 @@ bool QuadTree::CheckHeightOfTriangle(float x, float z, float &height,
         return false;
     }
 
-    // Calculate where we intersect the triangle.
+    // Calculate triangle intersection.
     float r = numerator / denominator;
 
     // Find the intersection vector.

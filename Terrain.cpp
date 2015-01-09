@@ -25,8 +25,11 @@ bool Terrain::GenerateDiamondSquare(ID3D11Device *device,
                                     Util  *util,
                                     int terrainSizeFactor,
                                     float hurst,
-                                    float initialVariance)
+                                    float initialVariance,
+                                    float scaling)
 {
+    m_scaling = scaling;
+
     if (!m_Util)
     {
         m_Util = util;
@@ -69,9 +72,6 @@ bool Terrain::GenerateFromFile(ID3D11Device *device,
         return false;
     }
 
-    // Normalize the height of the height map. Scaling is negative proportional.
-    NormalizeHeightMap();
-
     return true;
 }
 
@@ -92,6 +92,9 @@ bool Terrain::Initialize(ID3D11Device *device,
     //{
     //    return false;
     //}
+
+    // Normalize the height of the height map. Scaling is negative proportional.
+    NormalizeHeightMap();
 
     // Calculate the normals for the terrain data.
     if (!CalculateNormals())
@@ -131,9 +134,9 @@ float Terrain::GetScalingFactor()
 }
 
 
-void Terrain::SetScalingFactor(float scaling)
+void Terrain::SetScalingFactor(float scalingFactor)
 {
-    m_scaling = 1.0f / scaling;
+    m_scaling = 1.0f / scalingFactor;
 }
 
 
@@ -146,9 +149,6 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
     // terrain is always quadratic
     m_terrainWidth = m_terrainHeight;
 
-    // terrain scaling factor
-    float terrainScale = 8.0f;
-
     m_heightMap.clear();
     m_heightMap.resize(m_terrainWidth * m_terrainHeight);
 
@@ -160,19 +160,19 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
     m_heightMap[index].position = Vec3f(0.0f, heightValue, 0.0f);
     // upper right
     index = m_terrainWidth - 1;
-    m_heightMap[index].position = Vec3f((float)(m_terrainWidth - 1)*terrainScale,
+    m_heightMap[index].position = Vec3f((float)(m_terrainWidth - 1),
                                         heightValue,
                                         0.0f);
     // lower left
     index = m_terrainWidth*(m_terrainHeight - 1);
     m_heightMap[index].position = Vec3f(0.0f,
                                         heightValue,
-                                        (float)(m_terrainHeight - 1)*terrainScale);
+                                        (float)(m_terrainHeight - 1));
     // lower right
     index = m_terrainWidth*m_terrainHeight - 1;
-    m_heightMap[index].position = Vec3f((float)(m_terrainHeight - 1)*terrainScale,
+    m_heightMap[index].position = Vec3f((float)(m_terrainHeight - 1),
                                         heightValue,
-                                        (float)(m_terrainWidth - 1)*terrainScale);
+                                        (float)(m_terrainWidth - 1));
 
     int idWidth = m_terrainWidth;
 
@@ -224,9 +224,9 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
             // generate random value in range [0,1]
             D = distr(gen);
 
-            m_heightMap[index].position = Vec3f((float)(index % m_terrainWidth)*terrainScale,
-                                                height + D*terrainScale,
-                                                (float)(index / m_terrainHeight)*terrainScale);
+            m_heightMap[index].position = Vec3f((float)(index % m_terrainWidth),
+                                                height + D,
+                                                (float)(index / m_terrainHeight));
         }
 
         // Second step: generate squares.
@@ -244,9 +244,9 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
             // generate random value in range [0,1]
             D = distr(gen);
 
-            m_heightMap[index].position = Vec3f((float)(index % m_terrainWidth)*terrainScale,
-                                                height + D*terrainScale,
-                                                (float)(index / m_terrainHeight)*terrainScale);
+            m_heightMap[index].position = Vec3f((float)(index % m_terrainWidth),
+                                                height + D,
+                                                (float)(index / m_terrainHeight));
         }
 
         // odd rows 1, 3, 5,...
@@ -263,9 +263,9 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
             // generate random value in range [0,1]
             D = distr(gen);
 
-            m_heightMap[index].position = Vec3f((float)(index % m_terrainWidth)*terrainScale,
-                                                height + D*terrainScale,
-                                                (float)(index / m_terrainHeight)*terrainScale);
+            m_heightMap[index].position = Vec3f((float)(index % m_terrainWidth),
+                                                height + D,
+                                                (float)(index / m_terrainHeight));
         }
     }
 
@@ -275,7 +275,7 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
 
 void Terrain::InterpolateHightValues(int index, int divSegment, int idWidth, float &height)
 {
-    // interpolate between neighboring points (von Neumann)
+    // interpolate between neighboring points (von-Neumann)
     // special cases: border points (!) -> set to 0.0
     height = 0.0f;
     int tmpIndex = 0;
@@ -355,7 +355,7 @@ void Terrain::NormalizeHeightMap()
     {
         for (int i = 0; i  <m_terrainWidth; i++)
         {
-            m_heightMap[(m_terrainHeight * j) + i].position.y /= m_scaling;
+            m_heightMap[(m_terrainHeight * j) + i].position *= m_scaling;
         }
     }
 

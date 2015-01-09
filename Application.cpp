@@ -4,6 +4,7 @@
 
 Application::Application()
 {
+    // initial properties - TODO: load/save from file
     m_fullScreen        = false;
     m_vSync             = false;
     m_lockSurfaceCamera = false;
@@ -21,6 +22,7 @@ Application::Application()
 
     m_terrainHurst      = m_oldTerrainHurst         = 0.5f;
     m_terrainVariance   = m_oldTerrainVariance      = 1.35f;
+    m_terrainScaling    = m_oldTerrainScaling       = 14.0f;
     m_terrainResolution = m_oldTerrainResolution    = 8;
 
     m_orbitalCamera     = false;
@@ -30,6 +32,7 @@ Application::Application()
     m_spectatorHeight   = 10.0f;
     m_elapsedTime       = 0;
 
+    // set pointer to null
     m_pInput            = nullptr;
     m_pDirect3D         = nullptr;
     m_pCamera           = nullptr;
@@ -142,7 +145,8 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
                                                m_pUtil,
                                                m_terrainResolution,
                                                m_terrainHurst,
-                                               m_terrainVariance);
+                                               m_terrainVariance,
+                                               m_terrainScaling);
     if (!result)
     {
         MessageBox(m_hwnd, L"Could not initialize the terrain object.", L"Error", MB_OK);
@@ -517,7 +521,8 @@ bool Application::HandleInput(float frameTime)
     // workaround, TODO: use callback methods...
     if (m_oldTerrainHurst != m_terrainHurst ||
             m_oldTerrainVariance != m_terrainVariance ||
-            m_oldTerrainResolution != m_terrainResolution)
+            m_oldTerrainResolution != m_terrainResolution ||
+            m_oldTerrainScaling != m_terrainScaling)
     {
         m_pQuadTree->Shutdown();
         m_pTerrain->Shutdown();
@@ -528,7 +533,8 @@ bool Application::HandleInput(float frameTime)
                                                m_pUtil,
                                                m_terrainResolution,
                                                m_terrainHurst,
-                                               m_terrainVariance))
+                                               m_terrainVariance,
+                                               m_terrainScaling))
         {
             MessageBox(m_hwnd, L"Something went wrong while generating the terrain.", L"Error", MB_OK);
             return false;
@@ -540,6 +546,7 @@ bool Application::HandleInput(float frameTime)
         // update memory values
         m_oldTerrainHurst = m_terrainHurst;
         m_oldTerrainVariance = m_terrainVariance;
+        m_oldTerrainScaling = m_terrainScaling;
         m_oldTerrainResolution = m_terrainResolution;
     }
 
@@ -596,29 +603,12 @@ bool Application::RenderGraphics()
     m_pDirect3D->TurnZBufferOn();
     m_pDirect3D->TurnOnCulling();
 
-    // Render the ocean geometry
-    if (m_drawOcean)
-    {
-        // enable variable sea level (GUI parameter)
-        worldMatrix = XMMatrixTranslation(0.0f, m_oceanHeightOffset, 0.0f);
-
-        m_pOceanShader->Render(m_pDirect3D->GetDeviceContext(),
-                               worldMatrix,
-                               viewMatrix,
-                               projectionMatrix,
-                               cameraPosition,
-                               m_pLight->GetDirection(),
-                               m_pOcean->GetDisplacementMap(),
-                               m_pOcean->GetGradientMap(),
-                               m_pSkyDomeTex->GetSrv(),
-                               m_wireframe);
-    }
-
     // Reset the world matrix.
     m_pDirect3D->GetWorldMatrix(worldMatrix);
 
     m_pFrustum->ConstructFrustum(projectionMatrix, viewMatrix, m_screenDepth);
 
+    // Render the terrain geometry
     if (m_drawTerrain)
     {
         if (!m_pTerrainShader->SetShaderParameters(m_pDirect3D->GetDeviceContext(),
@@ -638,6 +628,24 @@ bool Application::RenderGraphics()
                             m_pDirect3D->GetDeviceContext(),
                             m_pTerrainShader,
                             m_wireframe);
+    }
+
+    // Render the ocean geometry
+    if (m_drawOcean)
+    {
+        // enable variable sea level (GUI parameter)
+        worldMatrix = XMMatrixTranslation(0.0f, m_oceanHeightOffset, 0.0f);
+
+        m_pOceanShader->Render(m_pDirect3D->GetDeviceContext(),
+                               worldMatrix,
+                               viewMatrix,
+                               projectionMatrix,
+                               cameraPosition,
+                               m_pLight->GetDirection(),
+                               m_pOcean->GetDisplacementMap(),
+                               m_pOcean->GetGradientMap(),
+                               m_pSkyDomeTex->GetSrv(),
+                               m_wireframe);
     }
 
 // profiling/debug output
@@ -766,9 +774,15 @@ bool Application::SetGuiParams()
     }
 
     // Terrain Settings
-    if (!m_pGUI->AddIntVar("LODFactor",
+    if (!m_pGUI->AddIntVar("Resolution",
                            m_terrainResolution,
                            "min=2 max=9 step=1 group='TerrainSettings'"))
+    {
+        return false;
+    }
+    if (!m_pGUI->AddFloatVar("Scaling",
+                             m_terrainScaling,
+                             "min=1.0 max=20.0 step=1 group='TerrainSettings'"))
     {
         return false;
     }

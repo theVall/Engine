@@ -110,10 +110,12 @@ private:
     // terrain settings
     float m_terrainHurst;
     float m_terrainVariance;
+    float m_terrainScaling;
     int m_terrainResolution;
     // TODO: Callback methods
     float m_oldTerrainHurst;
     float m_oldTerrainVariance;
+    float m_oldTerrainScaling;
     int m_oldTerrainResolution;
 
     // Camera settings
