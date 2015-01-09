@@ -1,6 +1,8 @@
 #pragma once
 
 #include "ShaderProgram.h"
+#include <vector>
+#include "Texture.h"
 
 class TerrainShader :
     public ShaderProgram
@@ -11,7 +13,7 @@ private:
         XMFLOAT4 ambientColor;
         XMFLOAT4 diffuseColor;
         XMFLOAT3 lightDirection;
-        float padding;
+        float scaling;
     };
 
 public:
@@ -23,10 +25,11 @@ public:
                              const XMMATRIX &worldMatrix,
                              const XMMATRIX &viewMatrix,
                              const XMMATRIX &projectionMatrix,
-                             ID3D11ShaderResourceView *pSrv,
                              const XMFLOAT3 &lightDirection,
                              const XMFLOAT4 &ambientColor,
-                             const XMFLOAT4 &diffuseColor);
+                             const XMFLOAT4 &diffuseColor,
+                             const vector<Texture *> vTextures,
+                             const float scaling);
 
     void RenderShader(ID3D11DeviceContext *pContext, int indexCount, bool wireframe);
 

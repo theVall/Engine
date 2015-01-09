@@ -17,17 +17,18 @@ Application::Application()
     m_drawOcean         = false;
     m_drawTerrain       = true;
 
-    m_oceanTimeScale    = 0.0003f;
-    m_oceanHeightOffset = 0.0f;
-
+    // terrain settings
     m_terrainHurst      = m_oldTerrainHurst         = 0.5f;
     m_terrainVariance   = m_oldTerrainVariance      = 1.35f;
     m_terrainScaling    = m_oldTerrainScaling       = 14.0f;
     m_terrainResolution = m_oldTerrainResolution    = 8;
-
+    // ocean settings
+    m_oceanTimeScale    = 0.0003f;
+    m_oceanHeightOffset = -m_terrainScaling;
+    // camera settings
     m_orbitalCamera     = false;
     m_zoom              = 1.0f;
-    m_screenDepth       = 2500.0f;
+    m_screenDepth       = 5000.0f;
     m_screenNear        = 0.1f;
     m_spectatorHeight   = 10.0f;
     m_elapsedTime       = 0;
@@ -43,7 +44,6 @@ Application::Application()
     m_pUtil             = nullptr;
     m_pTerrainShader    = nullptr;
     m_pLight            = nullptr;
-    m_pGroundTex        = nullptr;
     m_pSkyDomeTex       = nullptr;
     m_pFrustum          = nullptr;
     m_pQuadTree         = nullptr;
@@ -219,20 +219,32 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     }
 
     // Create and initialize __textures__.
-    m_pGroundTex = new Texture;
-    if (!m_pGroundTex)
-    {
-        return false;
-    }
-    result = m_pGroundTex->LoadFromDDS(m_pDirect3D->GetDevice(), L"../Engine/res/tex/dirt.dds");
-
     m_pSkyDomeTex = new Texture;
     if (!m_pSkyDomeTex)
     {
         return false;
     }
-    result = m_pSkyDomeTex->LoadFromDDS(m_pDirect3D->GetDevice(), L"../Engine/res/tex/sky2.dds");
+    if (!m_pSkyDomeTex->LoadFromDDS(m_pDirect3D->GetDevice(), L"../Engine/res/tex/sky2.dds"))
+    {
+        MessageBox(m_hwnd, L"Error loading sand texture.", L"Error", MB_OK);
+        return false;
+    }
+    // terrain textures
+    vector<WCHAR *> terrainTexFilenames;
+    terrainTexFilenames.push_back(L"../Engine/res/tex/sand.dds");
+    terrainTexFilenames.push_back(L"../Engine/res/tex/rock.dds");
+    terrainTexFilenames.push_back(L"../Engine/res/tex/mossyRock.dds");
+    terrainTexFilenames.push_back(L"../Engine/res/tex/grass.dds");
 
+    for (int i = 0; i < 4; ++i)
+    {
+        m_vTerrainTextures.push_back(new Texture);
+        if (!m_vTerrainTextures.back()->LoadFromDDS(m_pDirect3D->GetDevice(), terrainTexFilenames.at(i)))
+        {
+            MessageBox(m_hwnd, L"Error loading terrain texture.", L"Error", MB_OK);
+            return false;
+        }
+    }
 
     // Create and initialize the __timer__ object.
     m_pTimer = new Timer;
@@ -379,12 +391,17 @@ void Application::Shutdown()
     SafeDelete(m_pProfiler);
     SafeDelete(m_pPosition);
     SafeDelete(m_pTimer);
-    SafeDelete(m_pGroundTex);
-    SafeDelete(m_pSkyDomeTex);
     SafeDelete(m_pFrustum);
     SafeDelete(m_pLight);
     SafeDelete(m_pUtil);
     SafeDelete(m_pCamera);
+
+    SafeDelete(m_pSkyDomeTex);
+    for (size_t i = 0; i < m_vTerrainTextures.size(); ++i)
+    {
+        SafeDelete(m_vTerrainTextures.at(i));
+
+    }
 
     return;
 }
@@ -615,10 +632,11 @@ bool Application::RenderGraphics()
                                                    worldMatrix,
                                                    viewMatrix,
                                                    projectionMatrix,
-                                                   m_pGroundTex->GetSrv(),
                                                    m_pLight->GetDirection(),
                                                    m_pLight->GetAmbientColor(),
-                                                   m_pLight->GetDiffuseColor()))
+                                                   m_pLight->GetDiffuseColor(),
+                                                   m_vTerrainTextures,
+                                                   m_terrainScaling))
         {
             return false;
         }
@@ -658,7 +676,7 @@ bool Application::RenderGraphics()
     m_pFont->drawText(m_pDirect3D->GetDeviceContext(),
                       (WCHAR *)fpswchar.str().c_str(),
                       16.0f,
-                      700.0f,
+                      1150.0f,
                       20.0f,
                       0xff8cc63e,
                       0);
@@ -668,7 +686,7 @@ bool Application::RenderGraphics()
     m_pFont->drawText(m_pDirect3D->GetDeviceContext(),
                       (WCHAR *)triangleswchar.str().c_str(),
                       16.0f,
-                      700.0f,
+                      1150.0f,
                       40.0f,
                       0xff8cc63e,
                       0);

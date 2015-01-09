@@ -162,7 +162,7 @@ void System::InitializeWindows(int &screenWidth, int &screenHeight)
     m_hinstance = GetModuleHandle(NULL);
 
     // Application name.
-    m_applicationName = L"Engine";
+    m_applicationName = L"VallEngine";
 
     // Setup the windows class with default settings.
     wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
@@ -200,8 +200,8 @@ void System::InitializeWindows(int &screenWidth, int &screenHeight)
     }
     else
     {
-        screenWidth  = 800;
-        screenHeight = 600;
+        screenWidth  = 1280;
+        screenHeight = 720;
 
         //  Place the window in the middle of the screen.
         posX = (GetSystemMetrics(SM_CXSCREEN) - screenWidth)  / 2;

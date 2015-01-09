@@ -230,10 +230,11 @@ bool TerrainShader::SetShaderParameters(ID3D11DeviceContext *pContext,
                                         const XMMATRIX &worldMatrix,
                                         const XMMATRIX &viewMatrix,
                                         const XMMATRIX &projectionMatrix,
-                                        ID3D11ShaderResourceView *texture,
                                         const XMFLOAT3 &lightDirection,
                                         const XMFLOAT4 &ambientColor,
-                                        const XMFLOAT4 &diffuseColor)
+                                        const XMFLOAT4 &diffuseColor,
+                                        const vector<Texture *> vTextures,
+                                        const float scaling)
 {
     HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -268,7 +269,15 @@ bool TerrainShader::SetShaderParameters(ID3D11DeviceContext *pContext,
     bufferNumber = 1;
     pContext->VSSetConstantBuffers(bufferNumber, 1, &m_pCameraBuffer);
 
-    pContext->PSSetShaderResources(0, 1, &texture);
+    // set texture resources for pixel shader
+    ID3D11ShaderResourceView *pSrvs[4];
+
+    for (size_t i = 0; i < vTextures.size(); ++i)
+    {
+        pSrvs[i] = vTextures.at(i)->GetSrv();
+    }
+
+    pContext->PSSetShaderResources(0, 4, pSrvs);
 
     // Lock the light constant buffer so it can be written to.
     result = pContext->Map(m_pLightBuffer,
@@ -287,7 +296,7 @@ bool TerrainShader::SetShaderParameters(ID3D11DeviceContext *pContext,
     lightDataBuffer->ambientColor = ambientColor;
     lightDataBuffer->diffuseColor = diffuseColor;
     lightDataBuffer->lightDirection = lightDirection;
-    lightDataBuffer->padding = 0.0f;
+    lightDataBuffer->scaling = scaling;
 
     // Unlock the constant buffer.
     pContext->Unmap(m_pLightBuffer, 0);

@@ -152,36 +152,36 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
     m_heightMap.clear();
     m_heightMap.resize(m_terrainWidth * m_terrainHeight);
 
-    float heightValue = 0.0f;
-
-    // initially set the four corner points
-    int index = 0;
-    // upper left
-    m_heightMap[index].position = Vec3f(0.0f, heightValue, 0.0f);
-    // upper right
-    index = m_terrainWidth - 1;
-    m_heightMap[index].position = Vec3f((float)(m_terrainWidth - 1),
-                                        heightValue,
-                                        0.0f);
-    // lower left
-    index = m_terrainWidth*(m_terrainHeight - 1);
-    m_heightMap[index].position = Vec3f(0.0f,
-                                        heightValue,
-                                        (float)(m_terrainHeight - 1));
-    // lower right
-    index = m_terrainWidth*m_terrainHeight - 1;
-    m_heightMap[index].position = Vec3f((float)(m_terrainHeight - 1),
-                                        heightValue,
-                                        (float)(m_terrainWidth - 1));
-
-    int idWidth = m_terrainWidth;
-
     // terrain height offset
     float D = 0.0f;
     float height = 0.0f;
     float variance = initialVariance;
-    // random generator
+    // random generator -> deterministic seed
     mt19937 gen(1337);
+    // generate a normal distribution with initial variance and n = 0
+    normal_distribution<float> distr(0.0f, variance*variance);
+
+    // initially set the four corner points
+    int index = 0;
+    // upper left
+    m_heightMap[index].position = Vec3f(0.0f, distr(gen), 0.0f);
+    // upper right
+    index = m_terrainWidth - 1;
+    m_heightMap[index].position = Vec3f((float)(m_terrainWidth - 1),
+                                        distr(gen),
+                                        0.0f);
+    // lower left
+    index = m_terrainWidth*(m_terrainHeight - 1);
+    m_heightMap[index].position = Vec3f(0.0f,
+                                        distr(gen),
+                                        (float)(m_terrainHeight - 1));
+    // lower right
+    index = m_terrainWidth*m_terrainHeight - 1;
+    m_heightMap[index].position = Vec3f((float)(m_terrainHeight - 1),
+                                        distr(gen),
+                                        (float)(m_terrainWidth - 1));
+
+    int idWidth = m_terrainWidth;
 
     for (int i = 0; i < terrainSizeFactor; ++i)
     {
@@ -219,7 +219,6 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
             height += m_heightMap[tmpIndex].position.y;
             // normalize
             height /= 4.0f;
-
 #undef min
             // generate random value in range [0,1]
             D = distr(gen);

@@ -138,8 +138,6 @@ private:
     Util *m_pUtil;
     TerrainShader *m_pTerrainShader;
     Light *m_pLight;
-    Texture *m_pGroundTex;
-    Texture *m_pSkyDomeTex;
     Frustum *m_pFrustum;
     QuadTree *m_pQuadTree;
     Font *m_pFont;
@@ -149,6 +147,10 @@ private:
     Ocean *m_pOcean;
     OceanShader *m_pOceanShader;
     GUI *m_pGUI;
+
+    // textures
+    Texture *m_pSkyDomeTex;
+    vector<Texture *> m_vTerrainTextures;
 
     ID3D11RenderTargetView *pNullRTV;
 };
