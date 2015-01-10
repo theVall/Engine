@@ -85,11 +85,11 @@ void Camera::Render()
 
 void Camera::RenderOrbital(float zoom)
 {
-    XMFLOAT3 up = XMFLOAT3(0.0f, 1.0f, 0.0f);
+    Vec3f up = Vec3f(0.0f, 1.0f, 0.0f);
     XMFLOAT3 lookAt = XMFLOAT3(0.0f, 0.0f, 1.0f);
-    Vec3f targetPoint = XMFLOAT3(0.0f, 0.0f, 0.0f);
+    Vec3f targetPoint = XMFLOAT3(1000.0f, 0.0f, 1000.0f);
 
-    XMVECTOR upVec = XMLoadFloat3(&up);
+    XMVECTOR upVec = up.GetAsXMVector();
 
     // Yaw and pitch in radians.
     float pitch = m_rotation.x * 0.0174532925f;
@@ -97,14 +97,21 @@ void Camera::RenderOrbital(float zoom)
 
     float distance = (m_position - targetPoint).Length() + zoom;
 
+    m_position -= targetPoint;
+
     // Calculate the camera position using the distance and angles
     m_position.x = distance * -sinf(yaw) * cosf(pitch);
     m_position.y = distance * -sinf(pitch);
     m_position.z = -distance * cosf(yaw) * cosf(pitch);
 
-    // Create the view matrix from the three updated vectors.
-    //m_viewMatrix = XMMatrixLookAtLH(positionVec, targetVec, upVec);
+    m_position += targetPoint;
 
+    // TODO: avoid rotation over north and south pole
+    //Vec3f eval = (targetPoint - m_position).Normalize();
+    //if (eval.y > -0.95f)
+    //    return;
+
+    // Create the view matrix from the three updated vectors.
     m_viewMatrix = XMMatrixLookAtLH(m_position.GetAsXMVector(),
                                     targetPoint.GetAsXMVector(),
                                     upVec);
