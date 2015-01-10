@@ -83,12 +83,10 @@ void Camera::Render()
 }
 
 
-void Camera::RenderOrbital(float zoom)
+void Camera::RenderOrbital(Vec3f targetPoint, float zoom)
 {
     Vec3f up = Vec3f(0.0f, 1.0f, 0.0f);
     XMFLOAT3 lookAt = XMFLOAT3(0.0f, 0.0f, 1.0f);
-    Vec3f targetPoint = XMFLOAT3(1000.0f, 0.0f, 1000.0f);
-
     XMVECTOR upVec = up.GetAsXMVector();
 
     // Yaw and pitch in radians.

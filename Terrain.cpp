@@ -639,3 +639,9 @@ vector<VertexType> Terrain::GetVertices()
 {
     return m_vertices;
 }
+
+
+int Terrain::GetWidth()
+{
+    return m_terrainWidth;
+}

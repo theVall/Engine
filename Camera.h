@@ -27,7 +27,7 @@ public:
 
     void Render();
     // Orbital camera mode "trackball camera"
-    void RenderOrbital(float zoom);
+    void RenderOrbital(Vec3f targetPoint, float zoom);
 
 
     // guarantee align 16 for heap allocations

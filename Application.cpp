@@ -122,7 +122,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     }
     // Initialize a base view matrix with the camera for 2D user interface rendering.
     m_pCamera->SetPosition(0.0f, 0.0f, -1.0f);
-    m_pCamera->RenderOrbital(1.0f);
+    m_pCamera->Render();
     m_pCamera->GetViewMatrix(baseViewMatrix);
     // Set the initial position of the camera.
     cameraX = 100.0f;
@@ -592,7 +592,9 @@ bool Application::RenderGraphics()
     // Generate the view matrix based on the camera's position.
     if (m_orbitalCamera)
     {
-        m_pCamera->RenderOrbital(m_zoom);
+        // Calculate target point from terrain size
+        float target = (float)m_pTerrain->GetWidth() * (float)m_terrainScaling / 2.0f;
+        m_pCamera->RenderOrbital(Vec3f(target, 0.0f, target), m_zoom);
     }
     else
     {
