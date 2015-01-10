@@ -3,8 +3,8 @@
 
 Camera::Camera()
 {
-    m_position = XMFLOAT3(0.0f, 0.0f, 0.0f);
-    m_rotation = XMFLOAT3(0.0f, 0.0f, 0.0f);
+    m_position = Vec3f();
+    m_rotation = Vec3f();
 }
 
 
@@ -31,13 +31,13 @@ void Camera::SetRotation(float x, float y, float z)
     return;
 }
 
-XMFLOAT3 Camera::GetPosition()
+Vec3f Camera::GetPosition()
 {
     return m_position;
 }
 
 
-XMFLOAT3 Camera::GetRotation()
+Vec3f Camera::GetRotation()
 {
     return m_rotation;
 }
@@ -56,7 +56,7 @@ void Camera::Render()
     XMFLOAT3 lookAt = XMFLOAT3(0.0f, 0.0f, 1.0f);
 
     XMVECTOR upVec = XMLoadFloat3(&up);
-    XMVECTOR positionVec = XMLoadFloat3(&m_position);
+    XMVECTOR positionVec = m_position.GetAsXMVector();
 
     //  Setup where the camera is looking by default.
     XMVECTOR lookAtVec = XMLoadFloat3(&lookAt);
@@ -87,32 +87,27 @@ void Camera::RenderOrbital(float zoom)
 {
     XMFLOAT3 up = XMFLOAT3(0.0f, 1.0f, 0.0f);
     XMFLOAT3 lookAt = XMFLOAT3(0.0f, 0.0f, 1.0f);
-    XMFLOAT3 targetPoint = XMFLOAT3(1000.0f, 0.0f, 1000.0f);
+    Vec3f targetPoint = XMFLOAT3(0.0f, 0.0f, 0.0f);
 
     XMVECTOR upVec = XMLoadFloat3(&up);
-    XMVECTOR positionVec = XMLoadFloat3(&m_position);
-    XMVECTOR targetVec = XMLoadFloat3(&targetPoint);
-
-    // Setup where the camera is looking by default.
-    XMVECTOR lookAtVec = XMLoadFloat3(&lookAt) + targetVec;
 
     // Yaw and pitch in radians.
     float pitch = m_rotation.x * 0.0174532925f;
     float yaw = m_rotation.y * 0.0174532925f;
 
-    // Create the rotation matrix from the yaw and pitch values.
-    XMMATRIX rotationMatrix = XMMatrixRotationRollPitchYaw(pitch, yaw, 0);
+    float distance = (m_position - targetPoint).Length() + zoom;
 
-    // Transform the look and up vectors with rotation matrix so the view is correctly rotated.
-    positionVec = XMVector3TransformCoord(lookAtVec, rotationMatrix);
-
-    // Convert the relative position to the absolute position
-    positionVec *= zoom;
-    positionVec += lookAtVec;
+    // Calculate the camera position using the distance and angles
+    m_position.x = distance * -sinf(yaw) * cosf(pitch);
+    m_position.y = distance * -sinf(pitch);
+    m_position.z = -distance * cosf(yaw) * cosf(pitch);
 
     // Create the view matrix from the three updated vectors.
-    m_viewMatrix = XMMatrixLookAtLH(positionVec, lookAtVec, upVec);
-    XMStoreFloat3(&m_position, positionVec);
+    //m_viewMatrix = XMMatrixLookAtLH(positionVec, targetVec, upVec);
+
+    m_viewMatrix = XMMatrixLookAtLH(m_position.GetAsXMVector(),
+                                    targetPoint.GetAsXMVector(),
+                                    upVec);
 
     return;
 }

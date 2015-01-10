@@ -209,7 +209,7 @@ bool Graphics::Render(float rotation)
                                    m_Light->GetDiffuseColor(),
                                    m_Light->GetSpecularColor(),
                                    m_Light->GetSpecularPower(),
-                                   m_Camera->GetPosition());
+                                   m_Camera->GetPosition().GetAsXMFloat3());
     if (!result)
     {
         return false;

@@ -4,8 +4,12 @@
 #include <DirectXMath.h>
 #include <DirectXPackedVector.h>
 
+#include "Vec3f.h"
+
 using namespace DirectX;
 using namespace DirectX::PackedVector;
+
+using namespace math;
 
 class Camera
 {
@@ -17,8 +21,8 @@ public:
     void SetPosition(float, float, float);
     void SetRotation(float, float, float);
 
-    XMFLOAT3 GetPosition();
-    XMFLOAT3 GetRotation();
+    Vec3f GetPosition();
+    Vec3f GetRotation();
     void GetViewMatrix(XMMATRIX &viewMatrix);
 
     void Render();
@@ -38,8 +42,8 @@ public:
     }
 
 private:
-    XMFLOAT3 m_position;
-    XMFLOAT3 m_rotation;
+    Vec3f m_position;
+    Vec3f m_rotation;
 
     XMMATRIX m_viewMatrix;
 };

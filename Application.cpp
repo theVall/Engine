@@ -584,7 +584,7 @@ bool Application::RenderGraphics()
     XMMATRIX viewMatrix;
     XMMATRIX projectionMatrix;
     XMMATRIX orthoMatrix;
-    XMFLOAT3 cameraPosition;
+    Vec3f cameraPosition;
 
     // Clear the scene.
     m_pDirect3D->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
@@ -665,7 +665,7 @@ bool Application::RenderGraphics()
                                worldMatrix,
                                viewMatrix,
                                projectionMatrix,
-                               cameraPosition,
+                               cameraPosition.GetAsXMFloat3(),
                                m_pLight->GetDirection(),
                                m_pOcean->GetDisplacementMap(),
                                m_pOcean->GetGradientMap(),
