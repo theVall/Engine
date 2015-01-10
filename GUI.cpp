@@ -69,14 +69,14 @@ bool GUI::AddIntVar(const char *name, int &var, const char *params)
 }
 
 
-bool GUI::AddBoolVar(const char *name, bool &var)
+bool GUI::AddBoolVar(const char *name, bool &var, const char *params)
 {
     if (!m_pTweakBar)
     {
         return false;
     }
 
-    TwAddVarRW(m_pTweakBar, name, TW_TYPE_BOOL8, &var, "");
+    TwAddVarRW(m_pTweakBar, name, TW_TYPE_BOOL8, &var, params);
 
     return true;
 }

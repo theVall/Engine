@@ -22,7 +22,11 @@ Application::Application()
     m_terrainVariance   = m_oldTerrainVariance      = 1.35f;
     m_terrainScaling    = m_oldTerrainScaling       = 14.0f;
     m_terrainResolution = m_oldTerrainResolution    = 8;
+
+    m_maxTrianglesQtNode = 5000;
+
     // ocean settings
+    m_oceanTileFactor   = 7;
     m_oceanTimeScale    = 0.0003f;
     m_oceanHeightOffset = -m_terrainScaling;
     // camera settings
@@ -139,10 +143,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     {
         return false;
     }
-    result = m_pTerrain->GenerateDiamondSquare(m_pDirect3D->GetDevice(),
-                                               L"../Engine/res/tex/dirt.dds",
-                                               L"../Engine/res/terrain/colormap01.bmp",
-                                               m_pUtil,
+    result = m_pTerrain->GenerateDiamondSquare(m_pUtil,
                                                m_terrainResolution,
                                                m_terrainHurst,
                                                m_terrainVariance,
@@ -211,7 +212,9 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     {
         return false;
     }
-    result = m_pQuadTree->Initialize(m_pTerrain, m_pDirect3D->GetDevice());
+    result = m_pQuadTree->Initialize(m_pTerrain,
+                                     m_pDirect3D->GetDevice(),
+                                     m_maxTrianglesQtNode);
     if (!result)
     {
         MessageBox(hwnd, L"Could not initialize the quad tree object.", L"Error", MB_OK);
@@ -347,6 +350,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
         MessageBox(hwnd, L"Could not initialize the ocean shader object.", L"Error", MB_OK);
         return false;
     }
+    m_pOceanShader->SetTileCount(m_oceanTileFactor);
 
     // Create the __GUI__ for text output and GUI elements
     m_pGUI = new GUI;
@@ -531,9 +535,15 @@ bool Application::HandleInput(float frameTime)
     m_pCamera->SetRotation(rotX, rotY, rotZ);
 
     // Handle GUI parameters
-    m_pDirect3D->SetWireframe(m_wireframe);
-    m_pOcean->SetTimeScale(m_oceanTimeScale);
     m_pDirect3D->SetFullscreen(m_fullScreen);
+    m_pDirect3D->SetWireframe(m_wireframe);
+    m_pOceanShader->SetTileCount(m_oceanTileFactor);
+    m_pOcean->SetTimeScale(m_oceanTimeScale);
+
+    if (!m_useQuadtree)
+    {
+        m_maxTrianglesQtNode = 1000000;
+    }
 
     // workaround, TODO: use callback methods...
     if (m_oldTerrainHurst != m_terrainHurst ||
@@ -544,10 +554,7 @@ bool Application::HandleInput(float frameTime)
         m_pQuadTree->Shutdown();
         m_pTerrain->Shutdown();
 
-        if (!m_pTerrain->GenerateDiamondSquare(m_pDirect3D->GetDevice(),
-                                               L"../Engine/res/tex/dirt.dds",
-                                               L"../Engine/res/terrain/colormap01.bmp",
-                                               m_pUtil,
+        if (!m_pTerrain->GenerateDiamondSquare(m_pUtil,
                                                m_terrainResolution,
                                                m_terrainHurst,
                                                m_terrainVariance,
@@ -558,7 +565,7 @@ bool Application::HandleInput(float frameTime)
         }
 
         // rebuild quadtree
-        m_pQuadTree->Initialize(m_pTerrain, m_pDirect3D->GetDevice());
+        m_pQuadTree->Initialize(m_pTerrain, m_pDirect3D->GetDevice(), m_maxTrianglesQtNode);
 
         // update memory values
         m_oldTerrainHurst = m_terrainHurst;
@@ -745,30 +752,30 @@ void Application::SetRightMouseDown(bool state)
 
 bool Application::SetGuiParams()
 {
-    // not working yet, re-initialization of D3D required??
+    // not working yet, re-initialization of D3D required?
     //m_pGUI->AddBoolVar("vSync", m_vSync);
 
-    // TODO: Does not make sense as long as window is not resizable
+    // TODO: Does not make sense as long as window is not re-sizable
     //if (!m_pGUI->AddBoolVar("FullScreen", m_fullScreen))
     //{
     //    return false;
     //}
 
-    if (!m_pGUI->AddBoolVar("Pause", m_stopAnimation))
+    if (!m_pGUI->AddBoolVar("Pause", m_stopAnimation, ""))
     {
         return false;
     }
-    if (!m_pGUI->AddBoolVar("Wireframe", m_wireframe))
-    {
-        return false;
-    }
-
-    if (!m_pGUI->AddBoolVar("WalkingMode", m_lockSurfaceCamera))
+    if (!m_pGUI->AddBoolVar("Wireframe", m_wireframe, ""))
     {
         return false;
     }
 
-    if (!m_pGUI->AddBoolVar("OrbitalCamera", m_orbitalCamera))
+    if (!m_pGUI->AddBoolVar("WalkingMode", m_lockSurfaceCamera, ""))
+    {
+        return false;
+    }
+
+    if (!m_pGUI->AddBoolVar("OrbitalCamera", m_orbitalCamera, ""))
     {
         return false;
     }
@@ -778,15 +785,15 @@ bool Application::SetGuiParams()
         return false;
     }
 
-    if (!m_pGUI->AddBoolVar("RenderSky", m_drawSkyDome))
+    if (!m_pGUI->AddBoolVar("RenderSky", m_drawSkyDome, ""))
     {
         return false;
     }
-    if (!m_pGUI->AddBoolVar("RenderOcean", m_drawOcean))
+    if (!m_pGUI->AddBoolVar("RenderOcean", m_drawOcean, ""))
     {
         return false;
     }
-    if (!m_pGUI->AddBoolVar("RenderTerrain", m_drawTerrain))
+    if (!m_pGUI->AddBoolVar("RenderTerrain", m_drawTerrain, ""))
     {
         return false;
     }
@@ -818,6 +825,12 @@ bool Application::SetGuiParams()
     }
 
     // Ocean Settings
+    if (!m_pGUI->AddIntVar("TileFactor",
+                           m_oceanTileFactor,
+                           "min=1 max=8 step=1 group='OceanSettings'"))
+    {
+        return false;
+    }
     if (!m_pGUI->AddFloatVar("AnimationSpeed",
                              m_oceanTimeScale,
                              "min=0 max=0.005 step=0.00001 group='OceanSettings'"))
@@ -827,6 +840,18 @@ bool Application::SetGuiParams()
     if (!m_pGUI->AddFloatVar("SeaLevel",
                              m_oceanHeightOffset,
                              "min=-150 max=150 step=1 group='OceanSettings'"))
+    {
+        return false;
+    }
+
+    // Quad tree settings
+    if (!m_pGUI->AddBoolVar("UseQuadtree", m_useQuadtree, "group='QuadTreeSettings'"))
+    {
+        return false;
+    }
+    if (!m_pGUI->AddIntVar("MaxTriangles",
+                           m_maxTrianglesQtNode,
+                           "min=1000 max=500000 step=10000 group='QuadTreeSettings'"))
     {
         return false;
     }

@@ -28,7 +28,7 @@ bool OceanShader::InitializeShader(ID3D11Device *pDevice,
     unsigned int numElements;
 
     // number of ocean tiles to be drawn instanced
-    m_tileCount = 49;
+    m_tileCount = 7*7;
 
     // D3D buffers
     if (!CreateSurfaceVertices(pDevice))
@@ -181,15 +181,31 @@ bool OceanShader::InitializeShader(ID3D11Device *pDevice,
         return false;
     }
 
-    D3D11_BUFFER_DESC perFameBufferDesc;
-    perFameBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-    perFameBufferDesc.ByteWidth = ((sizeof(PerFrameBufferType) + 15) / 16 * 16);
-    perFameBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-    perFameBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    perFameBufferDesc.MiscFlags = 0;
-    perFameBufferDesc.StructureByteStride = 0;
+    // Per frame buffer for vertex shader
+    D3D11_BUFFER_DESC perFameBufferDescVS;
+    perFameBufferDescVS.Usage = D3D11_USAGE_DYNAMIC;
+    perFameBufferDescVS.ByteWidth = sizeof(PerFrameBufferTypeVS);
+    perFameBufferDescVS.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    perFameBufferDescVS.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    perFameBufferDescVS.MiscFlags = 0;
+    perFameBufferDescVS.StructureByteStride = 0;
 
-    result = pDevice->CreateBuffer(&perFameBufferDesc, NULL, &m_perFameBuffer);
+    result = pDevice->CreateBuffer(&perFameBufferDescVS, NULL, &m_perFameBufferVS);
+    if (FAILED(result))
+    {
+        return false;
+    }
+
+    // Per frame buffer for pixel shader
+    D3D11_BUFFER_DESC perFameBufferDescPS;
+    perFameBufferDescPS.Usage = D3D11_USAGE_DYNAMIC;
+    perFameBufferDescPS.ByteWidth = ((sizeof(PerFrameBufferTypePS) + 15) / 16 * 16);
+    perFameBufferDescPS.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    perFameBufferDescPS.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    perFameBufferDescPS.MiscFlags = 0;
+    perFameBufferDescPS.StructureByteStride = 0;
+
+    result = pDevice->CreateBuffer(&perFameBufferDescPS, NULL, &m_perFameBufferPS);
     if (FAILED(result))
     {
         return false;
@@ -276,13 +292,6 @@ bool OceanShader::InitializeShader(ID3D11Device *pDevice,
         return false;
     }
 
-    //rasterDesc.FillMode = D3D11_FILL_WIREFRAME;
-    //result = pDevice->CreateRasterizerState(&rasterDesc, &m_pRsStateWireframe);
-    //if (FAILED(result))
-    //{
-    //    return false;
-    //}
-
     return true;
 }
 
@@ -293,7 +302,8 @@ void OceanShader::ShutdownShader()
     SafeRelease(m_pMeshIB);
     SafeRelease(m_pMeshVB);
     SafeRelease(m_pMatrixBuffer);
-    SafeRelease(m_perFameBuffer);
+    SafeRelease(m_perFameBufferVS);
+    SafeRelease(m_perFameBufferPS);
     // Shader
     SafeRelease(m_pOceanSurfaceVS);
     SafeRelease(m_pOceanSurfacePS);
@@ -322,7 +332,7 @@ bool OceanShader::SetShaderParameters(ID3D11DeviceContext *pContext,
     D3D11_MAPPED_SUBRESOURCE mappedResource;
     MatrixBufferType *pTransformDataBuffer;
 
-    // Lock the constant buffer so it can be written to.
+    // Vertex shader buffer
     result = pContext->Map(m_pMatrixBuffer,
                            0,
                            D3D11_MAP_WRITE_DISCARD,
@@ -341,9 +351,29 @@ bool OceanShader::SetShaderParameters(ID3D11DeviceContext *pContext,
     pTransformDataBuffer->projection = XMMatrixTranspose(projectionMatrix);
 
     pContext->Unmap(m_pMatrixBuffer, 0);
-    pContext->VSSetConstantBuffers(0, 1, &m_pMatrixBuffer);
 
-    result = pContext->Map(m_perFameBuffer,
+    result = pContext->Map(m_perFameBufferVS,
+                           0,
+                           D3D11_MAP_WRITE_DISCARD,
+                           0,
+                           &mappedResource);
+    if (FAILED(result))
+    {
+        return false;
+    }
+
+    // Other uniforms
+    PerFrameBufferTypeVS *pPerFrameDataBufferVS = (PerFrameBufferTypeVS *)mappedResource.pData;
+    pPerFrameDataBufferVS->numInstances = m_tileCount;
+    pPerFrameDataBufferVS->padding = XMFLOAT3();
+    pContext->Unmap(m_perFameBufferVS, 0);
+
+    ID3D11Buffer *vsBuffer[2] = { m_pMatrixBuffer, m_perFameBufferVS };
+
+    pContext->VSSetConstantBuffers(0, 2, vsBuffer);
+
+    // Pixel shader buffer
+    result = pContext->Map(m_perFameBufferPS,
                            0,
                            D3D11_MAP_WRITE_DISCARD,
                            0,
@@ -354,11 +384,11 @@ bool OceanShader::SetShaderParameters(ID3D11DeviceContext *pContext,
     }
 
     // Other per frame constants
-    PerFrameBufferType *pPerFrameDataBuffer = (PerFrameBufferType *)mappedResource.pData;
-    pPerFrameDataBuffer->eyeVec = eyeVec;
-    pPerFrameDataBuffer->lightDir = lightDir;
-    pContext->Unmap(m_perFameBuffer, 0);
-    pContext->PSSetConstantBuffers(1, 1, &m_perFameBuffer);
+    PerFrameBufferTypePS *pPerFrameDataBufferPS = (PerFrameBufferTypePS *)mappedResource.pData;
+    pPerFrameDataBufferPS->eyeVec = eyeVec;
+    pPerFrameDataBufferPS->lightDir = lightDir;
+    pContext->Unmap(m_perFameBufferPS, 0);
+    pContext->PSSetConstantBuffers(1, 1, &m_perFameBufferPS);
 
     // Set textures.
     ID3D11ShaderResourceView *pSrvs[3] = { displacementTex, gradientTex, skyDomeTex };
@@ -443,7 +473,7 @@ void OceanShader::RenderShader(ID3D11DeviceContext *pContext, bool wireframe)
     pContext->PSSetSamplers(1, 3, &psSamplers[0]);
 
     // draw call
-    pContext->DrawIndexedInstanced(m_numIndices, m_tileCount, 0, 0, 0);
+    pContext->DrawIndexedInstanced(m_numIndices, m_tileCount*m_tileCount, 0, 0, 0);
 
     // Unbind SRVs
     ID3D11ShaderResourceView *pNullSrvs[2] = { NULL, NULL };
@@ -553,4 +583,10 @@ bool OceanShader::CreateSurfaceVertices(ID3D11Device *pDevice)
     delete(pIndices);
 
     return true;
+}
+
+
+void OceanShader::SetTileCount(int tileCount)
+{
+    m_tileCount = tileCount;
 }

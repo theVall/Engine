@@ -104,6 +104,7 @@ private:
     bool m_drawTerrain;
 
     // ocean settings
+    int m_oceanTileFactor;
     float m_oceanTimeScale;
     float m_oceanHeightOffset;
 
@@ -117,6 +118,9 @@ private:
     float m_oldTerrainVariance;
     float m_oldTerrainScaling;
     int m_oldTerrainResolution;
+
+    bool m_useQuadtree;
+    int m_maxTrianglesQtNode;
 
     // Camera settings
     bool m_orbitalCamera;

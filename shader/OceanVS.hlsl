@@ -11,12 +11,18 @@ SamplerState samplerDisplacement : register(s0);
 SamplerState samplerGradient : register(s1);
 SamplerState samplerSkyDome : register(s2);
 
-cbuffer PerFrameConstBuf : register(b0)
+cbuffer MatrixBuf : register(b0)
 {
     matrix worldMatrix;
     matrix viewMatrix;
     matrix projectionMatrix;
 }
+
+cbuffer PerFrameConstBufVS : register(b1)
+{
+    int numInstances;
+    //float3 padding;
+};
 
 struct PixelInputType
 {
@@ -29,7 +35,7 @@ float3 debugColor   : TEXCOORD2;
 PixelInputType Main(float2 pos : POSITION, uint instanceId : SV_InstanceID)
 {
     PixelInputType output;
-    uint tileDiv = 7;
+    int tileDiv = numInstances;
     float3 offset = float3((instanceId % tileDiv) * 512.0f, 0.0f, (instanceId / tileDiv) * 512.0f);
 
     float4 posLocal = float4(pos.x, 0.0f, pos.y, 1.0f);

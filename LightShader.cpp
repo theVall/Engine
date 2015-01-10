@@ -23,7 +23,7 @@ LightShader::~LightShader()
 }
 
 
-bool LightShader::Initialize(ID3D11Device* device, HWND hwnd)
+bool LightShader::Initialize(ID3D11Device *device, HWND hwnd)
 {
     bool result;
 
@@ -49,12 +49,12 @@ void LightShader::Shutdown()
 }
 
 
-bool LightShader::Render(ID3D11DeviceContext* deviceContext,
+bool LightShader::Render(ID3D11DeviceContext *deviceContext,
                          int indexCount,
                          const XMMATRIX &worldMatrix,
                          const XMMATRIX &viewMatrix,
                          const XMMATRIX &projectionMatrix,
-                         ID3D11ShaderResourceView* texture,
+                         ID3D11ShaderResourceView *texture,
                          const XMFLOAT3 &lightDirection,
                          const XMFLOAT4 &ambientColor,
                          const XMFLOAT4 &diffuseColor,
@@ -87,15 +87,15 @@ bool LightShader::Render(ID3D11DeviceContext* deviceContext,
 }
 
 
-bool LightShader::InitializeShader(ID3D11Device* device,
+bool LightShader::InitializeShader(ID3D11Device *device,
                                    HWND hwnd,
-                                   WCHAR* vsFilename,
-                                   WCHAR* psFilename)
+                                   WCHAR *vsFilename,
+                                   WCHAR *psFilename)
 {
     HRESULT result;
-    ID3D10Blob* errorMessage;
-    ID3D10Blob* vertexShaderBuffer;
-    ID3D10Blob* pixelShaderBuffer;
+    ID3D10Blob *errorMessage;
+    ID3D10Blob *vertexShaderBuffer;
+    ID3D10Blob *pixelShaderBuffer;
     D3D11_INPUT_ELEMENT_DESC polygonLayout[3];
     unsigned int numElements;
     D3D11_SAMPLER_DESC samplerDesc;
@@ -341,13 +341,13 @@ void LightShader::ShutdownShader()
 }
 
 
-void LightShader::OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND hwnd, WCHAR* shaderFilename)
+void LightShader::OutputShaderErrorMessage(ID3D10Blob *errorMessage, HWND hwnd, WCHAR *shaderFilename)
 {
-    char* compileErrors;
+    char *compileErrors;
     unsigned long bufferSize, i;
     ofstream fout;
 
-    compileErrors = (char*)(errorMessage->GetBufferPointer());
+    compileErrors = (char *)(errorMessage->GetBufferPointer());
 
     bufferSize = errorMessage->GetBufferSize();
 
@@ -370,11 +370,11 @@ void LightShader::OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND hwnd, 
 }
 
 
-bool LightShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
+bool LightShader::SetShaderParameters(ID3D11DeviceContext *deviceContext,
                                       const XMMATRIX &worldMatrix,
                                       const XMMATRIX &viewMatrix,
                                       const XMMATRIX &projectionMatrix,
-                                      ID3D11ShaderResourceView* texture,
+                                      ID3D11ShaderResourceView *texture,
                                       const XMFLOAT3 &lightDirection,
                                       const XMFLOAT4 &ambientColor,
                                       const XMFLOAT4 &diffuseColor,
@@ -385,9 +385,9 @@ bool LightShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
     HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedResource;
     unsigned int bufferNumber;
-    MatrixBufferType* transformDataBuffer;
-    LightBufferType* lightDataBuffer;
-    CameraBufferType* cameraDataBuffer;
+    MatrixBufferType *transformDataBuffer;
+    LightBufferType *lightDataBuffer;
+    CameraBufferType *cameraDataBuffer;
 
     // Lock the constant buffer so it can be written to.
     result = deviceContext->Map(m_matrixBuffer,
@@ -400,7 +400,7 @@ bool LightShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
         return false;
     }
 
-    transformDataBuffer = (MatrixBufferType*)mappedResource.pData;
+    transformDataBuffer = (MatrixBufferType *)mappedResource.pData;
 
     // Transpose the matrices for shader and copy them into the constant buffer.
     transformDataBuffer->world = XMMatrixTranspose(worldMatrix);
@@ -413,13 +413,17 @@ bool LightShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
     deviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_matrixBuffer);
 
     // Lock the camera constant buffer so it can be written to.
-    result = deviceContext->Map(m_cameraBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+    result = deviceContext->Map(m_cameraBuffer,
+                                0,
+                                D3D11_MAP_WRITE_DISCARD,
+                                0,
+                                &mappedResource);
     if (FAILED(result))
     {
         return false;
     }
 
-    cameraDataBuffer = (CameraBufferType*)mappedResource.pData;
+    cameraDataBuffer = (CameraBufferType *)mappedResource.pData;
     cameraDataBuffer->cameraPosition = cameraPosition;
     cameraDataBuffer->padding = 0.0f;
 
@@ -443,7 +447,7 @@ bool LightShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
     }
 
     // Get a pointer to the data in the constant buffer.
-    lightDataBuffer = (LightBufferType*)mappedResource.pData;
+    lightDataBuffer = (LightBufferType *)mappedResource.pData;
 
     lightDataBuffer->ambientColor = ambientColor;
     lightDataBuffer->diffuseColor = diffuseColor;
@@ -460,7 +464,7 @@ bool LightShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
 }
 
 
-void LightShader::RenderShader(ID3D11DeviceContext* deviceContext, int indexCount)
+void LightShader::RenderShader(ID3D11DeviceContext *deviceContext, int indexCount)
 {
     deviceContext->IASetInputLayout(m_layout);
 

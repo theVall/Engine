@@ -17,7 +17,6 @@ using namespace std;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
-const int MAX_TRIANGLES = 1000;
 const int MAX_CHILDREN = 4;
 
 class QuadTree
@@ -53,7 +52,7 @@ public:
     QuadTree(const QuadTree &);
     ~QuadTree();
 
-    bool Initialize(Terrain *, ID3D11Device *);
+    bool Initialize(Terrain *pTerrain, ID3D11Device *pDevice, const int maxTriangles);
     void Shutdown();
     void Render(Frustum *pFrustum,
                 ID3D11DeviceContext *pContext,
@@ -69,11 +68,11 @@ private:
                                  float &centerZ,
                                  float &width);
 
-    void CreateTreeNode(NodeType *parent,
+    void CreateTreeNode(NodeType *pNode,
                         float centerX,
                         float centerZ,
                         float width,
-                        ID3D11Device *device);
+                        ID3D11Device *pDevice);
 
     int CountTriangles(float posX, float posY, float width);
     bool IsTriangleContained(int index, float posX, float posZ, float width);
@@ -96,6 +95,7 @@ private:
 private:
     int m_triangleCount;
     int m_drawCount;
+    int m_maxTrianges;
 
     vector<VertexType> m_vertexList;
     NodeType *m_pParentNode;

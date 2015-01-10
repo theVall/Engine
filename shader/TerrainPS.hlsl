@@ -56,7 +56,14 @@ float4 Main(PixelInputType input) : SV_TARGET
     else if (height < 0.0f)
     {
         blendFactor = abs(height)/scaling;
-        textureColor = lerp(grassTexColor, sandTexColor, blendFactor);;
+        if (slope > 0.3f)
+        {
+            textureColor = lerp(mossyRockTexColor, sandTexColor, blendFactor);
+        }
+        else
+        {
+            textureColor = lerp(grassTexColor, sandTexColor, blendFactor);
+        }
     }
     else
     {

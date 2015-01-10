@@ -265,10 +265,6 @@ bool TerrainShader::SetShaderParameters(ID3D11DeviceContext *pContext,
     bufferNumber = 0;
     pContext->VSSetConstantBuffers(bufferNumber, 1, &m_pMatrixBuffer);
 
-    // Position of the camera constant buffer in the vertex shader.
-    bufferNumber = 1;
-    pContext->VSSetConstantBuffers(bufferNumber, 1, &m_pCameraBuffer);
-
     // set texture resources for pixel shader
     ID3D11ShaderResourceView *pSrvs[4];
 

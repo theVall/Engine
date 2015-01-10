@@ -4,7 +4,6 @@
 Terrain::Terrain()
 {
     m_Util = 0;
-    m_pTexture = 0;
     m_scaling = 1.0f;
 }
 
@@ -19,10 +18,7 @@ Terrain::~Terrain()
 }
 
 
-bool Terrain::GenerateDiamondSquare(ID3D11Device *device,
-                                    WCHAR *texFilename,
-                                    WCHAR *colorMapFilename,
-                                    Util  *util,
+bool Terrain::GenerateDiamondSquare(Util *util,
                                     int terrainSizeFactor,
                                     float hurst,
                                     float initialVariance,
@@ -41,7 +37,7 @@ bool Terrain::GenerateDiamondSquare(ID3D11Device *device,
         return false;
     }
 
-    if (!Initialize(device, texFilename, colorMapFilename))
+    if (!Initialize())
     {
         return false;
     }
@@ -50,10 +46,7 @@ bool Terrain::GenerateDiamondSquare(ID3D11Device *device,
 }
 
 
-bool Terrain::GenerateFromFile(ID3D11Device *device,
-                               WCHAR *texFilename,
-                               WCHAR *colorMapFilename,
-                               Util  *util,
+bool Terrain::GenerateFromFile(Util *util,
                                WCHAR *heightmapFilename)
 {
     if (!m_Util)
@@ -67,7 +60,7 @@ bool Terrain::GenerateFromFile(ID3D11Device *device,
         return false;
     }
 
-    if (!Initialize(device, texFilename, colorMapFilename))
+    if (!Initialize())
     {
         return false;
     }
@@ -76,22 +69,10 @@ bool Terrain::GenerateFromFile(ID3D11Device *device,
 }
 
 
-bool Terrain::Initialize(ID3D11Device *device,
-                         WCHAR *texFilename,
-                         WCHAR *colorMapFilename)
+bool Terrain::Initialize()
 {
     // Calculate texture coordinates and load the texture from file.
     CalculateTextureCoordinates();
-    if (!LoadTexture(device, texFilename))
-    {
-        return false;
-    }
-
-    // Load the color map.
-    //if (!LoadColorMap(colorMapFilename))
-    //{
-    //    return false;
-    //}
 
     // Normalize the height of the height map. Scaling is negative proportional.
     NormalizeHeightMap();
@@ -114,17 +95,10 @@ bool Terrain::Initialize(ID3D11Device *device,
 
 void Terrain::Shutdown()
 {
-    ReleaseTexture();
     ShutdownBuffers();
     ShutdownHeightMap();
 
     return;
-}
-
-
-ID3D11ShaderResourceView *Terrain::GetTexture()
-{
-    return m_pTexture->GetSrv();
 }
 
 
@@ -188,8 +162,8 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
         // calculate division segment length
         int divSegment = m_terrainWidth / (2 * (1 << i));
 
-        // variance
-        variance = (variance*variance) / pow(2.0f, i * hurst);
+        // calculate new variance
+        variance = (initialVariance*initialVariance) / pow(2.0f, (i + 1) * hurst);
         // generate normal distribution with new variance
         normal_distribution<float> distr(0.0f, variance);
 
@@ -274,8 +248,8 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
 
 void Terrain::InterpolateHightValues(int index, int divSegment, int idWidth, float &height)
 {
-    // interpolate between neighboring points (von-Neumann)
-    // special cases: border points (!) -> set to 0.0
+    // interpolate between neighboring points (von Neumann neighborhood)
+    // special cases: border points => assume a height of 0.0 for outlying points
     height = 0.0f;
     int tmpIndex = 0;
 
@@ -509,39 +483,6 @@ void Terrain::CalculateTextureCoordinates()
             tvCoordinate = 1.0f;
             tvCount = 0;
         }
-    }
-
-    return;
-}
-
-
-bool Terrain::LoadTexture(ID3D11Device *device, WCHAR *filename)
-{
-    bool result;
-
-    m_pTexture = new Texture;
-    if (!m_pTexture)
-    {
-        return false;
-    }
-
-    result = m_pTexture->LoadFromDDS(device, filename);
-    if (!result)
-    {
-        return false;
-    }
-
-    return true;
-}
-
-
-void Terrain::ReleaseTexture()
-{
-    if (m_pTexture)
-    {
-        m_pTexture->Shutdown();
-        delete m_pTexture;
-        m_pTexture = 0;
     }
 
     return;

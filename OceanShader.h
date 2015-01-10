@@ -13,7 +13,13 @@ private:
         float indexY;
     };
 
-    struct PerFrameBufferType
+    struct PerFrameBufferTypeVS
+    {
+        int numInstances;
+        XMFLOAT3 padding;
+    };
+
+    struct PerFrameBufferTypePS
     {
         XMFLOAT3 eyeVec;
         XMFLOAT3 lightDir;
@@ -44,6 +50,8 @@ public:
                 ID3D11ShaderResourceView *skyDomeTex,
                 bool wireframe);
 
+    // Set number of ocean tiles to be drawn instanced.
+    void SetTileCount(int tileCount);
 
 private:
     bool InitializeShader(ID3D11Device *pDevice,
@@ -82,7 +90,8 @@ private:
     ID3D11PixelShader *m_pWireframePS;
 
     // Buffers
-    ID3D11Buffer *m_perFameBuffer;
+    ID3D11Buffer *m_perFameBufferVS;
+    ID3D11Buffer *m_perFameBufferPS;
 
     // Samplers
     ID3D11SamplerState *m_pHeightSampler;
@@ -91,7 +100,6 @@ private:
 
     // State blocks
     ID3D11RasterizerState *m_pRsStateSolid;
-    //ID3D11RasterizerState *m_pRsStateWireframe;
     ID3D11BlendState *m_pBlendState;
 };
 

@@ -16,23 +16,23 @@ QuadTree::~QuadTree()
 }
 
 
-bool QuadTree::Initialize(Terrain *terrain, ID3D11Device *device)
+bool QuadTree::Initialize(Terrain *pTerrain, ID3D11Device *pDevice, const int maxTriangles)
 {
-    int vertexCount;
+    // Set the maximum number of triangles per node.
+    m_maxTrianges = maxTriangles;
+
+    int vertexCount = pTerrain->GetVertexCount();
+    m_triangleCount = vertexCount / 3;
+
+    m_vertexList.resize(vertexCount);
+    m_vertexList = pTerrain->GetVertices();
 
     float centerX;
     float centerZ;
     float width;
-
-    vertexCount = terrain->GetVertexCount();
-    m_triangleCount = vertexCount / 3;
-
-    m_vertexList.resize(vertexCount);
-
-    m_vertexList = terrain->GetVertices();
     CalculateMeshDimensions(vertexCount, centerX, centerZ, width);
 
-    // Create the parent pNode for the quad tree.
+    // Create the parent node for the quad tree.
     m_pParentNode = new NodeType;
     if (!m_pParentNode)
     {
@@ -40,9 +40,9 @@ bool QuadTree::Initialize(Terrain *terrain, ID3D11Device *device)
     }
 
     // Recursively build the quad tree based on the vertex list data and mesh dimensions.
-    CreateTreeNode(m_pParentNode, centerX, centerZ, width, device);
+    CreateTreeNode(m_pParentNode, centerX, centerZ, width, pDevice);
 
-    // Release the vertex list since the quad tree now has the vertices in each pNode.
+    // Release the vertex list since the quad tree now has the vertices in the nodes.
     m_vertexList.clear();
 
     return true;
@@ -158,7 +158,11 @@ void QuadTree::CalculateMeshDimensions(int vertexCount,
 }
 
 
-void QuadTree::CreateTreeNode(NodeType *pNode, float positionX, float positionZ, float width, ID3D11Device *device)
+void QuadTree::CreateTreeNode(NodeType *pNode,
+                              float positionX,
+                              float positionZ,
+                              float width,
+                              ID3D11Device *pDevice)
 {
     int numTriangles;
     int count;
@@ -201,7 +205,7 @@ void QuadTree::CreateTreeNode(NodeType *pNode, float positionX, float positionZ,
         return;
     }
     // Node too big -> create new nodes.
-    else if (numTriangles > MAX_TRIANGLES)
+    else if (numTriangles > m_maxTrianges)
     {
         for (int i = 0; i < MAX_CHILDREN; i++)
         {
@@ -220,7 +224,7 @@ void QuadTree::CreateTreeNode(NodeType *pNode, float positionX, float positionZ,
                                 (positionX + offsetX),
                                 (positionZ + offsetZ),
                                 (width / 2.0f),
-                                device);
+                                pDevice);
             }
         }
 
@@ -280,7 +284,7 @@ void QuadTree::CreateTreeNode(NodeType *pNode, float positionX, float positionZ,
         vertexData.SysMemPitch = 0;
         vertexData.SysMemSlicePitch = 0;
 
-        device->CreateBuffer(&vertexBufferDesc, &vertexData, &pNode->vertexBuffer);
+        pDevice->CreateBuffer(&vertexBufferDesc, &vertexData, &pNode->vertexBuffer);
 
         // Set up the description of the index buffer.
         indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -295,7 +299,7 @@ void QuadTree::CreateTreeNode(NodeType *pNode, float positionX, float positionZ,
         indexData.SysMemPitch = 0;
         indexData.SysMemSlicePitch = 0;
 
-        device->CreateBuffer(&indexBufferDesc, &indexData, &pNode->indexBuffer);
+        pDevice->CreateBuffer(&indexBufferDesc, &indexData, &pNode->indexBuffer);
 
         // clean-up
         delete[] vertices;

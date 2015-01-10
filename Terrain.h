@@ -20,7 +20,7 @@ using namespace DirectX::PackedVector;
 using namespace math;
 
 // GLOBALS
-const int TEXTURE_REPEAT = 8;
+const int TEXTURE_REPEAT = 43;
 
 class Terrain
 {
@@ -30,26 +30,17 @@ public:
     ~Terrain();
 
     // generate a fractal terrain with the diamond square algorithm (plasma terrain)
-    bool GenerateDiamondSquare(ID3D11Device *device,
-                               WCHAR *texFilename,
-                               WCHAR *colorMapFilename,
-                               Util  *util,
+    bool GenerateDiamondSquare(Util  *util,
                                int terrainSizeFactor,
                                float hurst,
                                float initialVariance,
                                float m_terrainScaling);
 
     // generate a terrain from a height map image file
-    bool GenerateFromFile(ID3D11Device *device,
-                          WCHAR *texFilename,
-                          WCHAR *colorMapFilename,
-                          Util  *util,
+    bool GenerateFromFile(Util  *util,
                           WCHAR *heightmapFilename);
 
-    bool Initialize(ID3D11Device *device,
-                    WCHAR *texFilename,
-                    WCHAR *colorMapFilename);
-
+    bool Initialize();
     void Shutdown();
 
     int GetVertexCount();
@@ -72,7 +63,7 @@ private:
                                    float hurst,
                                    float initialVariance);
     // Interpolate the height values of the points in von-Neumann-neighborhood
-    // border treatment: assume 0.0
+    // border treatment: assume 0.0 for outlying points
     void InterpolateHightValues(int index, int divSegment, int idWidth, float &height);
 
     // Initialization helper methods
@@ -81,10 +72,7 @@ private:
     bool CalculateNormals();
     void ShutdownHeightMap();
 
-    // Texturing
     void CalculateTextureCoordinates();
-    bool LoadTexture(ID3D11Device *device, WCHAR *texFilename);
-    void ReleaseTexture();
 
 private:
     int m_terrainWidth;
@@ -93,7 +81,6 @@ private:
     int m_vertexCount;
 
     Util *m_Util;
-    Texture *m_pTexture;
 
     vector<VertexType> m_heightMap;
     vector<VertexType> m_vertices;
