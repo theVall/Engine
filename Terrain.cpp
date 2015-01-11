@@ -6,6 +6,10 @@ Terrain::Terrain()
     m_Util = 0;
     m_scaling = 1.0f;
     m_heightScaling = 1.0f;
+    m_rand = 156;
+
+    // random seed
+    srand(time(NULL));
 }
 
 
@@ -133,29 +137,30 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
     float D = 0.0f;
     float height = 0.0f;
     float variance = initialVariance;
-    // random generator -> deterministic seed
-    mt19937 gen(1337);
+
+    // random generator
+    mt19937 gen(m_rand);
     // generate a normal distribution with initial variance and n = 0
     normal_distribution<float> distr(0.0f, variance*variance);
 
     // initially set the four corner points
     int index = 0;
     // upper left
-    m_heightMap[index].position = Vec3f(0.0f, distr(gen), 0.0f);
+    m_heightMap[index].position = Vec3f(0.0f, 0.0f, 0.0f);
     // upper right
     index = m_terrainWidth - 1;
     m_heightMap[index].position = Vec3f((float)(m_terrainWidth - 1),
-                                        distr(gen),
+                                        0.0f,
                                         0.0f);
     // lower left
     index = m_terrainWidth*(m_terrainHeight - 1);
     m_heightMap[index].position = Vec3f(0.0f,
-                                        distr(gen),
+                                        0.0f,
                                         (float)(m_terrainHeight - 1));
     // lower right
     index = m_terrainWidth*m_terrainHeight - 1;
     m_heightMap[index].position = Vec3f((float)(m_terrainHeight - 1),
-                                        distr(gen),
+                                        0.0f,
                                         (float)(m_terrainWidth - 1));
 
     int idWidth = m_terrainWidth;
@@ -664,4 +669,10 @@ vector<VertexType> Terrain::GetVertices()
 int Terrain::GetWidth()
 {
     return m_terrainWidth;
+}
+
+
+void Terrain::GenNewRand()
+{
+    m_rand = rand();
 }

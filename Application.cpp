@@ -18,10 +18,10 @@ Application::Application()
     m_drawTerrain       = true;
 
     // terrain settings
-    m_terrainHurst          = m_oldTerrainHurst         = 0.5f;
+    m_terrainHurst          = m_oldTerrainHurst         = 0.75f;
     m_terrainVariance       = m_oldTerrainVariance      = 1.0f;
     m_terrainScaling        = m_oldTerrainScaling       = 14.0f;
-    m_terrainHeightScaling  = m_oldTerrainHeightScaling = 10.0f;
+    m_terrainHeightScaling  = m_oldTerrainHeightScaling = 20.0f;
     m_terrainResolution     = m_oldTerrainResolution    = 8;
 
     m_useQuadtree        = false;
@@ -30,7 +30,7 @@ Application::Application()
     // ocean settings
     m_oceanTileFactor   = 7;
     m_oceanTimeScale    = 0.0003f;
-    m_oceanHeightOffset = -m_terrainScaling;
+    m_oceanHeightOffset = -m_terrainHeightScaling - 5.0f;
     // camera settings
     m_orbitalCamera     = false;
     m_zoom              = 1.0f;
@@ -507,6 +507,13 @@ bool Application::HandleInput(float frameTime)
     keyDown = GetAsyncKeyState('C');
     m_pPosition->MoveDownward(keyDown != 0, sensitivity);
 
+    keyDown = GetAsyncKeyState('R');
+    if (keyDown != 0)
+    {
+        m_pTerrain->GenNewRand();
+        m_terrainHurst += 0.000001f;
+    }
+
     // Yaw and pitch with __mouse__ movement.
     if (moveCamOnDrag)
     {
@@ -662,7 +669,7 @@ bool Application::RenderGraphics()
                                                    m_pLight->GetAmbientColor(),
                                                    m_pLight->GetDiffuseColor(),
                                                    m_vTerrainTextures,
-                                                   m_terrainScaling * m_terrainHeightScaling))
+                                                   m_terrainHeightScaling))
         {
             return false;
         }
@@ -832,7 +839,7 @@ bool Application::SetGuiParams()
     }
     if (!m_pGUI->AddFloatVar("HeightScaling",
                              m_terrainHeightScaling,
-                             "min=1.0 max=20.0 step=1 group='TerrainSettings'"))
+                             "min=1.0 max=50.0 step=1 group='TerrainSettings'"))
     {
         return false;
     }

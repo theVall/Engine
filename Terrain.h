@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <random>
+#include <time.h>
 
 #include "Util.h"
 #include "Texture.h"
@@ -51,7 +52,8 @@ public:
     int GetWidth();
     // Set the scaling for the terrain height.
     void SetScalingFactor(float scaling);
-
+    // generate new random variable for fractal terrain generation
+    void GenNewRand();
 
 private:
     bool InitializeBuffers();
@@ -82,6 +84,8 @@ private:
     float m_scaling;
     float m_heightScaling;
     int m_vertexCount;
+
+    int m_rand;
 
     Util *m_Util;
 
