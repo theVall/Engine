@@ -450,7 +450,7 @@ void OceanShader::RenderShader(ID3D11DeviceContext *pContext, bool wireframe)
     pContext->VSSetShader(m_pOceanSurfaceVS, NULL, 0);
     if (!wireframe)
     {
-        float blendFactor[] = { 0.4f, 0.4f, 0.4f, 1.0f };
+        float blendFactor[] = { 0.3f, 0.3f, 0.3f, 1.0f };
         pContext->OMSetBlendState(m_pBlendState, blendFactor, 0xffffffff);
         pContext->PSSetShader(m_pOceanSurfacePS, NULL, 0);
     }

@@ -9,7 +9,7 @@ Terrain::Terrain()
     m_rand = 156;
 
     // random seed
-    srand(time(NULL));
+    srand((int)time(NULL));
 }
 
 
@@ -471,16 +471,18 @@ void Terrain::CalculateTextureCoordinates()
     float tuCoordinate = 0.0f;
     float tvCoordinate = 1.0f;
 
+    int textureRepeat = (m_terrainWidth - 1) / 8;
+
     // Calculate how much to increment the texture coordinates by.
-    incrementValue = (float)TEXTURE_REPEAT / (float)m_terrainWidth;
+    incrementValue = (float)textureRepeat / (float)(m_terrainWidth - 1);
 
     // Calculate how many times to repeat the texture.
-    incrementCount = m_terrainWidth / TEXTURE_REPEAT;
+    incrementCount = (m_terrainWidth - 1) / textureRepeat;
 
     // Loop through the height map and calculate the texture coordinates for each vertex.
-    for (int j = 0; j < m_terrainHeight; j++)
+    for (int j = 0; j < m_terrainHeight - 1; j++)
     {
-        for (int i = 0; i < m_terrainWidth; i++)
+        for (int i = 0; i < m_terrainWidth - 1; i++)
         {
             // Store the texture coordinate in the height map.
             m_heightMap[(m_terrainHeight * j) + i].texture.u = tuCoordinate;

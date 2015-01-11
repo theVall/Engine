@@ -29,7 +29,7 @@ bool GUI::Initialize(ID3D11Device *pDevice,
 
     //TwDefine(" Settings color='255 255 0' ");
     TwDefine(" Settings position='10 40' ");
-    TwDefine(" Settings iconified=true ");
+    TwDefine(" Settings iconified=false ");
     TwDefine(" TW_HELP visible=false ");
     TwDefine(" GLOBAL iconpos=topleft ");
 

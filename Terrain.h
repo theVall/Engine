@@ -20,9 +20,6 @@ using namespace DirectX::PackedVector;
 
 using namespace math;
 
-// GLOBALS
-const int TEXTURE_REPEAT = 43;
-
 class Terrain
 {
 public:

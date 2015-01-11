@@ -55,15 +55,13 @@ float4 Main(PixelInputType input) : SV_TARGET
     }
     else if (height < 0.0f)
     {
-        blendFactor = abs(height)/scaling;
-        if (slope > 0.2f)
-        {
-            textureColor = lerp(mossyRockTexColor, sandTexColor, blendFactor);
-        }
-        else
-        {
-            textureColor = lerp(grassTexColor, sandTexColor, blendFactor);
-        }
+        blendFactor = abs(height) / scaling;
+        textureColor = lerp(rockTexColor, sandTexColor, blendFactor);
+    }
+    else if (height < scaling)
+    {
+        blendFactor = abs(height) / scaling;
+        textureColor = lerp(rockTexColor, mossyRockTexColor, blendFactor);
     }
     else
     {
@@ -87,7 +85,7 @@ float4 Main(PixelInputType input) : SV_TARGET
         color += (diffuseColor*lightIntensity);
     }
 
-    color = color * textureColor;
+    color = color *textureColor;
 
     // combine with color map value
     color = saturate(color);
