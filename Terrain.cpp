@@ -5,6 +5,7 @@ Terrain::Terrain()
 {
     m_Util = 0;
     m_scaling = 1.0f;
+    m_heightScaling = 1.0f;
 }
 
 
@@ -22,9 +23,11 @@ bool Terrain::GenerateDiamondSquare(Util *util,
                                     int terrainSizeFactor,
                                     float hurst,
                                     float initialVariance,
-                                    float scaling)
+                                    float scaling,
+                                    float heightScaling)
 {
     m_scaling = scaling;
+    m_heightScaling = heightScaling;
 
     if (!m_Util)
     {
@@ -249,7 +252,7 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
 void Terrain::InterpolateHightValues(int index, int divSegment, int idWidth, float &height)
 {
     // interpolate between neighboring points (von Neumann neighborhood)
-    // special cases: border points => assume a height of 0.0 for outlying points
+    // special cases: border points => assume a height of 1/heightScale for outlying points
     height = 0.0f;
     int tmpIndex = 0;
 
@@ -259,26 +262,42 @@ void Terrain::InterpolateHightValues(int index, int divSegment, int idWidth, flo
     {
         height += m_heightMap[tmpIndex].position.y;
     }
+    else
+    {
+        height -= 1.0f / m_heightScaling;
+    }
 
     // lower neighbor
     tmpIndex = index + (divSegment*idWidth);
-    if (!(tmpIndex > idWidth * idWidth))
+    if (!(tmpIndex >= idWidth * idWidth))
     {
         height += m_heightMap[tmpIndex].position.y;
     }
+    else
+    {
+        height -= 1.0f / m_heightScaling;
+    }
 
     // right neighbor
-    if (!((index + divSegment) >= (m_terrainWidth*m_terrainHeight)))
+    if (!((index % idWidth) == (idWidth - 1)))
     {
         tmpIndex = index + divSegment;
         height += m_heightMap[tmpIndex].position.y;
     }
+    else
+    {
+        height -= 1.0f / m_heightScaling;
+    }
 
     // left neighbor
-    if (!(index % (idWidth + 1)) == 0)
+    if (!(index % idWidth) == 0)
     {
         tmpIndex = index - divSegment;
         height += m_heightMap[tmpIndex].position.y;
+    }
+    else
+    {
+        height -= 1.0f / m_heightScaling;
     }
 
     // normalize
@@ -329,6 +348,7 @@ void Terrain::NormalizeHeightMap()
         for (int i = 0; i  <m_terrainWidth; i++)
         {
             m_heightMap[(m_terrainHeight * j) + i].position *= m_scaling;
+            m_heightMap[(m_terrainHeight * j) + i].position.y *= m_heightScaling;
         }
     }
 

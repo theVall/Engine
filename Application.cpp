@@ -18,11 +18,13 @@ Application::Application()
     m_drawTerrain       = true;
 
     // terrain settings
-    m_terrainHurst      = m_oldTerrainHurst         = 0.5f;
-    m_terrainVariance   = m_oldTerrainVariance      = 1.35f;
-    m_terrainScaling    = m_oldTerrainScaling       = 14.0f;
-    m_terrainResolution = m_oldTerrainResolution    = 8;
+    m_terrainHurst          = m_oldTerrainHurst         = 0.5f;
+    m_terrainVariance       = m_oldTerrainVariance      = 1.0f;
+    m_terrainScaling        = m_oldTerrainScaling       = 14.0f;
+    m_terrainHeightScaling  = m_oldTerrainHeightScaling = 10.0f;
+    m_terrainResolution     = m_oldTerrainResolution    = 8;
 
+    m_useQuadtree        = false;
     m_maxTrianglesQtNode = 5000;
 
     // ocean settings
@@ -147,7 +149,8 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
                                                m_terrainResolution,
                                                m_terrainHurst,
                                                m_terrainVariance,
-                                               m_terrainScaling);
+                                               m_terrainScaling,
+                                               m_terrainHeightScaling);
     if (!result)
     {
         MessageBox(m_hwnd, L"Could not initialize the terrain object.", L"Error", MB_OK);
@@ -519,12 +522,23 @@ bool Application::HandleInput(float frameTime)
         m_pPosition->TurnOnMouseMovement(mouseX, mouseY, 0.5f);
     }
 
-    // TODO: zoom on both mouse buttons down
-    //if (m_leftMouseDown && m_rightMouseDown)
-    //{
-    //    m_pInput->GetMouseLocationChange(mouseX, mouseY);
-    //    m_zoom += mouseY * 1.001f;
-    //}
+    // zoom on right mouse button down
+    if (m_rightMouseDown && m_orbitalCamera)
+    {
+        int mouseXLoc;
+        int mouseYLoc;
+
+        m_pInput->GetMouseLocation(mouseXLoc, mouseYLoc);
+        m_pInput->GetMouseLocationChange(mouseX, mouseY);
+        if (mouseY > 0)
+        {
+            m_zoom += (mouseY + mouseYLoc) / (m_pProfiler->GetFps() / 6);
+        }
+        else if (mouseY < 0)
+        {
+            m_zoom -= (-mouseY + mouseYLoc) / (m_pProfiler->GetFps() / 6);
+        }
+    }
 
     // Get the view point position/rotation.
     m_pPosition->GetPosition(posX, posY, posZ);
@@ -549,7 +563,8 @@ bool Application::HandleInput(float frameTime)
     if (m_oldTerrainHurst != m_terrainHurst ||
             m_oldTerrainVariance != m_terrainVariance ||
             m_oldTerrainResolution != m_terrainResolution ||
-            m_oldTerrainScaling != m_terrainScaling)
+            m_oldTerrainScaling != m_terrainScaling ||
+            m_oldTerrainHeightScaling != m_terrainHeightScaling)
     {
         m_pQuadTree->Shutdown();
         m_pTerrain->Shutdown();
@@ -558,7 +573,8 @@ bool Application::HandleInput(float frameTime)
                                                m_terrainResolution,
                                                m_terrainHurst,
                                                m_terrainVariance,
-                                               m_terrainScaling))
+                                               m_terrainScaling,
+                                               m_terrainHeightScaling))
         {
             MessageBox(m_hwnd, L"Something went wrong while generating the terrain.", L"Error", MB_OK);
             return false;
@@ -571,6 +587,7 @@ bool Application::HandleInput(float frameTime)
         m_oldTerrainHurst = m_terrainHurst;
         m_oldTerrainVariance = m_terrainVariance;
         m_oldTerrainScaling = m_terrainScaling;
+        m_oldTerrainHeightScaling = m_terrainHeightScaling;
         m_oldTerrainResolution = m_terrainResolution;
     }
 
@@ -645,7 +662,7 @@ bool Application::RenderGraphics()
                                                    m_pLight->GetAmbientColor(),
                                                    m_pLight->GetDiffuseColor(),
                                                    m_vTerrainTextures,
-                                                   m_terrainScaling))
+                                                   m_terrainScaling * m_terrainHeightScaling))
         {
             return false;
         }
@@ -803,12 +820,18 @@ bool Application::SetGuiParams()
     // Terrain Settings
     if (!m_pGUI->AddIntVar("Resolution",
                            m_terrainResolution,
-                           "min=2 max=9 step=1 group='TerrainSettings'"))
+                           "min=2 max=10 step=1 group='TerrainSettings'"))
     {
         return false;
     }
     if (!m_pGUI->AddFloatVar("Scaling",
                              m_terrainScaling,
+                             "min=1.0 max=20.0 step=1 group='TerrainSettings'"))
+    {
+        return false;
+    }
+    if (!m_pGUI->AddFloatVar("HeightScaling",
+                             m_terrainHeightScaling,
                              "min=1.0 max=20.0 step=1 group='TerrainSettings'"))
     {
         return false;
@@ -821,7 +844,7 @@ bool Application::SetGuiParams()
     }
     if (!m_pGUI->AddFloatVar("Variance",
                              m_terrainVariance,
-                             "min=0 max=1.5 step=0.01 group='TerrainSettings'"))
+                             "min=0 max=2.5 step=0.01 group='TerrainSettings'"))
     {
         return false;
     }
@@ -829,7 +852,7 @@ bool Application::SetGuiParams()
     // Ocean Settings
     if (!m_pGUI->AddIntVar("TileFactor",
                            m_oceanTileFactor,
-                           "min=1 max=8 step=1 group='OceanSettings'"))
+                           "min=1 max=10 step=1 group='OceanSettings'"))
     {
         return false;
     }
@@ -841,7 +864,7 @@ bool Application::SetGuiParams()
     }
     if (!m_pGUI->AddFloatVar("SeaLevel",
                              m_oceanHeightOffset,
-                             "min=-150 max=150 step=1 group='OceanSettings'"))
+                             "min=-250 max=250 step=1 group='OceanSettings'"))
     {
         return false;
     }

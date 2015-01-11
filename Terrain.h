@@ -34,7 +34,8 @@ public:
                                int terrainSizeFactor,
                                float hurst,
                                float initialVariance,
-                               float m_terrainScaling);
+                               float scaling,
+                               float heightScaling);
 
     // generate a terrain from a height map image file
     bool GenerateFromFile(Util  *util,
@@ -79,6 +80,7 @@ private:
     int m_terrainWidth;
     int m_terrainHeight;
     float m_scaling;
+    float m_heightScaling;
     int m_vertexCount;
 
     Util *m_Util;

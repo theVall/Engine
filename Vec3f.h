@@ -30,6 +30,13 @@ public:
         this->m_v.z = z;
     }
 
+    Vec3f(float xyz)
+    {
+        this->m_v.x = xyz;
+        this->m_v.y = xyz;
+        this->m_v.z = xyz;
+    }
+
     Vec3f(const Vec3f &v)
     {
         this->m_v = v.m_v;

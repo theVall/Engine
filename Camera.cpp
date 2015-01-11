@@ -20,14 +20,14 @@ Camera::~Camera()
 
 void Camera::SetPosition(float x, float y, float z)
 {
-    m_position = XMFLOAT3(x, y, z);
+    m_position = Vec3f(x, y, z);
     return;
 }
 
 
 void Camera::SetRotation(float x, float y, float z)
 {
-    m_rotation = XMFLOAT3(x, y, z);
+    m_rotation = Vec3f(x, y, z);
     return;
 }
 
@@ -93,6 +93,13 @@ void Camera::RenderOrbital(Vec3f targetPoint, float zoom)
     float pitch = m_rotation.x * 0.0174532925f;
     float yaw = m_rotation.y * 0.0174532925f;
 
+    // TODO: avoid rotation over north and south pole
+    //Vec3f eval = (targetPoint - m_position).Normalize();
+    //if (eval.y > 0.8f)
+    //{
+    //    pitch = 0.0f;
+    //}
+
     float distance = (m_position - targetPoint).Length() + zoom;
 
     m_position -= targetPoint;
@@ -104,10 +111,6 @@ void Camera::RenderOrbital(Vec3f targetPoint, float zoom)
 
     m_position += targetPoint;
 
-    // TODO: avoid rotation over north and south pole
-    //Vec3f eval = (targetPoint - m_position).Normalize();
-    //if (eval.y > -0.95f)
-    //    return;
 
     // Create the view matrix from the three updated vectors.
     m_viewMatrix = XMMatrixLookAtLH(m_position.GetAsXMVector(),
