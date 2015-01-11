@@ -31,7 +31,7 @@ bool GUI::Initialize(ID3D11Device *pDevice,
     TwDefine(" Settings position='10 50' ");
     TwDefine(" Settings iconified=false ");
     TwDefine(" Settings fontsize=2 ");
-    TwDefine(" Settings size='220 360' ");
+    TwDefine(" Settings size='220 380' ");
 
     TwDefine(" TW_HELP visible=false ");
     TwDefine(" GLOBAL iconpos=topleft ");
@@ -93,6 +93,19 @@ bool GUI::AddSeperator(const char *name, const char *params)
     }
 
     TwAddSeparator(m_pTweakBar, name, params);
+
+    return true;
+}
+
+
+bool GUI::AddLabel(const char *label)
+{
+    if (!m_pTweakBar)
+    {
+        return false;
+    }
+
+    TwAddButton(m_pTweakBar, NULL, NULL, NULL, label);
 
     return true;
 }

@@ -796,12 +796,12 @@ bool Application::SetGuiParams()
         return false;
     }
 
-    if (!m_pGUI->AddBoolVar("WalkingMode", m_lockSurfaceCamera, ""))
+    if (!m_pGUI->AddBoolVar("Walking Mode", m_lockSurfaceCamera, ""))
     {
         return false;
     }
 
-    if (!m_pGUI->AddBoolVar("OrbitalCamera", m_orbitalCamera, ""))
+    if (!m_pGUI->AddBoolVar("Orbital Camera", m_orbitalCamera, ""))
     {
         return false;
     }
@@ -811,15 +811,15 @@ bool Application::SetGuiParams()
         return false;
     }
 
-    if (!m_pGUI->AddBoolVar("RenderSky", m_drawSkyDome, ""))
+    if (!m_pGUI->AddBoolVar("Render Sky", m_drawSkyDome, ""))
     {
         return false;
     }
-    if (!m_pGUI->AddBoolVar("RenderOcean", m_drawOcean, ""))
+    if (!m_pGUI->AddBoolVar("Render Ocean", m_drawOcean, ""))
     {
         return false;
     }
-    if (!m_pGUI->AddBoolVar("RenderTerrain", m_drawTerrain, ""))
+    if (!m_pGUI->AddBoolVar("Render Terrain", m_drawTerrain, ""))
     {
         return false;
     }
@@ -827,63 +827,73 @@ bool Application::SetGuiParams()
     // Terrain Settings
     if (!m_pGUI->AddIntVar("Resolution",
                            m_terrainResolution,
-                           "min=2 max=10 step=1 group='TerrainSettings'"))
+                           "min=2 max=10 step=1 group='Terrain Settings'"))
     {
         return false;
     }
     if (!m_pGUI->AddFloatVar("Scaling",
                              m_terrainScaling,
-                             "min=1.0 max=20.0 step=1 group='TerrainSettings'"))
+                             "min=1.0 max=20.0 step=1 group='Terrain Settings'"))
     {
         return false;
     }
-    if (!m_pGUI->AddFloatVar("HeightScaling",
+    if (!m_pGUI->AddFloatVar("Height Scaling",
                              m_terrainHeightScaling,
-                             "min=1.0 max=50.0 step=1 group='TerrainSettings'"))
+                             "min=1.0 max=50.0 step=1 group='Terrain Settings'"))
     {
         return false;
     }
-    if (!m_pGUI->AddFloatVar("HurstOperator",
+    if (!m_pGUI->AddFloatVar("Hurst Operator",
                              m_terrainHurst,
-                             "min=0 max=1.0 step=0.01 group='TerrainSettings'"))
+                             "min=0 max=1.0 step=0.01 group='Terrain Settings'"))
     {
         return false;
     }
     if (!m_pGUI->AddFloatVar("Variance",
                              m_terrainVariance,
-                             "min=0 max=2.5 step=0.01 group='TerrainSettings'"))
+                             "min=0 max=2.5 step=0.01 group='Terrain Settings'"))
     {
         return false;
     }
 
     // Ocean Settings
-    if (!m_pGUI->AddIntVar("TileFactor",
+    if (!m_pGUI->AddIntVar("Tile Factor",
                            m_oceanTileFactor,
-                           "min=1 max=10 step=1 group='OceanSettings'"))
+                           "min=1 max=10 step=1 group='Ocean Settings'"))
     {
         return false;
     }
-    if (!m_pGUI->AddFloatVar("AnimationSpeed",
+    if (!m_pGUI->AddFloatVar("Animation Speed",
                              m_oceanTimeScale,
-                             "min=0 max=0.005 step=0.00001 group='OceanSettings'"))
+                             "min=0 max=0.005 step=0.00001 group='Ocean Settings'"))
     {
         return false;
     }
-    if (!m_pGUI->AddFloatVar("SeaLevel",
+    if (!m_pGUI->AddFloatVar("Sea Level",
                              m_oceanHeightOffset,
-                             "min=-250 max=250 step=1 group='OceanSettings'"))
+                             "min=-250 max=250 step=1 group='Ocean Settings'"))
     {
         return false;
     }
 
     // Quad tree settings
-    if (!m_pGUI->AddBoolVar("UseQuadtree", m_useQuadtree, "group='QuadTreeSettings'"))
+    if (!m_pGUI->AddBoolVar("Use Quadtree", m_useQuadtree, "group='Quad Tree Settings'"))
     {
         return false;
     }
-    if (!m_pGUI->AddIntVar("MaxTriangles",
+    if (!m_pGUI->AddIntVar("Max Triangles",
                            m_maxTrianglesQtNode,
-                           "min=1000 max=500000 step=10000 group='QuadTreeSettings'"))
+                           "min=1000 max=500000 step=10000 group='Quad Tree Settings'"))
+    {
+        return false;
+    }
+
+    // Credits
+    if (!m_pGUI->AddSeperator(NULL, NULL))
+    {
+        return false;
+    }
+    if (!m_pGUI->AddLabel(" label='(c) 2015 - Valentin Bruder' "))
     {
         return false;
     }

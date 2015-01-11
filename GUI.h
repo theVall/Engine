@@ -21,6 +21,7 @@ public:
     bool AddIntVar(const char *name, int &var, const char *params);
     bool AddBoolVar(const char *name, bool &var, const char *params);
     bool AddSeperator(const char *name, const char *params);
+    bool AddLabel(const char *label);
 
     void RenderGUI();
 
