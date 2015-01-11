@@ -74,7 +74,8 @@ float4 OceanPS(PixelInputType input) : SV_Target
     float specular = pow(saturate(dot(reflectVec, sunDir)), 200.0f);
     surfaceColor += sunColor * specular;
 
-    surfaceColor.a = 0.5f;
+    // TODO: shader based alpha blending
+    surfaceColor.a = fresnel;
     return surfaceColor;
 }
 

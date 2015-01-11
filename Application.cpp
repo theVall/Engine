@@ -24,7 +24,7 @@ Application::Application()
     m_terrainHeightScaling  = m_oldTerrainHeightScaling = 20.0f;
     m_terrainResolution     = m_oldTerrainResolution    = 8;
 
-    m_useQuadtree        = false;
+    m_useQuadtree        = true;
     m_maxTrianglesQtNode = 5000;
 
     // ocean settings
