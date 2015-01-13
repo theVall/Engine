@@ -240,8 +240,9 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     terrainTexFilenames.push_back(L"../Engine/res/tex/rock.dds");
     terrainTexFilenames.push_back(L"../Engine/res/tex/mossyRock.dds");
     terrainTexFilenames.push_back(L"../Engine/res/tex/grass.dds");
+    terrainTexFilenames.push_back(L"../Engine/res/tex/snow.dds");
 
-    for (int i = 0; i < 4; ++i)
+    for (size_t i = 0; i < terrainTexFilenames.size(); ++i)
     {
         m_vTerrainTextures.push_back(new Texture);
         if (!m_vTerrainTextures.back()->LoadFromDDS(m_pDirect3D->GetDevice(), terrainTexFilenames.at(i)))
@@ -318,7 +319,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     }
     Ocean::OceanParameter oceanParams = { 512,                  // map dim
                                           m_oceanTimeScale,     // time factor
-                                          0.2f,                 // amplitude
+                                          0.25f,                // amplitude
                                           Vec2f(0.3f, 0.6f),    // wind direction
                                           400.0f,               // wind speed
                                           0.07f,                // wind dependency
@@ -534,11 +535,11 @@ bool Application::HandleInput(float frameTime)
         m_pInput->GetMouseLocationChange(mouseX, mouseY);
         if (mouseY > 0)
         {
-            m_zoom += (mouseY + mouseYLoc) / (m_pProfiler->GetFps() / 6);
+            m_zoom += (mouseY + mouseYLoc) / (m_pProfiler->GetFps() / 4.0f);
         }
         else if (mouseY < 0)
         {
-            m_zoom -= (-mouseY + mouseYLoc) / (m_pProfiler->GetFps() / 6);
+            m_zoom -= (-mouseY + mouseYLoc) / (m_pProfiler->GetFps() / 4.0f);
         }
     }
 

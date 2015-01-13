@@ -266,14 +266,14 @@ bool TerrainShader::SetShaderParameters(ID3D11DeviceContext *pContext,
     pContext->VSSetConstantBuffers(bufferNumber, 1, &m_pMatrixBuffer);
 
     // set texture resources for pixel shader
-    ID3D11ShaderResourceView *pSrvs[4];
+    ID3D11ShaderResourceView *pSrvs[5];
 
     for (size_t i = 0; i < vTextures.size(); ++i)
     {
         pSrvs[i] = vTextures.at(i)->GetSrv();
     }
 
-    pContext->PSSetShaderResources(0, 4, pSrvs);
+    pContext->PSSetShaderResources(0, vTextures.size(), pSrvs);
 
     // Lock the light constant buffer so it can be written to.
     result = pContext->Map(m_pLightBuffer,
