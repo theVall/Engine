@@ -58,7 +58,7 @@ bool Graphics::Initialize(int screenWidth, int screenHeight, HWND hwnd)
     {
         return false;
     }
-    m_Camera->SetPosition(0.0f, 0.0f, -10.0f);
+    m_Camera->SetPosition(Vec3f(0.0f, 0.0f, -10.0f));
 
     // Load models.
     m_Model = new Model;

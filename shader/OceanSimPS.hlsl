@@ -47,6 +47,7 @@ float4 UpdateDisplacementPS(PixelInputType input) : SV_Target
     return float4(dx, dy, dz, 1);
 }
 
+
 // Displacement -> Normal, Folding
 float4 NormalsFoldingsPS(PixelInputType input) : SV_Target
 {

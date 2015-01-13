@@ -34,7 +34,7 @@ Application::Application()
     // camera settings
     m_orbitalCamera     = false;
     m_zoom              = 1.0f;
-    m_screenDepth       = 5000.0f;
+    m_screenDepth       = 10000.0f;
     m_screenNear        = 0.1f;
     m_spectatorHeight   = 10.0f;
     m_elapsedTime       = 0;
@@ -74,11 +74,9 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
 {
     bool result;
 
-    float cameraX;
-    float cameraY;
-    float cameraZ;
-
     XMMATRIX baseViewMatrix;
+
+// TODO: advanced profiling output
 //    char videoCard[128];
 //    int videoMemory;
 
@@ -123,14 +121,15 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
         return false;
     }
     // Initialize a base view matrix with the camera for 2D user interface rendering.
-    m_pCamera->SetPosition(0.0f, 0.0f, -1.0f);
+    m_pCamera->SetPosition(Vec3f(0.0f, 0.0f, -1.0f));
     m_pCamera->Render();
     m_pCamera->GetViewMatrix(baseViewMatrix);
     // Set the initial position of the camera.
-    cameraX = 100.0f;
-    cameraY = 200.0f;
-    cameraZ = 100.0f;
-    m_pCamera->SetPosition(cameraX, cameraY, cameraZ);
+    Vec3f camPos;
+    camPos.x = 100.0f * m_terrainScaling;
+    camPos.y = 20.0f * m_terrainHeightScaling;
+    camPos.z = 100.0f * m_terrainScaling;
+    m_pCamera->SetPosition(camPos);
 
     // image loading utility object
     m_pUtil = new Util;
@@ -273,7 +272,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
         return false;
     }
     // Set the initial position of the viewer to the same as the initial camera position.
-    m_pPosition->SetPosition(cameraX, cameraY, cameraZ);
+    m_pPosition->SetPosition(camPos);
 
     // Create and initialize the __profiler__ object.
     m_pProfiler = new Profiler;
@@ -437,7 +436,8 @@ bool Application::ProcessFrame()
         // set the camera two units above it.
         if (m_pQuadTree->GetHeightAtPosition(position.x, position.z, height))
         {
-            m_pCamera->SetPosition(position.x, height + m_spectatorHeight, position.z);
+            Vec3f newPos = Vec3f(position.x, height + m_spectatorHeight, position.z);
+            m_pCamera->SetPosition(newPos);
         }
     }
 
@@ -464,14 +464,6 @@ bool Application::HandleInput(float frameTime)
     int mouseX = 0;
     int mouseY = 0;
 
-    float posX;
-    float posY;
-    float posZ;
-
-    float rotX;
-    float rotY;
-    float rotZ;
-
     float sensitivity = 0.1f;
 
     // Set the frame time for calculating the updated position.
@@ -489,23 +481,26 @@ bool Application::HandleInput(float frameTime)
         sensitivity = 0.5f;
     }
 
-    keyDown = GetAsyncKeyState(VK_UP) || GetAsyncKeyState('W');
-    m_pPosition->MoveForward((keyDown == 1) || (keyDown == 0x8000), sensitivity);
+    if (!m_orbitalCamera)
+    {
+        keyDown = GetAsyncKeyState(VK_UP) || GetAsyncKeyState('W');
+        m_pPosition->MoveForward((keyDown == 1) || (keyDown == 0x8000), sensitivity);
 
-    keyDown = GetAsyncKeyState(VK_LEFT) || GetAsyncKeyState('A');
-    m_pPosition->MoveLeft((keyDown == 1) || (keyDown == 0x8000), sensitivity);
+        keyDown = GetAsyncKeyState(VK_LEFT) || GetAsyncKeyState('A');
+        m_pPosition->MoveLeft((keyDown == 1) || (keyDown == 0x8000), sensitivity);
 
-    keyDown = GetAsyncKeyState(VK_DOWN) || GetAsyncKeyState('S');
-    m_pPosition->MoveBackward((keyDown == 1) || (keyDown == 0x8000), sensitivity);
+        keyDown = GetAsyncKeyState(VK_DOWN) || GetAsyncKeyState('S');
+        m_pPosition->MoveBackward((keyDown == 1) || (keyDown == 0x8000), sensitivity);
 
-    keyDown = GetAsyncKeyState(VK_RIGHT) || GetAsyncKeyState('D');
-    m_pPosition->MoveRight((keyDown == 1) || (keyDown == 0x8000), sensitivity);
+        keyDown = GetAsyncKeyState(VK_RIGHT) || GetAsyncKeyState('D');
+        m_pPosition->MoveRight((keyDown == 1) || (keyDown == 0x8000), sensitivity);
 
-    keyDown = GetAsyncKeyState(VK_SPACE);
-    m_pPosition->MoveUpward(keyDown != 0, sensitivity);
+        keyDown = GetAsyncKeyState(VK_SPACE);
+        m_pPosition->MoveUpward(keyDown != 0, sensitivity);
 
-    keyDown = GetAsyncKeyState('C');
-    m_pPosition->MoveDownward(keyDown != 0, sensitivity);
+        keyDown = GetAsyncKeyState('C');
+        m_pPosition->MoveDownward(keyDown != 0, sensitivity);
+    }
 
     keyDown = GetAsyncKeyState('R');
     if (keyDown != 0)
@@ -547,13 +542,16 @@ bool Application::HandleInput(float frameTime)
         }
     }
 
+    Vec3f pos;
+    Vec3f rot;
+
     // Get the view point position/rotation.
-    m_pPosition->GetPosition(posX, posY, posZ);
-    m_pPosition->GetRotation(rotX, rotY, rotZ);
+    m_pPosition->GetPosition(pos);
+    m_pPosition->GetRotation(rot);
 
     // Set the position of the camera.
-    m_pCamera->SetPosition(posX, posY, posZ);
-    m_pCamera->SetRotation(rotX, rotY, rotZ);
+    m_pCamera->SetPosition(pos);
+    m_pCamera->SetRotation(rot);
 
     // Handle GUI parameters
     m_pDirect3D->SetFullscreen(m_fullScreen);
@@ -833,13 +831,13 @@ bool Application::SetGuiParams()
     }
     if (!m_pGUI->AddFloatVar("Scaling",
                              m_terrainScaling,
-                             "min=1.0 max=20.0 step=1 group='Terrain Settings'"))
+                             "min=1.0 max=25.0 step=1 group='Terrain Settings'"))
     {
         return false;
     }
     if (!m_pGUI->AddFloatVar("Height Scaling",
                              m_terrainHeightScaling,
-                             "min=1.0 max=50.0 step=1 group='Terrain Settings'"))
+                             "min=1.0 max=75.0 step=1 group='Terrain Settings'"))
     {
         return false;
     }

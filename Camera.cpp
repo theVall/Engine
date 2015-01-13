@@ -18,16 +18,16 @@ Camera::~Camera()
 }
 
 
-void Camera::SetPosition(float x, float y, float z)
+void Camera::SetPosition(Vec3f pos)
 {
-    m_position = Vec3f(x, y, z);
+    m_position = pos;
     return;
 }
 
 
-void Camera::SetRotation(float x, float y, float z)
+void Camera::SetRotation(Vec3f rot)
 {
-    m_rotation = Vec3f(x, y, z);
+    m_rotation = rot;
     return;
 }
 
@@ -85,9 +85,8 @@ void Camera::Render()
 
 void Camera::RenderOrbital(Vec3f targetPoint, float zoom)
 {
+    // fixed up vector - TODO: variable for true orbital cam
     Vec3f up = Vec3f(0.0f, 1.0f, 0.0f);
-    XMFLOAT3 lookAt = XMFLOAT3(0.0f, 0.0f, 1.0f);
-    XMVECTOR upVec = up.GetAsXMVector();
 
     // Yaw and pitch in radians.
     float pitch = m_rotation.x * 0.0174532925f;
@@ -115,7 +114,7 @@ void Camera::RenderOrbital(Vec3f targetPoint, float zoom)
     // Create the view matrix from the three updated vectors.
     m_viewMatrix = XMMatrixLookAtLH(m_position.GetAsXMVector(),
                                     targetPoint.GetAsXMVector(),
-                                    upVec);
+                                    up.GetAsXMVector());
 
     return;
 }

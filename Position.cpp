@@ -3,13 +3,8 @@
 
 Position::Position()
 {
-    m_positionX = 0.0f;
-    m_positionY = 0.0f;
-    m_positionZ = 0.0f;
-
-    m_rotationX = 0.0f;
-    m_rotationY = 0.0f;
-    m_rotationZ = 0.0f;
+    m_position = Vec3f();
+    m_rotation = Vec3f();
 
     m_frameTime = 0.0f;
 
@@ -33,38 +28,30 @@ Position::~Position()
 }
 
 
-void Position::SetPosition(float x, float y, float z)
+void Position::SetPosition(Vec3f pos)
 {
-    m_positionX = x;
-    m_positionY = y;
-    m_positionZ = z;
+    m_position = pos;
     return;
 }
 
 
-void Position::SetRotation(float x, float y, float z)
+void Position::SetRotation(Vec3f rot)
 {
-    m_rotationX = x;
-    m_rotationY = y;
-    m_rotationZ = z;
+    m_rotation = rot;
     return;
 }
 
 
-void Position::GetPosition(float &x, float &y, float &z)
+void Position::GetPosition(Vec3f &pos)
 {
-    x = m_positionX;
-    y = m_positionY;
-    z = m_positionZ;
+    pos = m_position;
     return;
 }
 
 
-void Position::GetRotation(float &x, float &y, float &z)
+void Position::GetRotation(Vec3f &rot)
 {
-    x = m_rotationX;
-    y = m_rotationY;
-    z = m_rotationZ;
+    rot = m_rotation;
     return;
 }
 
@@ -92,11 +79,11 @@ void Position::MoveForward(bool keydown, float sensitivity)
     }
 
     // Convert degrees to radians.
-    radians = m_rotationY * 0.0174532925f;
+    radians = m_rotation.y * 0.0174532925f;
 
     // Update the position.
-    m_positionX += sinf(radians) * m_forwardSpeed;
-    m_positionZ += cosf(radians) * m_forwardSpeed;
+    m_position.x += sinf(radians) * m_forwardSpeed;
+    m_position.z += cosf(radians) * m_forwardSpeed;
 
     return;
 }
@@ -117,11 +104,11 @@ void Position::MoveBackward(bool keydown, float sensitivity)
     }
 
     // Convert degrees to radians.
-    radians = m_rotationY * 0.0174532925f;
+    radians = m_rotation.y * 0.0174532925f;
 
     // Update the position.
-    m_positionX -= sinf(radians) * m_backwardSpeed;
-    m_positionZ -= cosf(radians) * m_backwardSpeed;
+    m_position.x -= sinf(radians) * m_backwardSpeed;
+    m_position.z -= cosf(radians) * m_backwardSpeed;
 
     return;
 }
@@ -142,11 +129,11 @@ void Position::MoveLeft(bool keydown, float sensitivity)
     }
 
     // Convert degrees to radians.
-    radians = (m_rotationY - 90.0f) * 0.0174532925f;
+    radians = (m_rotation.y - 90.0f) * 0.0174532925f;
 
     // Update the position.
-    m_positionX += sinf(radians) * m_moveLeftSpeed;
-    m_positionZ += cosf(radians) * m_moveLeftSpeed;
+    m_position.x += sinf(radians) * m_moveLeftSpeed;
+    m_position.z += cosf(radians) * m_moveLeftSpeed;
 
     return;
 }
@@ -167,11 +154,11 @@ void Position::MoveRight(bool keydown, float sensitivity)
     }
 
     // Convert degrees to radians.
-    radians = (m_rotationY - 90.0f) * 0.0174532925f;
+    radians = (m_rotation.y - 90.0f) * 0.0174532925f;
 
     // Update the position.
-    m_positionX -= sinf(radians) * m_moveRightSpeed;
-    m_positionZ -= cosf(radians) * m_moveRightSpeed;
+    m_position.x -= sinf(radians) * m_moveRightSpeed;
+    m_position.z -= cosf(radians) * m_moveRightSpeed;
 
     return;
 }
@@ -191,7 +178,7 @@ void Position::MoveUpward(bool keydown, float sensitivity)
     }
 
     // Update the height position.
-    m_positionY += m_upwardSpeed;
+    m_position.y += m_upwardSpeed;
 
     return;
 }
@@ -211,7 +198,7 @@ void Position::MoveDownward(bool keydown, float sensitivity)
     }
 
     // Update the height position.
-    m_positionY -= m_downwardSpeed;
+    m_position.y -= m_downwardSpeed;
 
     return;
 }
@@ -220,10 +207,10 @@ void Position::MoveDownward(bool keydown, float sensitivity)
 void Position::TurnOnMouseMovement(int mouseX, int mouseY, float sensitivity)
 {
     m_pitchSpeed -= sensitivity * mouseX;
-    m_rotationY = m_pitchSpeed;
+    m_rotation.y = m_pitchSpeed;
 
     m_yawSpeed -= sensitivity * mouseY;
-    m_rotationX = m_yawSpeed;
+    m_rotation.x = m_yawSpeed;
 
     return;
 }

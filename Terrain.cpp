@@ -150,17 +150,17 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
     // upper right
     index = m_terrainWidth - 1;
     m_heightMap[index].position = Vec3f((float)(m_terrainWidth - 1),
-                                        0.0f,
+                                        distr(gen),
                                         0.0f);
     // lower left
     index = m_terrainWidth*(m_terrainHeight - 1);
     m_heightMap[index].position = Vec3f(0.0f,
-                                        0.0f,
+                                        distr(gen),
                                         (float)(m_terrainHeight - 1));
     // lower right
     index = m_terrainWidth*m_terrainHeight - 1;
     m_heightMap[index].position = Vec3f((float)(m_terrainHeight - 1),
-                                        0.0f,
+                                        distr(gen),
                                         (float)(m_terrainWidth - 1));
 
     int idWidth = m_terrainWidth;
@@ -265,45 +265,49 @@ void Terrain::InterpolateHightValues(int index, int divSegment, int idWidth, flo
     tmpIndex = index - (divSegment*idWidth);;
     if (!(tmpIndex < 0))
     {
-        height += m_heightMap[tmpIndex].position.y;
     }
     else
     {
-        height -= 1.0f / m_heightScaling;
+        tmpIndex = index + (divSegment*idWidth);
+        //height -= 1.0f / m_heightScaling;
     }
+    height += m_heightMap[tmpIndex].position.y;
 
     // lower neighbor
     tmpIndex = index + (divSegment*idWidth);
     if (!(tmpIndex >= idWidth * idWidth))
     {
-        height += m_heightMap[tmpIndex].position.y;
     }
     else
     {
-        height -= 1.0f / m_heightScaling;
+        tmpIndex = index - (divSegment*idWidth);;
+        //height -= 1.0f / m_heightScaling;
     }
+    height += m_heightMap[tmpIndex].position.y;
 
     // right neighbor
     if (!((index % idWidth) == (idWidth - 1)))
     {
         tmpIndex = index + divSegment;
-        height += m_heightMap[tmpIndex].position.y;
     }
     else
     {
-        height -= 1.0f / m_heightScaling;
+        tmpIndex = index - divSegment;
+        //height -= 1.0f / m_heightScaling;
     }
+    height += m_heightMap[tmpIndex].position.y;
 
     // left neighbor
     if (!(index % idWidth) == 0)
     {
         tmpIndex = index - divSegment;
-        height += m_heightMap[tmpIndex].position.y;
     }
     else
     {
-        height -= 1.0f / m_heightScaling;
+        tmpIndex = index + divSegment;
+        //height -= 1.0f / m_heightScaling;
     }
+    height += m_heightMap[tmpIndex].position.y;
 
     // normalize
     height /= 4.0f;

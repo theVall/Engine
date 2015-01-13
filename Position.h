@@ -2,6 +2,10 @@
 
 #include <math.h>
 
+#include "Vec3f.h"
+
+using namespace math;
+
 class Position
 {
 public:
@@ -9,11 +13,11 @@ public:
     Position(const Position &);
     ~Position();
 
-    void SetPosition(float, float, float);
-    void SetRotation(float, float, float);
+    void SetPosition(Vec3f pos);
+    void SetRotation(Vec3f rot);
 
-    void GetPosition(float&, float&, float&);
-    void GetRotation(float&, float&, float&);
+    void GetPosition(Vec3f &pos);
+    void GetRotation(Vec3f &rot);
 
     void SetFrameTime(float);
     // Movement
@@ -29,13 +33,8 @@ public:
 
 private:
 
-    float m_positionX;
-    float m_positionY;
-    float m_positionZ;
-
-    float m_rotationX;
-    float m_rotationY;
-    float m_rotationZ;
+    Vec3f m_position;
+    Vec3f m_rotation;
 
     float m_frameTime;
 

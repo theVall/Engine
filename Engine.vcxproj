@@ -106,6 +106,7 @@
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="GUI.h" />
     <ClInclude Include="include\AntTweakBar.h" />
+    <ClInclude Include="Mandelbrot.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="Ocean.h" />
     <ClInclude Include="OceanShader.h" />
@@ -147,6 +148,7 @@
     <ClCompile Include="Frustum.cpp" />
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="GUI.cpp" />
+    <ClCompile Include="Mandelbrot.cpp" />
     <ClCompile Include="Ocean.cpp" />
     <ClCompile Include="OceanShader.cpp" />
     <ClCompile Include="ShaderProgram.cpp" />

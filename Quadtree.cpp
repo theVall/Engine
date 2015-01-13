@@ -341,59 +341,45 @@ int QuadTree::CountTriangles(float positionX, float positionZ, float width)
 
 bool QuadTree::IsTriangleContained(int index, float positionX, float positionZ, float width)
 {
-    float radius;
-    int vertexIndex;
+    Vec3f xCoord;
+    Vec3f zCoord;
 
-    float x1;
-    float x2;
-    float x3;
-
-    float z1;
-    float z2;
-    float z3;
-
-    float minimumX;
-    float maximumX;
-
-    float minimumZ;
-    float maximumZ;
-
-    radius = width / 2.0f;
+    float radius = width / 2.0f;
 
     // Get the index into the vertex list.
-    vertexIndex = index * 3;
+    int vertexIndex = index * 3;
 
     // Get the three vertices of this triangle.
-    x1 = m_vertexList[vertexIndex].position.x;
-    z1 = m_vertexList[vertexIndex].position.z;
+    xCoord.x = m_vertexList[vertexIndex].position.x;
+    zCoord.x = m_vertexList[vertexIndex].position.z;
     vertexIndex++;
 
-    x2 = m_vertexList[vertexIndex].position.x;
-    z2 = m_vertexList[vertexIndex].position.z;
+    xCoord.y = m_vertexList[vertexIndex].position.x;
+    zCoord.y = m_vertexList[vertexIndex].position.z;
     vertexIndex++;
 
-    x3 = m_vertexList[vertexIndex].position.x;
-    z3 = m_vertexList[vertexIndex].position.z;
+    xCoord.z = m_vertexList[vertexIndex].position.x;
+    zCoord.z = m_vertexList[vertexIndex].position.z;
 
     // Min and max of x-coordinate inside the triangle?
-    minimumX = min(x1, min(x2, x3));
+    float minimumX = min(xCoord.x, min(xCoord.y, xCoord.z));
     if (minimumX > (positionX + radius))
     {
         return false;
     }
-    maximumX = max(x1, max(x2, x3));
+    float maximumX = max(xCoord.x, max(xCoord.y, xCoord.z));
     if (maximumX < (positionX - radius))
     {
         return false;
     }
 
     // Min and max of z-coordinate inside the triangle?
-    minimumZ = min(z1, min(z2, z3));
+    float minimumZ = min(zCoord.x, min(zCoord.y, zCoord.z));
     if (minimumZ > (positionZ + radius))
     {
         return false;
     }
-    maximumZ = max(z1, max(z2, z3));
+    float maximumZ = max(zCoord.x, max(zCoord.y, zCoord.z));
     if (maximumZ < (positionZ - radius))
     {
         return false;
@@ -556,7 +542,7 @@ void QuadTree::FindNode(NodeType *pNode, float x, float z, float &height)
         }
     }
 
-    // If there were children nodes then return since the polygon will be in one of these.
+    // If there were child nodes, return since the polygon will be in one of these.
     if (count > 0)
     {
         return;

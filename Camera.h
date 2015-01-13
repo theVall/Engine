@@ -18,8 +18,8 @@ public:
     Camera(const Camera &);
     ~Camera();
 
-    void SetPosition(float, float, float);
-    void SetRotation(float, float, float);
+    void SetPosition(Vec3f pos);
+    void SetRotation(Vec3f rot);
 
     Vec3f GetPosition();
     Vec3f GetRotation();

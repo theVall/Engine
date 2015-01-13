@@ -272,6 +272,39 @@ public:
         return *this;
     }
 
+    bool operator==(const Vec3f &vec)
+    {
+        if (m_v.x == vec.m_v.x)
+        {
+            if (m_v.y == vec.m_v.y)
+            {
+                if (m_v.z == vec.m_v.z)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    bool operator!=(const Vec3f &vec)
+    {
+        if (m_v.x != vec.m_v.x)
+        {
+            return true;
+        }
+        else if (m_v.y != vec.m_v.y)
+        {
+            return true;
+        }
+        else if (m_v.z != vec.m_v.z)
+        {
+            return true;
+        }
+        return false;
+    }
+
 
     //inline void Print(void) const
     //{
