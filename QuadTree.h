@@ -52,7 +52,10 @@ public:
     QuadTree(const QuadTree &);
     ~QuadTree();
 
-    bool Initialize(Terrain *pTerrain, ID3D11Device *pDevice, const int maxTriangles);
+    bool Initialize(Terrain *pTerrain,
+                    ID3D11Device *pDevice,
+                    const int maxTriangles,
+                    bool enabled);
     void Shutdown();
     void Render(Frustum *pFrustum,
                 ID3D11DeviceContext *pContext,
@@ -96,6 +99,7 @@ private:
     int m_triangleCount;
     int m_drawCount;
     int m_maxTrianges;
+    bool m_quadTreeEnabled;
 
     vector<VertexType> m_vertexList;
     NodeType *m_pParentNode;

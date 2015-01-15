@@ -24,7 +24,7 @@ Application::Application()
     m_terrainHeightScaling  = m_oldTerrainHeightScaling = 20.0f;
     m_terrainResolution     = m_oldTerrainResolution    = 8;
 
-    m_useQuadtree        = true;
+    m_useQuadtree        = m_oldUseQuadtree = false;
     m_maxTrianglesQtNode = 5000;
 
     // ocean settings
@@ -168,7 +168,10 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
                                           L"../Engine/shader/TerrainPS.hlsl");
     if (!result)
     {
-        MessageBox(m_hwnd, L"Could not initialize the terrain shader object.", L"Error", MB_OK);
+        MessageBox(m_hwnd,
+                   L"Could not initialize the terrain shader object.",
+                   L"Error",
+                   MB_OK);
         return false;
     }
 
@@ -216,7 +219,8 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     }
     result = m_pQuadTree->Initialize(m_pTerrain,
                                      m_pDirect3D->GetDevice(),
-                                     m_maxTrianglesQtNode);
+                                     m_maxTrianglesQtNode,
+                                     m_useQuadtree);
     if (!result)
     {
         MessageBox(hwnd, L"Could not initialize the quad tree object.", L"Error", MB_OK);
@@ -229,7 +233,8 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     {
         return false;
     }
-    if (!m_pSkyDomeTex->LoadFromDDS(m_pDirect3D->GetDevice(), L"../Engine/res/tex/sky2.dds"))
+    if (!m_pSkyDomeTex->LoadFromDDS(m_pDirect3D->GetDevice(),
+                                    L"../Engine/res/tex/sky2.dds"))
     {
         MessageBox(m_hwnd, L"Error loading sand texture.", L"Error", MB_OK);
         return false;
@@ -245,7 +250,8 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     for (size_t i = 0; i < terrainTexFilenames.size(); ++i)
     {
         m_vTerrainTextures.push_back(new Texture);
-        if (!m_vTerrainTextures.back()->LoadFromDDS(m_pDirect3D->GetDevice(), terrainTexFilenames.at(i)))
+        if (!m_vTerrainTextures.back()->LoadFromDDS(m_pDirect3D->GetDevice(),
+                                                    terrainTexFilenames.at(i)))
         {
             MessageBox(m_hwnd, L"Error loading terrain texture.", L"Error", MB_OK);
             return false;
@@ -290,7 +296,9 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     {
         return false;
     }
-    if (!m_pSkyDome->Initialize(m_pDirect3D->GetDevice(), L"../Engine/res/model/dome.txt", m_pUtil))
+    if (!m_pSkyDome->Initialize(m_pDirect3D->GetDevice(),
+                                L"../Engine/res/model/dome.txt",
+                                m_pUtil))
     {
         MessageBox(hwnd, L"Could not initialize the sky dome object.", L"Error", MB_OK);
         return false;
@@ -307,7 +315,10 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
                                       L"../Engine/shader/SkyDomeVS.hlsl",
                                       L"../Engine/shader/SkyDomePS.hlsl"))
     {
-        MessageBox(hwnd, L"Could not initialize the sky dome shader object.", L"Error", MB_OK);
+        MessageBox(hwnd,
+                   L"Could not initialize the sky dome shader object.",
+                   L"Error",
+                   MB_OK);
         return false;
     }
 
@@ -560,17 +571,13 @@ bool Application::HandleInput(float frameTime)
     m_pOceanShader->SetTileCount(m_oceanTileFactor);
     m_pOcean->SetTimeScale(m_oceanTimeScale);
 
-    if (!m_useQuadtree)
-    {
-        m_maxTrianglesQtNode = 1000000;
-    }
-
     // workaround, TODO: use callback methods...
     if (m_oldTerrainHurst != m_terrainHurst ||
             m_oldTerrainVariance != m_terrainVariance ||
             m_oldTerrainResolution != m_terrainResolution ||
             m_oldTerrainScaling != m_terrainScaling ||
-            m_oldTerrainHeightScaling != m_terrainHeightScaling)
+            m_oldTerrainHeightScaling != m_terrainHeightScaling ||
+            m_oldUseQuadtree != m_useQuadtree)
     {
         m_pQuadTree->Shutdown();
         m_pTerrain->Shutdown();
@@ -582,12 +589,18 @@ bool Application::HandleInput(float frameTime)
                                                m_terrainScaling,
                                                m_terrainHeightScaling))
         {
-            MessageBox(m_hwnd, L"Something went wrong while generating the terrain.", L"Error", MB_OK);
+            MessageBox(m_hwnd,
+                       L"Something went wrong while generating terrain.",
+                       L"Error",
+                       MB_OK);
             return false;
         }
 
-        // rebuild quadtree
-        m_pQuadTree->Initialize(m_pTerrain, m_pDirect3D->GetDevice(), m_maxTrianglesQtNode);
+        // rebuild quad-tree
+        m_pQuadTree->Initialize(m_pTerrain,
+                                m_pDirect3D->GetDevice(),
+                                m_maxTrianglesQtNode,
+                                m_useQuadtree);
 
         // update memory values
         m_oldTerrainHurst = m_terrainHurst;
@@ -595,6 +608,7 @@ bool Application::HandleInput(float frameTime)
         m_oldTerrainScaling = m_terrainScaling;
         m_oldTerrainHeightScaling = m_terrainHeightScaling;
         m_oldTerrainResolution = m_terrainResolution;
+        m_oldUseQuadtree = m_useQuadtree;
     }
 
     return true;
@@ -631,7 +645,9 @@ bool Application::RenderGraphics()
 
     // Sky dome calculations
     cameraPosition = m_pCamera->GetPosition();
-    worldMatrix = XMMatrixTranslation(cameraPosition.x, cameraPosition.y - 0.25f, cameraPosition.z);
+    worldMatrix = XMMatrixTranslation(cameraPosition.x,
+                                      cameraPosition.y - 0.25f,
+                                      cameraPosition.z);
 
     // Render the sky dome.
     if (m_drawSkyDome)

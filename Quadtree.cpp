@@ -8,6 +8,7 @@ QuadTree::QuadTree()
 
 QuadTree::QuadTree(const QuadTree &)
 {
+    m_pParentNode = nullptr;
 }
 
 
@@ -16,10 +17,14 @@ QuadTree::~QuadTree()
 }
 
 
-bool QuadTree::Initialize(Terrain *pTerrain, ID3D11Device *pDevice, const int maxTriangles)
+bool QuadTree::Initialize(Terrain *pTerrain,
+                          ID3D11Device *pDevice,
+                          const int maxTriangles,
+                          bool enabled)
 {
     // Set the maximum number of triangles per node.
     m_maxTrianges = maxTriangles;
+    m_quadTreeEnabled = enabled;
 
     int vertexCount = pTerrain->GetVertexCount();
     m_triangleCount = vertexCount / 3;
@@ -205,7 +210,7 @@ void QuadTree::CreateTreeNode(NodeType *pNode,
         return;
     }
     // Node too big -> create new nodes.
-    else if (numTriangles > m_maxTrianges)
+    else if (numTriangles > m_maxTrianges && m_quadTreeEnabled)
     {
         for (int i = 0; i < MAX_CHILDREN; i++)
         {

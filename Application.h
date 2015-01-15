@@ -53,7 +53,10 @@ public:
     // Handle user input.
     bool HandleInput(float);
 
-    bool drawText(ID3D11Device *pDevice, ID3D11DeviceContext *pContext, IDXGISwapChain *pSwapChain);
+    // Helper to draw text as overlay
+    bool drawText(ID3D11Device *pDevice,
+                  ID3D11DeviceContext *pContext,
+                  IDXGISwapChain *pSwapChain);
 
     // Getter methods
     bool IsFullScreen();
@@ -122,6 +125,7 @@ private:
     int m_oldTerrainResolution;
 
     bool m_useQuadtree;
+    bool m_oldUseQuadtree;
     int m_maxTrianglesQtNode;
 
     // Camera settings
@@ -134,6 +138,7 @@ private:
 
     HWND m_hwnd;
 
+    // object pointer
     Camera *m_pCamera;
     Input *m_pInput;
     D3D *m_pDirect3D;
@@ -157,6 +162,4 @@ private:
     // textures
     Texture *m_pSkyDomeTex;
     vector<Texture *> m_vTerrainTextures;
-
-    ID3D11RenderTargetView *pNullRTV;
 };
