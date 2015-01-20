@@ -12,6 +12,7 @@ Application::Application()
     m_leftMouseDown     = false;
     m_rightMouseDown    = false;
     m_wireframe         = false;
+    m_backFaceCulling   = true;
 
     m_drawSkyDome       = true;
     m_drawOcean         = false;
@@ -444,8 +445,8 @@ bool Application::ProcessFrame()
     {
         Vec3f position = m_pCamera->GetPosition();
         // Get the height of the triangle that is directly underneath the camera position.
-        // If there was a triangle under the camera position,
-        // set the camera two units above it.
+        // If there is a triangle under the camera position,
+        // set the camera above it, according to the spectator height.
         if (m_pQuadTree->GetHeightAtPosition(position.x, position.z, height))
         {
             Vec3f newPos = Vec3f(position.x, height + m_spectatorHeight, position.z);
@@ -476,7 +477,8 @@ bool Application::HandleInput(float frameTime)
     int mouseX = 0;
     int mouseY = 0;
 
-    float sensitivity = 0.1f;
+    // basic sensitivity, higher is faster
+    float sensitivity = 0.25f;
 
     // Set the frame time for calculating the updated position.
     m_pPosition->SetFrameTime(frameTime);
@@ -490,7 +492,7 @@ bool Application::HandleInput(float frameTime)
     keyDown = GetAsyncKeyState(VK_SHIFT);
     if (keyDown)
     {
-        sensitivity = 0.5f;
+        sensitivity = 0.75f;
     }
 
     if (!m_orbitalCamera)
@@ -512,6 +514,12 @@ bool Application::HandleInput(float frameTime)
 
         keyDown = GetAsyncKeyState('C');
         m_pPosition->MoveDownward(keyDown != 0, sensitivity);
+    }
+    else
+    {
+        // allow walking mode only with standard camera mode
+        // (GUI showing workaround) TODO: disable in GUI
+        m_lockSurfaceCamera = false;
     }
 
     keyDown = GetAsyncKeyState('R');
@@ -546,11 +554,11 @@ bool Application::HandleInput(float frameTime)
         m_pInput->GetMouseLocationChange(mouseX, mouseY);
         if (mouseY > 0)
         {
-            m_zoom += (mouseY + mouseYLoc) / (m_pProfiler->GetFps() / 4.0f);
+            m_zoom += (mouseY + mouseYLoc) / (m_pProfiler->GetFps() / 10.0f);
         }
         else if (mouseY < 0)
         {
-            m_zoom -= (-mouseY + mouseYLoc) / (m_pProfiler->GetFps() / 4.0f);
+            m_zoom -= (-mouseY + mouseYLoc) / (m_pProfiler->GetFps() / 10.0f);
         }
     }
 
@@ -626,10 +634,10 @@ bool Application::RenderGraphics()
     // Clear the scene.
     m_pDirect3D->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
 
-    // Generate the view matrix based on the camera's position.
+    // Generate the view matrix based on the camera's position and mode.
     if (m_orbitalCamera)
     {
-        // Calculate target point from terrain size
+        // Calculate target point from terrain size for orbital cam.
         float target = (float)m_pTerrain->GetWidth() * (float)m_terrainScaling / 2.0f;
         m_pCamera->RenderOrbital(Vec3f(target, 0.0f, target), m_zoom);
     }
@@ -666,11 +674,19 @@ bool Application::RenderGraphics()
                                  m_pSkyDomeTex->GetSrv());
     }
     m_pDirect3D->TurnZBufferOn();
-    m_pDirect3D->TurnOnCulling();
+    if (m_backFaceCulling)
+    {
+        m_pDirect3D->TurnOnCulling();
+    }
+    else
+    {
+        m_pDirect3D->TurnOffCulling();
+    }
 
     // Reset the world matrix.
     m_pDirect3D->GetWorldMatrix(worldMatrix);
 
+    // construct view frustum
     m_pFrustum->ConstructFrustum(projectionMatrix, viewMatrix, m_screenDepth);
 
     // Render the terrain geometry
@@ -738,8 +754,19 @@ bool Application::RenderGraphics()
                       40.0f,
                       0xff8cc63e,
                       0);
+
+    std::wostringstream randSeed;
+    randSeed << m_pTerrain->GetRand() << " Seed";
+    m_pFont->drawText(m_pDirect3D->GetDeviceContext(),
+                      (WCHAR *)randSeed.str().c_str(),
+                      16.0f,
+                      1150.0f,
+                      60.0f,
+                      0xff8cc63e,
+                      0);
 #endif
 
+    // gender AntTweakBar
     m_pGUI->RenderGUI();
 
     // Present the rendered scene to the screen.
@@ -810,6 +837,10 @@ bool Application::SetGuiParams()
     {
         return false;
     }
+    if (!m_pGUI->AddBoolVar("Back-face Culling", m_backFaceCulling, ""))
+    {
+        return false;
+    }
 
     if (!m_pGUI->AddBoolVar("Walking Mode", m_lockSurfaceCamera, ""))
     {
@@ -854,7 +885,7 @@ bool Application::SetGuiParams()
     }
     if (!m_pGUI->AddFloatVar("Height Scaling",
                              m_terrainHeightScaling,
-                             "min=1.0 max=75.0 step=1 group='Terrain Settings'"))
+                             "min=1.0 max=100.0 step=1 group='Terrain Settings'"))
     {
         return false;
     }
@@ -892,7 +923,7 @@ bool Application::SetGuiParams()
     }
 
     // Quad tree settings
-    if (!m_pGUI->AddBoolVar("Use Quadtree", m_useQuadtree, "group='Quad Tree Settings'"))
+    if (!m_pGUI->AddBoolVar("Use Quad-Tree", m_useQuadtree, "group='Quad Tree Settings'"))
     {
         return false;
     }

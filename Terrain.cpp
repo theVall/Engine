@@ -400,53 +400,60 @@ bool Terrain::CalculateNormals()
 
     // Go through all the vertices and take an average of each face normal
     // that the vertex touches to get the averaged normal for that vertex.
-    for (int j = 0; j < m_terrainHeight; j++)
+    omp_set_num_threads(NUM_THREADS);
+    // parallel section
+    #pragma omp parallel private(i, result) shared(count, positionX, positionZ, width)
     {
-        for (int i = 0; i < m_terrainWidth; i++)
+        #pragma omp for
+        for (int j = 0; j < m_terrainHeight; j++)
         {
-            sum = Vec3f(0.0f, 0.0f, 0.0f);
-            count = 0;
-
-            // Bottom left face.
-            if (((i - 1) >= 0) && ((j - 1) >= 0))
+            #pragma omp for
+            for (int i = 0; i < m_terrainWidth; i++)
             {
-                index0 = ((j - 1) * (m_terrainHeight - 1)) + (i - 1);
-                sum += normals[index0];
-                count++;
+                sum = Vec3f(0.0f, 0.0f, 0.0f);
+                count = 0;
+
+                // Bottom left face.
+                if (((i - 1) >= 0) && ((j - 1) >= 0))
+                {
+                    index0 = ((j - 1) * (m_terrainHeight - 1)) + (i - 1);
+                    sum += normals[index0];
+                    count++;
+                }
+
+                // Bottom right face.
+                if ((i < (m_terrainWidth - 1)) && ((j - 1) >= 0))
+                {
+                    index0 = ((j - 1) * (m_terrainHeight - 1)) + i;
+                    sum += normals[index0];
+                    count++;
+                }
+
+                // Upper left face.
+                if (((i - 1) >= 0) && (j < (m_terrainHeight - 1)))
+                {
+                    index0 = (j * (m_terrainHeight - 1)) + (i - 1);
+                    sum += normals[index0];
+                    count++;
+                }
+
+                // Upper right face.
+                if ((i < (m_terrainWidth - 1)) && (j < (m_terrainHeight - 1)))
+                {
+                    index0 = (j * (m_terrainHeight - 1)) + i;
+                    sum += normals[index0];
+                    count++;
+                }
+
+                // Take the average of the faces touching this vertex.
+                sum /= (float)count;
+
+                // Get an index to the vertex location in the height map array.
+                index0 = (j * m_terrainHeight) + i;
+
+                // Normalize the shared normal for this vertex.
+                m_heightMap[index0].normal = sum.Normalize();
             }
-
-            // Bottom right face.
-            if ((i < (m_terrainWidth - 1)) && ((j - 1) >= 0))
-            {
-                index0 = ((j - 1) * (m_terrainHeight - 1)) + i;
-                sum += normals[index0];
-                count++;
-            }
-
-            // Upper left face.
-            if (((i - 1) >= 0) && (j < (m_terrainHeight - 1)))
-            {
-                index0 = (j * (m_terrainHeight - 1)) + (i - 1);
-                sum += normals[index0];
-                count++;
-            }
-
-            // Upper right face.
-            if ((i < (m_terrainWidth - 1)) && (j < (m_terrainHeight - 1)))
-            {
-                index0 = (j * (m_terrainHeight - 1)) + i;
-                sum += normals[index0];
-                count++;
-            }
-
-            // Take the average of the faces touching this vertex.
-            sum /= (float)count;
-
-            // Get an index to the vertex location in the height map array.
-            index0 = (j * m_terrainHeight) + i;
-
-            // Normalize the shared normal for this vertex.
-            m_heightMap[index0].normal = sum.Normalize();
         }
     }
 
@@ -681,4 +688,10 @@ int Terrain::GetWidth()
 void Terrain::GenNewRand()
 {
     m_rand = rand();
+}
+
+
+int Terrain::GetRand()
+{
+    return m_rand;
 }

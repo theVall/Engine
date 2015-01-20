@@ -100,6 +100,7 @@ private:
     bool m_leftMouseDown;
     bool m_rightMouseDown;
     bool m_wireframe;
+    bool m_backFaceCulling;
 
     // draw object bools
     bool m_drawSkyDome;

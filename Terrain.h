@@ -4,6 +4,9 @@
 #include <DirectXMath.h>
 #include <DirectXPackedVector.h>
 
+#include <omp.h>
+#define NUM_THREADS 8
+
 #include <vector>
 #include <random>
 #include <time.h>
@@ -51,6 +54,7 @@ public:
     void SetScalingFactor(float scaling);
     // generate new random variable for fractal terrain generation
     void GenNewRand();
+    int GetRand();
 
 private:
     bool InitializeBuffers();
