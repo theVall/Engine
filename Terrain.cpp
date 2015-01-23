@@ -10,6 +10,7 @@ Terrain::Terrain()
 
     // random seed
     srand((int)time(NULL));
+    omp_set_num_threads(NUM_THREADS);
 }
 
 
@@ -178,6 +179,8 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
         int modDiv = (1 << i)*2;
 
         // first step: generate diamonds: 2^n * 2^n midpoints
+        // parallel section
+        #pragma omp parallel for
         for (int j = 0; j < ((1 << i) * (1 << i)); ++j)
         {
             // index calculation: first part is the x-offset, second part is the y-offset
@@ -213,6 +216,8 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
         // Second step: generate squares.
         // Divide into two parts: even and odd rows
         // even rows 0, 2, 4, ...
+        // parallel section
+        #pragma omp parallel for
         for (int j = 0; j < ((1 << i) * ((1 << i) + 1)); ++j)
         {
             // index calculation: first part is the x-offset, second part is the y-offset
@@ -231,6 +236,8 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
         }
 
         // odd rows 1, 3, 5,...
+        // parallel section
+        #pragma omp parallel for
         for (int j = 0; j < ((1 << i) * ((1 << i) + 1)); ++j)
         {
             // index calculation: first part is the x-offset, second part is the y-offset
@@ -330,6 +337,8 @@ bool Terrain::LoadHeightMap(WCHAR *hightmapFilename)
     m_heightMap.resize(m_terrainWidth * m_terrainHeight);
 
     // Read the image data into the height map.
+    // parallel section
+    #pragma omp parallel for
     for (int j = 0; j < m_terrainHeight; j++)
     {
         for (int i = 0; i < m_terrainWidth; i++)
@@ -352,6 +361,8 @@ bool Terrain::LoadHeightMap(WCHAR *hightmapFilename)
 
 void Terrain::NormalizeHeightMap()
 {
+    // parallel section
+    #pragma omp parallel for
     for (int j = 0; j < m_terrainHeight; j++)
     {
         for (int i = 0; i  <m_terrainWidth; i++)
@@ -382,6 +393,8 @@ bool Terrain::CalculateNormals()
     vector<Vec3f> normals((m_terrainHeight - 1) * (m_terrainWidth - 1));
 
     // Go through all the faces in the mesh and calculate their normals.
+    // parallel section
+    #pragma omp parallel for
     for (int j = 0; j < (m_terrainHeight - 1); j++)
     {
         for (int i = 0; i < (m_terrainWidth - 1); i++)
@@ -400,62 +413,58 @@ bool Terrain::CalculateNormals()
 
     // Go through all the vertices and take an average of each face normal
     // that the vertex touches to get the averaged normal for that vertex.
-    omp_set_num_threads(NUM_THREADS);
     // parallel section
-    #pragma omp parallel private(i, result) shared(count, positionX, positionZ, width)
+    #pragma omp parallel for
+    for (int j = 0; j < m_terrainHeight; j++)
     {
-        #pragma omp for
-        for (int j = 0; j < m_terrainHeight; j++)
+        for (int i = 0; i < m_terrainWidth; i++)
         {
-            #pragma omp for
-            for (int i = 0; i < m_terrainWidth; i++)
+            sum = Vec3f(0.0f, 0.0f, 0.0f);
+            count = 0;
+
+            // Bottom left face.
+            if (((i - 1) >= 0) && ((j - 1) >= 0))
             {
-                sum = Vec3f(0.0f, 0.0f, 0.0f);
-                count = 0;
-
-                // Bottom left face.
-                if (((i - 1) >= 0) && ((j - 1) >= 0))
-                {
-                    index0 = ((j - 1) * (m_terrainHeight - 1)) + (i - 1);
-                    sum += normals[index0];
-                    count++;
-                }
-
-                // Bottom right face.
-                if ((i < (m_terrainWidth - 1)) && ((j - 1) >= 0))
-                {
-                    index0 = ((j - 1) * (m_terrainHeight - 1)) + i;
-                    sum += normals[index0];
-                    count++;
-                }
-
-                // Upper left face.
-                if (((i - 1) >= 0) && (j < (m_terrainHeight - 1)))
-                {
-                    index0 = (j * (m_terrainHeight - 1)) + (i - 1);
-                    sum += normals[index0];
-                    count++;
-                }
-
-                // Upper right face.
-                if ((i < (m_terrainWidth - 1)) && (j < (m_terrainHeight - 1)))
-                {
-                    index0 = (j * (m_terrainHeight - 1)) + i;
-                    sum += normals[index0];
-                    count++;
-                }
-
-                // Take the average of the faces touching this vertex.
-                sum /= (float)count;
-
-                // Get an index to the vertex location in the height map array.
-                index0 = (j * m_terrainHeight) + i;
-
-                // Normalize the shared normal for this vertex.
-                m_heightMap[index0].normal = sum.Normalize();
+                index0 = ((j - 1) * (m_terrainHeight - 1)) + (i - 1);
+                sum += normals[index0];
+                count++;
             }
+
+            // Bottom right face.
+            if ((i < (m_terrainWidth - 1)) && ((j - 1) >= 0))
+            {
+                index0 = ((j - 1) * (m_terrainHeight - 1)) + i;
+                sum += normals[index0];
+                count++;
+            }
+
+            // Upper left face.
+            if (((i - 1) >= 0) && (j < (m_terrainHeight - 1)))
+            {
+                index0 = (j * (m_terrainHeight - 1)) + (i - 1);
+                sum += normals[index0];
+                count++;
+            }
+
+            // Upper right face.
+            if ((i < (m_terrainWidth - 1)) && (j < (m_terrainHeight - 1)))
+            {
+                index0 = (j * (m_terrainHeight - 1)) + i;
+                sum += normals[index0];
+                count++;
+            }
+
+            // Take the average of the faces touching this vertex.
+            sum /= (float)count;
+
+            // Get an index to the vertex location in the height map array.
+            index0 = (j * m_terrainHeight) + i;
+
+            // Normalize the shared normal for this vertex.
+            m_heightMap[index0].normal = sum.Normalize();
         }
     }
+
 
     // Release the temporary normals.
     normals.clear();

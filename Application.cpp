@@ -576,6 +576,11 @@ bool Application::HandleInput(float frameTime)
     // Handle GUI parameters
     m_pDirect3D->SetFullscreen(m_fullScreen);
     m_pDirect3D->SetWireframe(m_wireframe);
+    // workaround. TODO: fix wireframe ocean animation
+    if (m_wireframe)
+    {
+        m_stopAnimation = true;
+    }
     m_pOceanShader->SetTileCount(m_oceanTileFactor);
     m_pOcean->SetTimeScale(m_oceanTimeScale);
 

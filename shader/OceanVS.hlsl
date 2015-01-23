@@ -36,14 +36,19 @@ PixelInputType Main(float2 pos : POSITION, uint instanceId : SV_InstanceID)
 {
     PixelInputType output;
     int tileDiv = numInstances;
-    float3 offset = float3((instanceId % tileDiv) * 512.0f, 0.0f, (instanceId / tileDiv) * 512.0f);
+    // tile offset
+    float3 offset = float3((instanceId % tileDiv) * 512.0f,
+                           0.0f,
+                           (instanceId / tileDiv) * 512.0f);
 
     float4 posLocal = float4(pos.x, 0.0f, pos.y, 1.0f);
     float2 uvLocal = pos.xy / 512.0f + 0.00976f;
 
-    float3 displacement = texDisplacement.SampleLevel(samplerDisplacement, uvLocal, 0).xyz;
-    // z in displacement map is y in object coords
-    posLocal.xyz += displacement.xzy * 1.;
+    float3 displacement = texDisplacement.SampleLevel(samplerDisplacement,
+                                                      uvLocal,
+                                                      0.0f).xyz;
+    // z in displacement map is y in object coordinates
+    posLocal.xyz += displacement.xzy * 1.0f;
 
     output.position = mul(posLocal, worldMatrix);
     output.position.xyz += offset;

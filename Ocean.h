@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <fstream>
+#include <time.h>
 
 #include <d3d11.h>
 #include <DirectXMath.h>

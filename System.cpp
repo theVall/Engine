@@ -164,14 +164,22 @@ void System::InitializeWindows(int &screenWidth, int &screenHeight)
     // Application name.
     m_applicationName = L"VallEngine";
 
+    // Icon
+    wc.hIcon = (HICON)LoadImage(NULL,
+                                L"vallEngine.ico",
+                                IMAGE_ICON,
+                                0,
+                                0,
+                                LR_LOADFROMFILE | LR_DEFAULTSIZE | LR_SHARED);
+    //wc.hIcon = LoadIcon(NULL, IDI_WINLOGO);
+
     // Setup the windows class with default settings.
     wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
     wc.lpfnWndProc = WndProc;
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
     wc.hInstance = m_hinstance;
-    wc.hIcon = LoadIcon(NULL, IDI_WINLOGO);
-    wc.hIconSm = wc.hIcon;
+    wc.hIconSm = NULL;
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
     wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
     wc.lpszMenuName = NULL;

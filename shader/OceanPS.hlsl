@@ -19,7 +19,7 @@ cbuffer PerFrameConstBufPS : register(b1)
 
 struct PixelInputType
 {
-float4 position	    : SV_POSITION;
+float4 position : SV_POSITION;
 float2 tex	        : TEXCOORD0;
 float3 localPos	    : TEXCOORD1;
 float3 debugColor   : TEXCOORD2;
@@ -45,6 +45,7 @@ float4 OceanPS(PixelInputType input) : SV_Target
 
     float folding = texGradient.Sample(samplerGradient, input.tex).w * 0.8f;
 
+    //float2 gradientI = gradient;
     float2 gradientI = (gradient + gradientR + gradientL + gradientU + gradientD
     + gradientRU + gradientLU + gradientRD + gradientLD ) / 9.0f;
 
@@ -60,7 +61,7 @@ float4 OceanPS(PixelInputType input) : SV_Target
 
     // sky reflection
     float4 reflection = texSkyDome.Sample(samplerSkyDome, skyTexCoords);
-    reflection.rgb = lerp(skyMixColor.rgb, reflection.rgb, 0.5f);
+    reflection.rgb = lerp(skyMixColor.rgb, reflection.rgb, 0.6f);
     reflection = reflection * reflection * 0.8f;
 
     // very coarse Fresnel approximation

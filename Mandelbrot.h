@@ -25,7 +25,8 @@ public:
                     HWND hwnd,
                     WCHAR *pVsFilename,
                     WCHAR *pPsFilename,
-                    WCHAR *pCsFilename);
+                    WCHAR *pCsFilename,
+                    int heightMapDim);
 
     void Shutdown();
 
@@ -45,10 +46,39 @@ private:
                                   HWND hwnd,
                                   WCHAR *shaderFilename);
 
+    template<typename T> void SafeRelease(T *&obj)
+    {
+        if (obj)
+        {
+            obj->Release();
+            obj = NULL;
+        }
+    }
+
+    int CalcPad16(int n);
+
 private:
 
-    Texture *m_pDisplacementTex;        // RGBA32F
+    int m_heightMapDim;
 
+    ID3D11Buffer *m_pHeightBuffer;
+    ID3D11UnorderedAccessView *m_pHeightUav;
+    ID3D11ShaderResourceView *m_pHeightSrv;
 
+    Texture *m_pDisplacementTex;        // R32F
+    ID3D11SamplerState *m_pPointSampler;
+
+    // Shaders, layouts and constants
+    ID3D11VertexShader *m_pQuadVS;
+    ID3D11PixelShader *m_pDisplacementPS;
+    ID3D11ComputeShader *m_pMandelbrotCS;
+
+    ID3D11InputLayout *m_pVSLayout;
+
+    ID3D11Buffer *m_pQuadVB;
+
+    // constant buffers
+    ID3D11Buffer *m_pImmutableConstBuf;
+    ID3D11Buffer *m_pPerFrameConstBuf;
 };
 

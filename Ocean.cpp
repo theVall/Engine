@@ -20,16 +20,16 @@ bool Ocean::Initialize(OceanParameter &params,
                        ID3D11Device *pDevice,
                        ID3D11DeviceContext *pContext,
                        HWND hwnd,
-                       WCHAR *vsFilename,
-                       WCHAR *psFilename,
-                       WCHAR *csFilename)
+                       WCHAR *pVsFilename,
+                       WCHAR *pPsFilename,
+                       WCHAR *pCsFilename)
 {
     HRESULT hres;
     m_params = params;
 
     // height map
     int heightMapDim = params.displacementMapDim;
-    int heightMapSize = heightMapDim * heightMapDim;// (heightMapDim + 4) * (heightMapDim + 1);
+    int heightMapSize = heightMapDim * heightMapDim;
     XMFLOAT2 *heightData = new XMFLOAT2[heightMapSize * sizeof(XMFLOAT2)];
     float *omegaData = new float[heightMapSize * sizeof(float)];
     InitializeHeightMap(params, heightData, omegaData);
@@ -170,7 +170,7 @@ bool Ocean::Initialize(OceanParameter &params,
     if (!m_pGradientTex->Create2DTextureAndViews(pDevice,
                                                  heightMapDim,
                                                  heightMapDim,
-                                                 DXGI_FORMAT_R16G16B16A16_FLOAT))
+                                                 DXGI_FORMAT_R32G32B32A32_FLOAT))
     {
         return false;
     }
@@ -197,7 +197,7 @@ bool Ocean::Initialize(OceanParameter &params,
 
     // Shaders
     //
-    if (!InitializeShader(pDevice, pContext, hwnd, vsFilename, psFilename, csFilename))
+    if (!InitializeShader(pDevice, pContext, hwnd, pVsFilename, pPsFilename, pCsFilename))
     {
         return false;
     }
@@ -216,9 +216,9 @@ bool Ocean::Initialize(OceanParameter &params,
 bool Ocean::InitializeShader(ID3D11Device *pDevice,
                              ID3D11DeviceContext *pContext,
                              HWND hwnd,
-                             WCHAR *vsFilename,
-                             WCHAR *psFilename,
-                             WCHAR *csFilename)
+                             WCHAR *pVsFilename,
+                             WCHAR *pPsFilename,
+                             WCHAR *pCsFilename)
 {
     HRESULT hres;
 
@@ -231,7 +231,7 @@ bool Ocean::InitializeShader(ID3D11Device *pDevice,
     // Compile shaders
     //
     // Vertex shader (Quad)
-    hres = D3DCompileFromFile(vsFilename,
+    hres = D3DCompileFromFile(pVsFilename,
                               NULL,
                               NULL,
                               "Main",
@@ -244,16 +244,16 @@ bool Ocean::InitializeShader(ID3D11Device *pDevice,
     {
         if (errorMessage)
         {
-            OutputShaderErrorMessage(errorMessage, hwnd, vsFilename);
+            OutputShaderErrorMessage(errorMessage, hwnd, pVsFilename);
         }
         else
         {
-            MessageBox(hwnd, vsFilename, L"Missing Shader File", MB_OK);
+            MessageBox(hwnd, pVsFilename, L"Missing Shader File", MB_OK);
         }
         return false;
     }
     // Displacement pixel shader
-    hres = D3DCompileFromFile(psFilename,
+    hres = D3DCompileFromFile(pPsFilename,
                               NULL,
                               NULL,
                               "UpdateDisplacementPS",
@@ -266,16 +266,16 @@ bool Ocean::InitializeShader(ID3D11Device *pDevice,
     {
         if (errorMessage)
         {
-            OutputShaderErrorMessage(errorMessage, hwnd, psFilename);
+            OutputShaderErrorMessage(errorMessage, hwnd, pPsFilename);
         }
         else
         {
-            MessageBox(hwnd, psFilename, L"Missing Shader File", MB_OK);
+            MessageBox(hwnd, pPsFilename, L"Missing Shader File", MB_OK);
         }
         return false;
     }
     // Calculate normals and foldings pixel shader
-    hres = D3DCompileFromFile(psFilename,
+    hres = D3DCompileFromFile(pPsFilename,
                               NULL,
                               NULL,
                               "NormalsFoldingsPS",
@@ -288,16 +288,16 @@ bool Ocean::InitializeShader(ID3D11Device *pDevice,
     {
         if (errorMessage)
         {
-            OutputShaderErrorMessage(errorMessage, hwnd, psFilename);
+            OutputShaderErrorMessage(errorMessage, hwnd, pPsFilename);
         }
         else
         {
-            MessageBox(hwnd, psFilename, L"Missing Shader File", MB_OK);
+            MessageBox(hwnd, pPsFilename, L"Missing Shader File", MB_OK);
         }
         return false;
     }
     // Compute shader
-    hres = D3DCompileFromFile(csFilename,
+    hres = D3DCompileFromFile(pCsFilename,
                               NULL,
                               NULL,
                               "Main",
@@ -310,11 +310,11 @@ bool Ocean::InitializeShader(ID3D11Device *pDevice,
     {
         if (errorMessage)
         {
-            OutputShaderErrorMessage(errorMessage, hwnd, csFilename);
+            OutputShaderErrorMessage(errorMessage, hwnd, pCsFilename);
         }
         else
         {
-            MessageBox(hwnd, csFilename, L"Missing Shader File", MB_OK);
+            MessageBox(hwnd, pCsFilename, L"Missing Shader File", MB_OK);
         }
         return false;
     }
@@ -575,7 +575,7 @@ bool Ocean::InitializeHeightMap(OceanParameter &params,
     float phil;
 
     // Seed random generator
-    srand(0);
+    srand((int)time(NULL));
 
     // height map must be squared
     for (int i = 0; i <= heightMapDim; ++i)
