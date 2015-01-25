@@ -321,7 +321,7 @@ void TerrainShader::RenderShader(ID3D11DeviceContext *pContext,
 
     pContext->DrawIndexed(indexCount, 0, 0);
 
-    // Do NOT Unbind SRV here - multiple render calls (quadtree)
+    // Do NOT Unbind SRV here - multiple render calls (-> quad tree)
     //ID3D11ShaderResourceView *pNullSrv[1] = { NULL };
     //pContext->PSSetShaderResources(0, 1, pNullSrv);
 

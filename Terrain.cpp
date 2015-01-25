@@ -45,6 +45,9 @@ bool Terrain::GenerateDiamondSquare(Util *util,
         return false;
     }
 
+    // Calculate texture coordinates and load the textures from file.
+    CalculateTextureCoordinates();
+
     if (!Initialize())
     {
         return false;
@@ -54,8 +57,7 @@ bool Terrain::GenerateDiamondSquare(Util *util,
 }
 
 
-bool Terrain::GenerateFromFile(Util *util,
-                               WCHAR *heightmapFilename)
+bool Terrain::GenerateFromFile(Util *util, WCHAR *heightmapFilename)
 {
     if (!m_Util)
     {
@@ -68,6 +70,9 @@ bool Terrain::GenerateFromFile(Util *util,
         return false;
     }
 
+    // Calculate texture coordinates and load the textures from file.
+    CalculateTextureCoordinates();
+
     if (!Initialize())
     {
         return false;
@@ -79,9 +84,6 @@ bool Terrain::GenerateFromFile(Util *util,
 
 bool Terrain::Initialize()
 {
-    // Calculate texture coordinates and load the texture from file.
-    CalculateTextureCoordinates();
-
     // Normalize the height of the height map. Scaling is negative proportional.
     NormalizeHeightMap();
 

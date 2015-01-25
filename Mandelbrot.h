@@ -8,10 +8,16 @@
 #include <d3dcompiler.h>
 
 #include "Texture.h"
+#include "Vec2f.h"
+
+#define BLOCK_SIZE_X 16
+#define BLOCK_SIZE_Y 16
 
 using namespace std;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
+
+using namespace math;
 
 class Mandelbrot
 {
@@ -23,22 +29,26 @@ public:
     bool Initialize(ID3D11Device *pDevice,
                     ID3D11DeviceContext *pContext,
                     HWND hwnd,
-                    WCHAR *pVsFilename,
-                    WCHAR *pPsFilename,
                     WCHAR *pCsFilename,
                     int heightMapDim);
 
     void Shutdown();
 
-    ID3D11ShaderResourceView *GetDisplacementMap();
+    // Calculate Mandelbrot set as height data in given rectangle.
+    bool CalcHeightsInRectangle(UINT upperLeftX,
+                                UINT upperLeftY,
+                                UINT lowerRightX,
+                                UINT lowerRightY,
+                                UINT iterations,
+                                ID3D11DeviceContext *pContext);
+
+    ID3D11ShaderResourceView *GetHeightMap();
 
 private:
 
     bool InitializeShader(ID3D11Device *pDevice,
                           ID3D11DeviceContext *pContext,
                           HWND hwnd,
-                          WCHAR *pVsFilename,
-                          WCHAR *pPsFilename,
                           WCHAR *pCsFilename);
 
     // Shader error output message and log.
@@ -62,20 +72,12 @@ private:
     int m_heightMapDim;
 
     ID3D11Buffer *m_pHeightBuffer;
-    ID3D11UnorderedAccessView *m_pHeightUav;
+    ID3D11Buffer *m_pColorBuffer;
     ID3D11ShaderResourceView *m_pHeightSrv;
+    //ID3D11ShaderResourceView *m_pColorSrv;
 
-    Texture *m_pDisplacementTex;        // R32F
-    ID3D11SamplerState *m_pPointSampler;
-
-    // Shaders, layouts and constants
-    ID3D11VertexShader *m_pQuadVS;
-    ID3D11PixelShader *m_pDisplacementPS;
+    // Shader
     ID3D11ComputeShader *m_pMandelbrotCS;
-
-    ID3D11InputLayout *m_pVSLayout;
-
-    ID3D11Buffer *m_pQuadVB;
 
     // constant buffers
     ID3D11Buffer *m_pImmutableConstBuf;

@@ -22,6 +22,8 @@
 #include "Ocean.h"
 #include "OceanShader.h"
 #include "GUI.h"
+#include "Mandelbrot.h"
+#include "MandelbrotShader.h"
 
 //
 // Wrapper class for terrain application.
@@ -159,6 +161,8 @@ private:
     Ocean *m_pOcean;
     OceanShader *m_pOceanShader;
     GUI *m_pGUI;
+    Mandelbrot *m_pMandelbrot;
+    MandelbrotShader *m_pMandelbrotShader;
 
     // textures
     Texture *m_pSkyDomeTex;

@@ -1,34 +1,31 @@
-#include "OceanShader.h"
+#include "MandelbrotShader.h"
 
 
-OceanShader::OceanShader(int meshDim)
+MandelbrotShader::MandelbrotShader(int meshDim)
 {
     m_meshDim = meshDim;
 }
 
 
-OceanShader::OceanShader(const OceanShader &)
+MandelbrotShader::MandelbrotShader(const MandelbrotShader &)
 {
 }
 
 
-OceanShader::~OceanShader()
+MandelbrotShader::~MandelbrotShader()
 {
 }
 
 
-bool OceanShader::InitializeShader(ID3D11Device *pDevice,
-                                   HWND hwnd,
-                                   WCHAR *vsFilename,
-                                   WCHAR *psFilename)
+bool MandelbrotShader::InitializeShader(ID3D11Device *pDevice,
+                                        HWND hwnd,
+                                        WCHAR *vsFilename,
+                                        WCHAR *psFilename)
 {
     HRESULT result;
 
     D3D11_INPUT_ELEMENT_DESC polygonLayout[1];
     unsigned int numElements;
-
-    // initial number of ocean tiles to be drawn instanced
-    m_tileCount = 7*7;
 
     // D3D buffers
     if (!CreateSurfaceVertices(pDevice))
@@ -41,7 +38,6 @@ bool OceanShader::InitializeShader(ID3D11Device *pDevice,
     ID3D10Blob *pError = NULL;
     ID3D10Blob *pBufferVS = NULL;
     ID3D10Blob *pBufferPS = NULL;
-    ID3D10Blob *pBufferWireframePS = NULL;
 
     // Compile the vertex shader code.
     result = D3DCompileFromFile(vsFilename,
@@ -70,7 +66,7 @@ bool OceanShader::InitializeShader(ID3D11Device *pDevice,
     result = D3DCompileFromFile(psFilename,
                                 NULL,
                                 NULL,
-                                "OceanPS",
+                                "Main",
                                 "ps_5_0",
                                 NULL,
                                 NULL,
@@ -89,33 +85,11 @@ bool OceanShader::InitializeShader(ID3D11Device *pDevice,
         return false;
     }
 
-    result = D3DCompileFromFile(psFilename,
-                                NULL,
-                                NULL,
-                                "WireframePS",
-                                "ps_5_0",
-                                NULL,
-                                NULL,
-                                &pBufferWireframePS,
-                                &pError);
-    if (FAILED(result))
-    {
-        if (pError)
-        {
-            OutputShaderErrorMessage(pError, hwnd, psFilename);
-        }
-        else
-        {
-            MessageBox(hwnd, psFilename, L"Missing Shader File", MB_OK);
-        }
-        return false;
-    }
-
     // Create the vertex shader.
     result = pDevice->CreateVertexShader(pBufferVS->GetBufferPointer(),
                                          pBufferVS->GetBufferSize(),
                                          NULL,
-                                         &m_pOceanSurfaceVS);
+                                         &m_pMandelbrotVS);
     if (FAILED(result))
     {
         return false;
@@ -125,15 +99,7 @@ bool OceanShader::InitializeShader(ID3D11Device *pDevice,
     result = pDevice->CreatePixelShader(pBufferPS->GetBufferPointer(),
                                         pBufferPS->GetBufferSize(),
                                         NULL,
-                                        &m_pOceanSurfacePS);
-    if (FAILED(result))
-    {
-        return false;
-    }
-    result = pDevice->CreatePixelShader(pBufferWireframePS->GetBufferPointer(),
-                                        pBufferWireframePS->GetBufferSize(),
-                                        NULL,
-                                        &m_pWireframePS);
+                                        &m_pMandelbrotPS);
     if (FAILED(result))
     {
         return false;
@@ -163,7 +129,6 @@ bool OceanShader::InitializeShader(ID3D11Device *pDevice,
     // clean up shader buffers
     SafeRelease(pBufferVS);
     SafeRelease(pBufferPS);
-    SafeRelease(pBufferWireframePS);
 
     // Constant buffer
     // Constants
@@ -176,21 +141,6 @@ bool OceanShader::InitializeShader(ID3D11Device *pDevice,
     matrixBufferDesc.StructureByteStride = 0;
 
     result = pDevice->CreateBuffer(&matrixBufferDesc, NULL, &m_pMatrixBuffer);
-    if (FAILED(result))
-    {
-        return false;
-    }
-
-    // Per frame buffer for vertex shader
-    D3D11_BUFFER_DESC perFameBufferDescVS;
-    perFameBufferDescVS.Usage = D3D11_USAGE_DYNAMIC;
-    perFameBufferDescVS.ByteWidth = sizeof(PerFrameBufferTypeVS);
-    perFameBufferDescVS.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-    perFameBufferDescVS.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-    perFameBufferDescVS.MiscFlags = 0;
-    perFameBufferDescVS.StructureByteStride = 0;
-
-    result = pDevice->CreateBuffer(&perFameBufferDescVS, NULL, &m_perFameBufferVS);
     if (FAILED(result))
     {
         return false;
@@ -233,78 +183,30 @@ bool OceanShader::InitializeShader(ID3D11Device *pDevice,
         return false;
     }
 
-    samplerDesc.Filter = D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
-    samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
-    samplerDesc.MaxAnisotropy = 8;
-    result = pDevice->CreateSamplerState(&samplerDesc, &m_pGradientSampler);
-    if (FAILED(result))
-    {
-        return false;
-    }
-
-    result = pDevice->CreateSamplerState(&samplerDesc, &m_pSkyDomeSampler);
-    if (FAILED(result))
-    {
-        return false;
-    }
-
-    // create blend state
-    D3D11_BLEND_DESC blendDesc;
-    ZeroMemory(&blendDesc, sizeof(blendDesc));
-
-    D3D11_RENDER_TARGET_BLEND_DESC rtbd;
-    ZeroMemory(&rtbd, sizeof(rtbd));
-
-    rtbd.BlendEnable = true;
-    rtbd.SrcBlend = D3D11_BLEND_SRC_COLOR;
-    rtbd.DestBlend = D3D11_BLEND_BLEND_FACTOR;
-    rtbd.BlendOp = D3D11_BLEND_OP_ADD;
-    rtbd.SrcBlendAlpha = D3D11_BLEND_ONE;
-    rtbd.DestBlendAlpha = D3D11_BLEND_ZERO;
-    rtbd.BlendOpAlpha = D3D11_BLEND_OP_ADD;
-    rtbd.RenderTargetWriteMask = D3D10_COLOR_WRITE_ENABLE_ALL;
-
-    blendDesc.AlphaToCoverageEnable = false;
-    blendDesc.RenderTarget[0] = rtbd;
-
-    result = pDevice->CreateBlendState(&blendDesc, &m_pBlendState);
-    if (FAILED(result))
-    {
-        return false;
-    }
-
     return true;
 }
 
 
-void OceanShader::ShutdownShader()
+void MandelbrotShader::ShutdownShader()
 {
     // D3D Buffer
     SafeRelease(m_pMeshIB);
     SafeRelease(m_pMeshVB);
     SafeRelease(m_pMatrixBuffer);
-    SafeRelease(m_perFameBufferVS);
+    //SafeRelease(m_perFameBufferVS);
     SafeRelease(m_perFameBufferPS);
     // Shader
-    SafeRelease(m_pOceanSurfaceVS);
-    SafeRelease(m_pOceanSurfacePS);
-    SafeRelease(m_pWireframePS);
-    // Sampler
-    SafeRelease(m_pHeightSampler);
-    SafeRelease(m_pGradientSampler);
-    SafeRelease(m_pSkyDomeSampler);
+    SafeRelease(m_pMandelbrotVS);
+    SafeRelease(m_pMandelbrotPS);
 }
 
 
-bool OceanShader::SetShaderParameters(ID3D11DeviceContext *pContext,
-                                      const XMMATRIX &worldMatrix,
-                                      const XMMATRIX &viewMatrix,
-                                      const XMMATRIX &projectionMatrix,
-                                      const XMFLOAT3 &eyeVec,
-                                      const XMFLOAT3 &lightDir,
-                                      ID3D11ShaderResourceView *displacementTex,
-                                      ID3D11ShaderResourceView *gradientTex,
-                                      ID3D11ShaderResourceView *skyDomeTex)
+bool MandelbrotShader::SetShaderParameters(ID3D11DeviceContext *pContext,
+                                           const XMMATRIX &worldMatrix,
+                                           const XMMATRIX &viewMatrix,
+                                           const XMMATRIX &projectionMatrix,
+                                           const XMFLOAT3 &lightDir,
+                                           ID3D11ShaderResourceView *pHeightSrv)
 {
     HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -330,27 +232,7 @@ bool OceanShader::SetShaderParameters(ID3D11DeviceContext *pContext,
 
     pContext->Unmap(m_pMatrixBuffer, 0);
 
-    // Other uniforms
-    result = pContext->Map(m_perFameBufferVS,
-                           0,
-                           D3D11_MAP_WRITE_DISCARD,
-                           0,
-                           &mappedResource);
-    if (FAILED(result))
-    {
-        return false;
-    }
-
-    PerFrameBufferTypeVS *pPerFrameDataBufferVS = (PerFrameBufferTypeVS *)mappedResource.pData;
-    pPerFrameDataBufferVS->numInstances = m_tileCount;
-    pPerFrameDataBufferVS->padding = XMFLOAT3();
-    pContext->Unmap(m_perFameBufferVS, 0);
-
-    ID3D11Buffer *vsBuffer[2] = { m_pMatrixBuffer, m_perFameBufferVS };
-
-    pContext->VSSetConstantBuffers(0, 2, vsBuffer);
-
-    // Pixel shader buffer
+    // Pixel shader constant buffer
     result = pContext->Map(m_perFameBufferPS,
                            0,
                            D3D11_MAP_WRITE_DISCARD,
@@ -361,49 +243,38 @@ bool OceanShader::SetShaderParameters(ID3D11DeviceContext *pContext,
         return false;
     }
 
-    // Other per frame constants
     PerFrameBufferTypePS *pPerFrameDataBufferPS = (PerFrameBufferTypePS *)mappedResource.pData;
-    pPerFrameDataBufferPS->eyeVec = eyeVec;
     pPerFrameDataBufferPS->lightDir = lightDir;
     pContext->Unmap(m_perFameBufferPS, 0);
     pContext->PSSetConstantBuffers(1, 1, &m_perFameBufferPS);
 
-    // Set textures.
-    ID3D11ShaderResourceView *pSrvs[3] = { displacementTex, gradientTex, skyDomeTex };
-
-    pContext->VSSetShaderResources(0, 3, &pSrvs[0]);
-    pContext->PSSetShaderResources(0, 3, &pSrvs[0]);
+    ID3D11ShaderResourceView *pSrvs[1] = { pHeightSrv };
+    pContext->VSSetShaderResources(0, 1, &pSrvs[0]);
 
     return true;
 }
 
 
-bool OceanShader::Render(ID3D11DeviceContext *pContext,
-                         const XMMATRIX &worldMatrix,
-                         const XMMATRIX &viewMatrix,
-                         const XMMATRIX &projectionMatrix,
-                         const XMFLOAT3 &eyeVec,
-                         const XMFLOAT3 &lightDir,
-                         ID3D11ShaderResourceView *displacementTex,
-                         ID3D11ShaderResourceView *gradientTex,
-                         ID3D11ShaderResourceView *skyDomeTex,
-                         bool wireframe)
+bool MandelbrotShader::Render(ID3D11DeviceContext *pContext,
+                              const XMMATRIX &worldMatrix,
+                              const XMMATRIX &viewMatrix,
+                              const XMMATRIX &projectionMatrix,
+                              const XMFLOAT3 &lightDir,
+                              ID3D11ShaderResourceView *pHeightSrv,
+                              bool wireframe)
 {
     if (!SetShaderParameters(pContext,
                              worldMatrix,
                              viewMatrix,
                              projectionMatrix,
-                             eyeVec,
                              lightDir,
-                             displacementTex,
-                             gradientTex,
-                             skyDomeTex))
+                             pHeightSrv))
     {
         return false;
     }
 
     // Set the vertex and index buffers to active in the input assembler.
-    unsigned int stride = sizeof(OceanVertex);
+    unsigned int stride = sizeof(TerrainVertex);
     unsigned int offset = 0;
 
     pContext->IASetVertexBuffers(0, 1, &m_pMeshVB, &stride, &offset);
@@ -418,58 +289,42 @@ bool OceanShader::Render(ID3D11DeviceContext *pContext,
 }
 
 
-void OceanShader::RenderShader(ID3D11DeviceContext *pContext, bool wireframe)
+void MandelbrotShader::RenderShader(ID3D11DeviceContext *pContext, bool wireframe)
 {
     // Set the vertex input layout.
     pContext->IASetInputLayout(m_pLayout);
 
     // Set the vertex and pixel shaders.
-    pContext->VSSetShader(m_pOceanSurfaceVS, NULL, 0);
-    if (!wireframe)
-    {
-        // TODO: angle based blending factor
-        float blendFactor[] = { 0.3f, 0.3f, 0.3f, 1.0f };
-        pContext->OMSetBlendState(m_pBlendState, blendFactor, 0xffffffff);
-        pContext->PSSetShader(m_pOceanSurfacePS, NULL, 0);
-    }
-    else
+    pContext->VSSetShader(m_pMandelbrotVS, NULL, 0);
+    if (wireframe)
     {
         pContext->RSSetState(m_pRsStateWireframe);
-        pContext->PSSetShader(m_pWireframePS, NULL, 0);
     }
+    pContext->PSSetShader(m_pMandelbrotPS, NULL, 0);
 
     // Sampler
-    ID3D11SamplerState *vsSamplers[3] = { m_pHeightSampler,
-                                          m_pGradientSampler,
-                                          m_pSkyDomeSampler
-                                        };
+    ID3D11SamplerState *vsSamplers[3] = { m_pHeightSampler };
     pContext->VSSetSamplers(0, 3, &vsSamplers[0]);
-    ID3D11SamplerState *psSamplers[3] = { m_pHeightSampler,
-                                          m_pGradientSampler,
-                                          m_pSkyDomeSampler
-                                        };
-    pContext->PSSetSamplers(1, 3, &psSamplers[0]);
 
     // draw call
-    pContext->DrawIndexedInstanced(m_numIndices, m_tileCount*m_tileCount, 0, 0, 0);
+    pContext->DrawIndexed(m_numIndices, 0, 0);
 
     // Unbind SRVs
     ID3D11ShaderResourceView *pNullSrvs[2] = { NULL, NULL };
     pContext->VSSetShaderResources(0, 2, pNullSrvs);
     pContext->PSSetShaderResources(0, 2, pNullSrvs);
-    pContext->OMSetBlendState(0, 0, 0xffffffff);
 
     return;
 }
 
 
-bool OceanShader::CreateSurfaceVertices(ID3D11Device *pDevice)
+bool MandelbrotShader::CreateSurfaceVertices(ID3D11Device *pDevice)
 {
     HRESULT hres;
 
     // Vertex buffer
     int numVertices = (m_meshDim + 1) * (m_meshDim + 1);
-    OceanVertex *pVertices = new OceanVertex[numVertices];
+    TerrainVertex *pVertices = new TerrainVertex[numVertices];
 
     for (int i = 0; i <= m_meshDim; i++)
     {
@@ -481,12 +336,12 @@ bool OceanShader::CreateSurfaceVertices(ID3D11Device *pDevice)
     }
 
     D3D11_BUFFER_DESC vbDesc;
-    vbDesc.ByteWidth = numVertices * sizeof(OceanVertex);
+    vbDesc.ByteWidth = numVertices * sizeof(TerrainVertex);
     vbDesc.Usage = D3D11_USAGE_IMMUTABLE;
     vbDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
     vbDesc.CPUAccessFlags = 0;
     vbDesc.MiscFlags = 0;
-    vbDesc.StructureByteStride = sizeof(OceanVertex);
+    vbDesc.StructureByteStride = sizeof(TerrainVertex);
 
     D3D11_SUBRESOURCE_DATA initData;
     initData.pSysMem = pVertices;
@@ -501,7 +356,7 @@ bool OceanShader::CreateSurfaceVertices(ID3D11Device *pDevice)
     delete(pVertices);
 
     // Index buffer
-    m_numIndices = ((m_meshDim + 1) * 2) * (m_meshDim) + (m_meshDim - 1);
+    m_numIndices = ((m_meshDim + 1) * 2) * (m_meshDim)+(m_meshDim - 1);
 
     int idDim = m_meshDim + 1;
 
@@ -561,10 +416,4 @@ bool OceanShader::CreateSurfaceVertices(ID3D11Device *pDevice)
     delete(pIndices);
 
     return true;
-}
-
-
-void OceanShader::SetTileCount(int tileCount)
-{
-    m_tileCount = tileCount;
 }

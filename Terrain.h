@@ -5,7 +5,6 @@
 #include <DirectXPackedVector.h>
 
 #include <omp.h>
-#define NUM_THREADS 8
 
 #include <vector>
 #include <random>
@@ -16,6 +15,8 @@
 #include "Vec3f.h"
 #include "Vec4f.h"
 #include "VertexType.h"
+
+#define NUM_THREADS 8
 
 using namespace std;
 using namespace DirectX;
@@ -39,8 +40,7 @@ public:
                                float heightScaling);
 
     // generate a terrain from a height map image file
-    bool GenerateFromFile(Util  *util,
-                          WCHAR *heightmapFilename);
+    bool GenerateFromFile(Util *util, WCHAR *heightmapFilename);
 
     bool Initialize();
     void Shutdown();

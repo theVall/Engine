@@ -156,6 +156,9 @@
     <ClInclude Include="Mandelbrot.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MandelbrotShader.h">
+      <Filter>Header Files\ShaderProgram</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="System.cpp">
@@ -257,6 +260,9 @@
     <ClCompile Include="Mandelbrot.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MandelbrotShader.cpp">
+      <Filter>Source Files\ShaderProgram</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="seafloor.dds">
@@ -330,6 +336,15 @@
       <Filter>Shader Files</Filter>
     </FxCompile>
     <FxCompile Include="shader\OceanVS.hlsl">
+      <Filter>Shader Files</Filter>
+    </FxCompile>
+    <FxCompile Include="MandelbrotCS.hlsl">
+      <Filter>Shader Files</Filter>
+    </FxCompile>
+    <FxCompile Include="MandelbrotVS.hlsl">
+      <Filter>Shader Files</Filter>
+    </FxCompile>
+    <FxCompile Include="MandelbrotPS.hlsl">
       <Filter>Shader Files</Filter>
     </FxCompile>
   </ItemGroup>
