@@ -1,8 +1,5 @@
 
-//TODO
 StructuredBuffer<float> bufHeight : register(t0);
-
-SamplerState samplerHeight : register(s0);
 
 cbuffer MatrixBuf : register(b0)
 {
@@ -20,23 +17,25 @@ float3 color   : TEXCOORD2;
 };
 
 
-PixelInputType Main(float4 pos : POSITION, uint vid : SV_VertexID)
+PixelInputType Main(float2 pos : POSITION, uint vid : SV_VertexID)
 {
     PixelInputType output;
 
-    float4 posLocal = float4(pos.x, 0.0f, pos.y, 1.0f);
+    // TODO: scaling factors in const buffer
+    float4 posLocal = float4(pos.x * 2.0f, 0.0f, pos.y * 3.0f, 1.0f);
     float2 uvLocal = pos.xy / 512.0f;
 
     float height = bufHeight[vid];
 
-    posLocal.y += height * 1.0f;
+    posLocal.y += height * 10.0f;
 
     output.position = mul(posLocal, worldMatrix);
     output.position = mul(output.position, viewMatrix);
     output.position = mul(output.position, projectionMatrix);
 
+    output.localPos = posLocal.xyz;
     output.tex = uvLocal;
-    output.color.r = height;
+    output.color = float3(height, 0.0f, 0.0f);
 
     return output;
 }

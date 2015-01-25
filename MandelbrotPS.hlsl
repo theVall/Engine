@@ -10,9 +10,9 @@ cbuffer PerFrameConstBufPS : register(b1)
 struct PixelInputType
 {
 float4 position : SV_POSITION;
-float2 tex	        : TEXCOORD0;
-float3 localPos	    : TEXCOORD1;
-float3 color   : TEXCOORD2;
+float2 tex	    : TEXCOORD0;
+float3 localPos	: TEXCOORD1;
+float3 color    : TEXCOORD2;
 };
 
 

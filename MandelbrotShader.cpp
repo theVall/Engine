@@ -161,28 +161,6 @@ bool MandelbrotShader::InitializeShader(ID3D11Device *pDevice,
         return false;
     }
 
-    // Samplers
-    D3D11_SAMPLER_DESC samplerDesc;
-    samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
-    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.MipLODBias = 0;
-    samplerDesc.MaxAnisotropy = 1;
-    samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-    samplerDesc.BorderColor[0] = 1.0f;
-    samplerDesc.BorderColor[1] = 1.0f;
-    samplerDesc.BorderColor[2] = 1.0f;
-    samplerDesc.BorderColor[3] = 1.0f;
-    samplerDesc.MinLOD = 0;
-    samplerDesc.MaxLOD = FLT_MAX;
-
-    result = pDevice->CreateSamplerState(&samplerDesc, &m_pHeightSampler);
-    if (FAILED(result))
-    {
-        return false;
-    }
-
     return true;
 }
 
@@ -231,6 +209,9 @@ bool MandelbrotShader::SetShaderParameters(ID3D11DeviceContext *pContext,
     pTransformDataBuffer->projection = XMMatrixTranspose(projectionMatrix);
 
     pContext->Unmap(m_pMatrixBuffer, 0);
+
+    ID3D11Buffer *vsBuffer[1] = { m_pMatrixBuffer };
+    pContext->VSSetConstantBuffers(0, 1, vsBuffer);
 
     // Pixel shader constant buffer
     result = pContext->Map(m_perFameBufferPS,
@@ -301,10 +282,6 @@ void MandelbrotShader::RenderShader(ID3D11DeviceContext *pContext, bool wirefram
         pContext->RSSetState(m_pRsStateWireframe);
     }
     pContext->PSSetShader(m_pMandelbrotPS, NULL, 0);
-
-    // Sampler
-    ID3D11SamplerState *vsSamplers[3] = { m_pHeightSampler };
-    pContext->VSSetSamplers(0, 3, &vsSamplers[0]);
 
     // draw call
     pContext->DrawIndexed(m_numIndices, 0, 0);

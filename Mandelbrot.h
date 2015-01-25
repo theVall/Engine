@@ -35,11 +35,11 @@ public:
     void Shutdown();
 
     // Calculate Mandelbrot set as height data in given rectangle.
-    bool CalcHeightsInRectangle(UINT upperLeftX,
-                                UINT upperLeftY,
-                                UINT lowerRightX,
-                                UINT lowerRightY,
-                                UINT iterations,
+    bool CalcHeightsInRectangle(float upperLeftX,
+                                float upperLeftY,
+                                float lowerRightX,
+                                float lowerRightY,
+                                float iterations,
                                 ID3D11DeviceContext *pContext);
 
     ID3D11ShaderResourceView *GetHeightMap();
@@ -72,8 +72,10 @@ private:
     int m_heightMapDim;
 
     ID3D11Buffer *m_pHeightBuffer;
-    ID3D11Buffer *m_pColorBuffer;
     ID3D11ShaderResourceView *m_pHeightSrv;
+    ID3D11UnorderedAccessView *m_pHeightUav;
+
+    //ID3D11Buffer *m_pColorBuffer;
     //ID3D11ShaderResourceView *m_pColorSrv;
 
     // Shader

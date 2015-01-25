@@ -48,6 +48,23 @@ bool Mandelbrot::Initialize(ID3D11Device *pDevice,
         return false;
     }
 
+    // Bind buffer as UAV as well as SRV.
+    // Important, so that we can write to it from CS and read from it from VS/PS.
+    //
+    // Create UAV for height output
+    D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc;
+    uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+    uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+    uavDesc.Buffer.FirstElement = 0;
+    uavDesc.Buffer.NumElements = bufDesc.ByteWidth / bufDesc.StructureByteStride;
+    uavDesc.Buffer.Flags = 0;
+
+    result = pDevice->CreateUnorderedAccessView(m_pHeightBuffer, &uavDesc, &m_pHeightUav);
+    if (FAILED(result))
+    {
+        return false;
+    }
+
     // Create SRV for height output
     D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
     srvDesc.Format = DXGI_FORMAT_UNKNOWN;
@@ -108,6 +125,7 @@ void Mandelbrot::Shutdown()
 {
     m_pHeightBuffer->Release();
     m_pHeightSrv->Release();
+    m_pHeightUav->Release();
 }
 
 
@@ -197,11 +215,11 @@ bool Mandelbrot::InitializeShader(ID3D11Device *pDevice,
 }
 
 
-bool Mandelbrot::CalcHeightsInRectangle(UINT upperLeftX,
-                                        UINT upperLeftY,
-                                        UINT lowerRightX,
-                                        UINT lowerRightY,
-                                        UINT iterations,
+bool Mandelbrot::CalcHeightsInRectangle(float upperLeftX,
+                                        float upperLeftY,
+                                        float lowerRightX,
+                                        float lowerRightY,
+                                        float iterations,
                                         ID3D11DeviceContext *pContext)
 {
     HRESULT hres;
@@ -211,8 +229,10 @@ bool Mandelbrot::CalcHeightsInRectangle(UINT upperLeftX,
     pContext->CSSetShader(m_pMandelbrotCS, NULL, 0);
 
     // Set output buffers
-    ID3D11ShaderResourceView *cs0Srv[1] = { m_pHeightSrv };// , m_pColorSrv };
-    pContext->CSSetShaderResources(0, 1, cs0Srv);
+    //ID3D11ShaderResourceView *cs0Srv[1] = { m_pHeightSrv };// , m_pColorSrv };
+    //pContext->CSSetShaderResources(0, 1, cs0Srv);
+    ID3D11UnorderedAccessView *cs0Uav[1] = { m_pHeightUav };
+    pContext->CSSetUnorderedAccessViews(0, 1, cs0Uav, (UINT *)(&cs0Uav[0]));
 
     // set coordinates and iterations in per frame constant buffer
     D3D11_MAPPED_SUBRESOURCE mappedRes;
@@ -221,7 +241,7 @@ bool Mandelbrot::CalcHeightsInRectangle(UINT upperLeftX,
     {
         return false;
     }
-    UINT *perFrameData = (UINT *)mappedRes.pData;
+    float *perFrameData = (float *)mappedRes.pData;
     perFrameData[0] = upperLeftX;
     perFrameData[1] = upperLeftY;
     perFrameData[2] = lowerRightX;
@@ -237,9 +257,10 @@ bool Mandelbrot::CalcHeightsInRectangle(UINT upperLeftX,
     pContext->Dispatch(groupCountX, groupCountY, 1);
 
     // unbind resources
-    cs0Srv[0] = NULL;
+    //cs0Srv[0] = NULL;
     //cs0Srvs[1] = NULL;
-    pContext->CSSetShaderResources(0, 1, cs0Srv);
+    cs0Uav[0] = NULL;
+    pContext->CSSetUnorderedAccessViews(0, 1, cs0Uav, (UINT *)(&cs0Uav[0]));
 
     return true;
 }

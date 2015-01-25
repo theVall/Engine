@@ -405,7 +405,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
         return false;
     }
 
-    m_pMandelbrot->CalcHeightsInRectangle(0, 1, 1, 0, 50, m_pDirect3D->GetDeviceContext());
+    m_pMandelbrot->CalcHeightsInRectangle(0.5f, 1.0f, 1.0f, 0.0f, 10000.0f, m_pDirect3D->GetDeviceContext());
 
     // Mandelbrot shader program, TODO: magic number...
     m_pMandelbrotShader = new MandelbrotShader(512);
@@ -494,7 +494,7 @@ bool Application::ProcessFrame()
     }
 
     //
-    m_pMandelbrot->CalcHeightsInRectangle(0, 1, 1, 0, 50, m_pDirect3D->GetDeviceContext());
+    m_pMandelbrot->CalcHeightsInRectangle(-2.5f, 1.0f, 1.0f, -1.0f, 10000.0f, m_pDirect3D->GetDeviceContext());
 
     // Render the graphics.
     if (!RenderGraphics())

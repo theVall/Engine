@@ -62,8 +62,5 @@ private:
 
     // Buffers
     ID3D11Buffer *m_perFameBufferPS;
-
-    // Samplers
-    ID3D11SamplerState *m_pHeightSampler;
 };
 
