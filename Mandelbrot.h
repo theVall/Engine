@@ -9,6 +9,7 @@
 
 #include "Texture.h"
 #include "Vec2f.h"
+#include "Math.h"
 
 #define BLOCK_SIZE_X 16
 #define BLOCK_SIZE_Y 16
@@ -21,6 +22,17 @@ using namespace math;
 
 class Mandelbrot
 {
+    struct PerFrameBufferTypeCS
+    {
+        float upperLeftX;
+        float upperLeftY;
+        float lowerRightX;
+        float lowerRightY;
+        float iterations;
+        float maskSize;
+        XMFLOAT4 mask[4];
+    };
+
 public:
     Mandelbrot();
     Mandelbrot(const Mandelbrot &);
@@ -38,6 +50,7 @@ public:
     bool CalcHeightsInRectangle(Vec2f upperLeft,
                                 Vec2f lowerRight,
                                 float iterations,
+                                float blurVariance,
                                 ID3D11DeviceContext *pContext);
 
     ID3D11ShaderResourceView *GetHeightMap();
@@ -70,14 +83,18 @@ private:
     int m_heightMapDim;
 
     ID3D11Buffer *m_pHeightBuffer;
+    ID3D11Buffer *m_pGaussBuffer;
+
     ID3D11ShaderResourceView *m_pHeightSrv;
     ID3D11UnorderedAccessView *m_pHeightUav;
+    ID3D11UnorderedAccessView *m_pGaussUav;
 
     //ID3D11Buffer *m_pColorBuffer;
     //ID3D11ShaderResourceView *m_pColorSrv;
 
     // Shader
     ID3D11ComputeShader *m_pMandelbrotCS;
+    ID3D11ComputeShader *m_pGaussBlurCS;
 
     // constant buffers
     ID3D11Buffer *m_pImmutableConstBuf;

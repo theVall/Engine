@@ -261,8 +261,9 @@ bool MandelbrotShader::SetShaderParameters(ID3D11DeviceContext *pContext,
 
     PerFrameBufferTypePS *pPerFrameDataBufferPS = (PerFrameBufferTypePS *)mappedResource.pData;
     pPerFrameDataBufferPS->lightDir = lightDir;
+    pPerFrameDataBufferPS->heightMapDim = (UINT)m_meshDim;
     pContext->Unmap(m_perFameBufferPS, 0);
-    pContext->PSSetConstantBuffers(0, 1, &m_perFameBufferPS);
+    pContext->PSSetConstantBuffers(1, 1, &m_perFameBufferPS);
 
     ID3D11ShaderResourceView *pSrvs[1] = { pHeightSrv };
     pContext->VSSetShaderResources(0, 1, &pSrvs[0]);

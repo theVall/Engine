@@ -14,6 +14,7 @@ class MandelbrotShader :
     struct PerFrameBufferTypePS
     {
         XMFLOAT3 lightDir;
+        UINT heightMapDim;
     };
 
     struct PerFrameBufferTypeVS

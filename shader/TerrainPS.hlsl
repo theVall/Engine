@@ -114,7 +114,7 @@ float4 Main(PixelInputType input) : SV_TARGET
         color += (diffuseColor*lightIntensity);
     }
 
-    color = color *textureColor;
+    color = color * textureColor;
 
     // combine with color map value
     color = saturate(color);

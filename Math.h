@@ -38,5 +38,35 @@ class Math
 {
 public:
 
+    // Helper methods
+    //
+
+    // Generate a mask for Gaussian blur image filtering.
+    // Size defined the size per dimension. A size of 4 will give you a 4x4 mask.
+    static void GetGaussianBlurMask(int size, float sigma, float *mask)
+    {
+        int halfSize = size / 2;
+        float sum = 0.0f;
+
+        for (int i = 0; i < size; ++i)
+        {
+            for (int j = 0; j < size; ++j)
+            {
+                float x = (float)i - halfSize;
+                float y = (float)j - halfSize;
+                mask[i*size + j] = (1.0f / (F_PI*2.0f*sigma*sigma) * expf(-(x*x + y*y) / (2.0f*sigma*sigma)));
+                sum += mask[i * size + j];
+            }
+        }
+
+        for (int i = 0; i < size; ++i)
+        {
+            for (int j = 0; j < size; ++j)
+            {
+                mask[i*size + j] /= sum;
+            }
+        }
+    }
+
 };
 }

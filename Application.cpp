@@ -17,7 +17,7 @@ Application::Application()
     m_drawSkyDome       = true;
     m_drawOcean         = false;
     m_drawTerrain       = false;
-    m_drawMandelbrot    = false;
+    m_drawMandelbrot    = true;
 
     // terrain settings
     m_terrainHurst          = m_oldTerrainHurst         = 0.75f;
@@ -421,6 +421,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     m_pMandelbrot->CalcHeightsInRectangle(m_mandelUpperLeft,
                                           m_mandelLowerRight,
                                           m_mandelIterations,
+                                          1.0f,
                                           m_pDirect3D->GetDeviceContext());
 
     // Mandelbrot shader program, TODO: magic number...
