@@ -19,15 +19,18 @@ float3 color   : TEXCOORD2;
 
 PixelInputType Main(float2 pos : POSITION, uint vid : SV_VertexID)
 {
+    // TODO: get that into a constant!
+    uint heightmapDim = 2048;
+
     PixelInputType output;
 
     // TODO: scaling factors in const buffer
-    float4 posLocal = float4(pos.x * 2.0f, 0.0f, pos.y * 3.0f, 1.0f);
-    float2 uvLocal = pos.xy / 512.0f;
+    float4 posLocal = float4(pos.x * 1.0f, 0.0f, pos.y * 1.0f, 1.0f);
+    float2 uvLocal = pos.xy / heightmapDim;
 
-    float height = bufHeight[vid];
+    float height = bufHeight[uvLocal.x * heightmapDim * heightmapDim + uvLocal.y * heightmapDim];
 
-    posLocal.y += height * 10.0f;
+    posLocal.y += height * 100.0f;
 
     output.position = mul(posLocal, worldMatrix);
     output.position = mul(output.position, viewMatrix);

@@ -85,6 +85,19 @@ bool GUI::AddBoolVar(const char *name, bool &var, const char *params)
 }
 
 
+bool GUI::AddVec3fVar(const char *name, float &var, const char *params)
+{
+    if (!m_pTweakBar)
+    {
+        return false;
+    }
+
+    TwAddVarRW(m_pTweakBar, name, TW_TYPE_DIR3F, &var, params);
+
+    return true;
+}
+
+
 bool GUI::AddSeperator(const char *name, const char *params)
 {
     if (!m_pTweakBar)

@@ -108,6 +108,7 @@ private:
     bool m_drawSkyDome;
     bool m_drawOcean;
     bool m_drawTerrain;
+    bool m_drawMandelbrot;
 
     // ocean settings
     int m_oceanTileFactor;
@@ -127,6 +128,10 @@ private:
     float m_oldTerrainHeightScaling;
     int m_oldTerrainResolution;
 
+    // Mandelbrot settings
+    int m_mandelbrotDim;
+
+    // quad tree settings
     bool m_useQuadtree;
     bool m_oldUseQuadtree;
     int m_maxTrianglesQtNode;
@@ -138,6 +143,9 @@ private:
     float m_screenNear;
     float m_spectatorHeight;
     float m_elapsedTime;
+
+    // misc settings
+    float m_guiLightDir[3];
 
     HWND m_hwnd;
 

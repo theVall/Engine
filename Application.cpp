@@ -17,6 +17,7 @@ Application::Application()
     m_drawSkyDome       = true;
     m_drawOcean         = false;
     m_drawTerrain       = false;
+    m_drawMandelbrot    = false;
 
     // terrain settings
     m_terrainHurst          = m_oldTerrainHurst         = 0.75f;
@@ -25,13 +26,18 @@ Application::Application()
     m_terrainHeightScaling  = m_oldTerrainHeightScaling = 20.0f;
     m_terrainResolution     = m_oldTerrainResolution    = 8;
 
+    // Quad tree
     m_useQuadtree        = m_oldUseQuadtree = false;
     m_maxTrianglesQtNode = 5000;
+
+    // Mandelbrot settings
+    m_mandelbrotDim = 2048;
 
     // ocean settings
     m_oceanTileFactor   = 7;
     m_oceanTimeScale    = 0.0003f;
     m_oceanHeightOffset = -m_terrainHeightScaling - 5.0f;
+
     // camera settings
     m_orbitalCamera     = false;
     m_zoom              = 1.0f;
@@ -39,6 +45,10 @@ Application::Application()
     m_screenNear        = 0.1f;
     m_spectatorHeight   = 10.0f;
     m_elapsedTime       = 0;
+
+    m_guiLightDir[0] = 0.2f;
+    m_guiLightDir[1] = -0.33f;
+    m_guiLightDir[2] = 0.3f;
 
     // set pointer to null
     m_pInput            = nullptr;
@@ -204,7 +214,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
 
     m_pDirect3D->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
     m_pFont->drawText(m_pDirect3D->GetDeviceContext(),
-                      L"Loading...\n",
+                      L"Initializing...\n",
                       20.0f,
                       50.0f,
                       50.0f,
@@ -237,7 +247,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     if (!m_pSkyDomeTex->LoadFromDDS(m_pDirect3D->GetDevice(),
                                     L"../Engine/res/tex/sky2.dds"))
     {
-        MessageBox(m_hwnd, L"Error loading sand texture.", L"Error", MB_OK);
+        MessageBox(m_hwnd, L"Error loading sky dome texture.", L"Error", MB_OK);
         return false;
     }
     // terrain textures
@@ -399,16 +409,16 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
                                    m_pDirect3D->GetDeviceContext(),
                                    hwnd,
                                    L"MandelbrotCS.hlsl",
-                                   512))
+                                   m_mandelbrotDim))
     {
         MessageBox(hwnd, L"Could not initialize the Mandelbrot object.", L"Error", MB_OK);
         return false;
     }
 
-    m_pMandelbrot->CalcHeightsInRectangle(0.5f, 1.0f, 1.0f, 0.0f, 10000.0f, m_pDirect3D->GetDeviceContext());
+    m_pMandelbrot->CalcHeightsInRectangle(-1.5f, 0.25f, -1.0f, -0.25f, 10000.0f, m_pDirect3D->GetDeviceContext());
 
     // Mandelbrot shader program, TODO: magic number...
-    m_pMandelbrotShader = new MandelbrotShader(512);
+    m_pMandelbrotShader = new MandelbrotShader(m_mandelbrotDim);
     if (!m_pMandelbrotShader)
     {
         return false;
@@ -439,6 +449,8 @@ void Application::Shutdown()
     SafeShutdown(m_pDirect3D);
     SafeShutdown(m_pInput);
     SafeShutdown(m_pGUI);
+    SafeShutdown(m_pMandelbrot);
+    SafeShutdown(m_pMandelbrotShader);
 
     SafeDelete(m_pProfiler);
     SafeDelete(m_pPosition);
@@ -494,7 +506,7 @@ bool Application::ProcessFrame()
     }
 
     //
-    m_pMandelbrot->CalcHeightsInRectangle(-2.5f, 1.0f, 1.0f, -1.0f, 10000.0f, m_pDirect3D->GetDeviceContext());
+    //m_pMandelbrot->CalcHeightsInRectangle(-2.5f, 1.0f, 1.0f, -1.0f, 10000.0f, m_pDirect3D->GetDeviceContext());
 
     // Render the graphics.
     if (!RenderGraphics())
@@ -620,6 +632,7 @@ bool Application::HandleInput(float frameTime)
     }
     m_pOceanShader->SetTileCount(m_oceanTileFactor);
     m_pOcean->SetTimeScale(m_oceanTimeScale);
+    m_pLight->SetDirection(m_guiLightDir[0], m_guiLightDir[1], m_guiLightDir[2]);
 
     // workaround, TODO: use callback methods...
     if (m_oldTerrainHurst != m_terrainHurst ||
@@ -754,13 +767,16 @@ bool Application::RenderGraphics()
                             m_wireframe);
     }
 
-    m_pMandelbrotShader->Render(m_pDirect3D->GetDeviceContext(),
-                                worldMatrix,
-                                viewMatrix,
-                                projectionMatrix,
-                                m_pLight->GetDirection(),
-                                m_pMandelbrot->GetHeightMap(),
-                                m_wireframe);
+    if (m_drawMandelbrot)
+    {
+        m_pMandelbrotShader->Render(m_pDirect3D->GetDeviceContext(),
+                                    worldMatrix,
+                                    viewMatrix,
+                                    projectionMatrix,
+                                    m_pLight->GetDirection(),
+                                    m_pMandelbrot->GetHeightMap(),
+                                    m_wireframe);
+    }
 
     // Render the ocean geometry
     if (m_drawOcean)
@@ -919,6 +935,10 @@ bool Application::SetGuiParams()
     {
         return false;
     }
+    if (!m_pGUI->AddBoolVar("Mandelbrot Terrain", m_drawMandelbrot, ""))
+    {
+        return false;
+    }
 
     // Terrain Settings
     if (!m_pGUI->AddIntVar("Resolution",
@@ -980,6 +1000,12 @@ bool Application::SetGuiParams()
     if (!m_pGUI->AddIntVar("Max Triangles",
                            m_maxTrianglesQtNode,
                            "min=1000 max=500000 step=10000 group='Quad Tree Settings'"))
+    {
+        return false;
+    }
+
+    // Light settings
+    if (!m_pGUI->AddVec3fVar("Light Direction", m_guiLightDir[0], ""))
     {
         return false;
     }

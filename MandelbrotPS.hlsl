@@ -20,5 +20,19 @@ float4 Main(PixelInputType input, uint pid : SV_PrimitiveID) : SV_TARGET
 {
     //return float4(bufHeight[pid], 0.0f, 0.0f, 1.0f);
 
-    return float4(input.color.r, 0.3f, 0.3f, 1.0f);
+    float height = input.color.r;
+    float4 output = float4(0.0f, 0.0f, 0.0f, 1.0f);
+
+    if (height < 0.1f)
+    {
+        output.b = 0.3f;
+        return output;
+    }
+    else
+    {
+        output.b = height / 0.9f;
+    }
+    output.r = height;
+
+    return output;
 }
