@@ -8,27 +8,31 @@ cbuffer MatrixBuf : register(b0)
     matrix projectionMatrix;
 }
 
+cbuffer PerFrameConstBuf : register(b1)
+{
+    float heightMapDim;
+    float xScale;
+    float yScale;
+}
+
 struct PixelInputType
 {
 float4 position	    : SV_POSITION;
 float2 tex      	: TEXCOORD0;
 float3 localPos	    : TEXCOORD1;
-float3 color   : TEXCOORD2;
+float3 color        : TEXCOORD2;
 };
 
 
 PixelInputType Main(float2 pos : POSITION, uint vid : SV_VertexID)
 {
-    // TODO: get that into a constant!
-    uint heightmapDim = 2048;
-
     PixelInputType output;
 
     // TODO: scaling factors in const buffer
-    float4 posLocal = float4(pos.x * 1.0f, 0.0f, pos.y * 1.0f, 1.0f);
-    float2 uvLocal = pos.xy / heightmapDim;
+    float4 posLocal = float4(pos.x * xScale, 0.0f, pos.y * yScale, 1.0f);
+    float2 uvLocal = pos.xy / heightMapDim;
 
-    float height = bufHeight[uvLocal.x * heightmapDim * heightmapDim + uvLocal.y * heightmapDim];
+    float height = bufHeight[uvLocal.x * heightMapDim * heightMapDim + uvLocal.y * heightMapDim];
 
     posLocal.y += height * 100.0f;
 

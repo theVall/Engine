@@ -215,10 +215,8 @@ bool Mandelbrot::InitializeShader(ID3D11Device *pDevice,
 }
 
 
-bool Mandelbrot::CalcHeightsInRectangle(float upperLeftX,
-                                        float upperLeftY,
-                                        float lowerRightX,
-                                        float lowerRightY,
+bool Mandelbrot::CalcHeightsInRectangle(Vec2f upperLeft,
+                                        Vec2f lowerRight,
                                         float iterations,
                                         ID3D11DeviceContext *pContext)
 {
@@ -242,10 +240,10 @@ bool Mandelbrot::CalcHeightsInRectangle(float upperLeftX,
         return false;
     }
     float *perFrameData = (float *)mappedRes.pData;
-    perFrameData[0] = upperLeftX;
-    perFrameData[1] = upperLeftY;
-    perFrameData[2] = lowerRightX;
-    perFrameData[3] = lowerRightY;
+    perFrameData[0] = upperLeft.x;
+    perFrameData[1] = upperLeft.y;
+    perFrameData[2] = lowerRight.x;
+    perFrameData[3] = lowerRight.y;
     perFrameData[4] = iterations;
     pContext->Unmap(m_pPerFrameConstBuf, 0);
     ID3D11Buffer *csCbs[2] = { m_pImmutableConstBuf, m_pPerFrameConstBuf };

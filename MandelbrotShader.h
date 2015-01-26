@@ -16,6 +16,14 @@ class MandelbrotShader :
         XMFLOAT3 lightDir;
     };
 
+    struct PerFrameBufferTypeVS
+    {
+        float heightMapDim;
+        float xScale;
+        float yScale;
+        float padding;
+    };
+
 public:
     MandelbrotShader(int meshDim);
     MandelbrotShader(const MandelbrotShader &);
@@ -27,7 +35,9 @@ public:
                 const XMMATRIX &projectionMatrix,
                 const XMFLOAT3 &lightDir,
                 ID3D11ShaderResourceView *pHeightSrv,
-                bool wireframe);
+                bool wireframe,
+                Vec2f upperLeft,
+                Vec2f lowerRight);
 
 private:
     bool InitializeShader(ID3D11Device *pDevice,
@@ -41,7 +51,9 @@ private:
                              const XMMATRIX &viewMatrix,
                              const XMMATRIX &projectionMatrix,
                              const XMFLOAT3 &lightDir,
-                             ID3D11ShaderResourceView *pHeightSrv);
+                             ID3D11ShaderResourceView *pHeightSrv,
+                             const Vec2f upperLeft,
+                             const Vec2f lowerRight);
 
     void RenderShader(ID3D11DeviceContext *pContext, bool wireframe);
 
@@ -62,5 +74,6 @@ private:
 
     // Buffers
     ID3D11Buffer *m_perFameBufferPS;
+    ID3D11Buffer *m_perFameBufferVS;
 };
 

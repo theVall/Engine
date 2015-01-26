@@ -1,6 +1,4 @@
 
-//StructuredBuffer<float> bufHeight : register(t0);
-
 cbuffer PerFrameConstBufPS : register(b1)
 {
     float3 lightDir;
@@ -18,8 +16,6 @@ float3 color    : TEXCOORD2;
 
 float4 Main(PixelInputType input, uint pid : SV_PrimitiveID) : SV_TARGET
 {
-    //return float4(bufHeight[pid], 0.0f, 0.0f, 1.0f);
-
     float height = input.color.r;
     float4 output = float4(0.0f, 0.0f, 0.0f, 1.0f);
 

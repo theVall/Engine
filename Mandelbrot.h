@@ -35,10 +35,8 @@ public:
     void Shutdown();
 
     // Calculate Mandelbrot set as height data in given rectangle.
-    bool CalcHeightsInRectangle(float upperLeftX,
-                                float upperLeftY,
-                                float lowerRightX,
-                                float lowerRightY,
+    bool CalcHeightsInRectangle(Vec2f upperLeft,
+                                Vec2f lowerRight,
                                 float iterations,
                                 ID3D11DeviceContext *pContext);
 

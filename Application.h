@@ -129,7 +129,10 @@ private:
     int m_oldTerrainResolution;
 
     // Mandelbrot settings
-    int m_mandelbrotDim;
+    int m_mandelDim;
+    Vec2f m_mandelUpperLeft;
+    Vec2f m_mandelLowerRight;
+    float m_mandelIterations;
 
     // quad tree settings
     bool m_useQuadtree;

@@ -146,6 +146,21 @@ bool MandelbrotShader::InitializeShader(ID3D11Device *pDevice,
         return false;
     }
 
+    // Per frame buffer for vertex shader
+    D3D11_BUFFER_DESC perFameBufferDescVS;
+    perFameBufferDescVS.Usage = D3D11_USAGE_DYNAMIC;
+    perFameBufferDescVS.ByteWidth = sizeof(PerFrameBufferTypeVS);
+    perFameBufferDescVS.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    perFameBufferDescVS.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    perFameBufferDescVS.MiscFlags = 0;
+    perFameBufferDescVS.StructureByteStride = 0;
+
+    result = pDevice->CreateBuffer(&perFameBufferDescVS, NULL, &m_perFameBufferVS);
+    if (FAILED(result))
+    {
+        return false;
+    }
+
     // Per frame buffer for pixel shader
     D3D11_BUFFER_DESC perFameBufferDescPS;
     perFameBufferDescPS.Usage = D3D11_USAGE_DYNAMIC;
@@ -171,7 +186,7 @@ void MandelbrotShader::ShutdownShader()
     SafeRelease(m_pMeshIB);
     SafeRelease(m_pMeshVB);
     SafeRelease(m_pMatrixBuffer);
-    //SafeRelease(m_perFameBufferVS);
+    SafeRelease(m_perFameBufferVS);
     SafeRelease(m_perFameBufferPS);
     // Shader
     SafeRelease(m_pMandelbrotVS);
@@ -184,7 +199,9 @@ bool MandelbrotShader::SetShaderParameters(ID3D11DeviceContext *pContext,
                                            const XMMATRIX &viewMatrix,
                                            const XMMATRIX &projectionMatrix,
                                            const XMFLOAT3 &lightDir,
-                                           ID3D11ShaderResourceView *pHeightSrv)
+                                           ID3D11ShaderResourceView *pHeightSrv,
+                                           const Vec2f upperLeft,
+                                           const Vec2f lowerRight)
 {
     HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -210,8 +227,26 @@ bool MandelbrotShader::SetShaderParameters(ID3D11DeviceContext *pContext,
 
     pContext->Unmap(m_pMatrixBuffer, 0);
 
-    ID3D11Buffer *vsBuffer[1] = { m_pMatrixBuffer };
-    pContext->VSSetConstantBuffers(0, 1, vsBuffer);
+    // other VS constants
+    result = pContext->Map(m_perFameBufferVS,
+                           0,
+                           D3D11_MAP_WRITE_DISCARD,
+                           0,
+                           &mappedResource);
+    if (FAILED(result))
+    {
+        return false;
+    }
+
+    PerFrameBufferTypeVS *pPerFrameDataBufferVS = (PerFrameBufferTypeVS *)mappedResource.pData;
+    pPerFrameDataBufferVS->heightMapDim = (float)m_meshDim;
+    pPerFrameDataBufferVS->xScale = (fabs(upperLeft.x) + fabs(lowerRight.x)) / 1.0f;
+    pPerFrameDataBufferVS->yScale = (fabs(upperLeft.y) + fabs(lowerRight.y)) / 1.0f;
+    pPerFrameDataBufferVS->padding = 0.0f;
+    pContext->Unmap(m_perFameBufferVS, 0);
+
+    ID3D11Buffer *vsBuffers[2] = { m_pMatrixBuffer, m_perFameBufferVS };
+    pContext->VSSetConstantBuffers(0, 2, vsBuffers);
 
     // Pixel shader constant buffer
     result = pContext->Map(m_perFameBufferPS,
@@ -227,7 +262,7 @@ bool MandelbrotShader::SetShaderParameters(ID3D11DeviceContext *pContext,
     PerFrameBufferTypePS *pPerFrameDataBufferPS = (PerFrameBufferTypePS *)mappedResource.pData;
     pPerFrameDataBufferPS->lightDir = lightDir;
     pContext->Unmap(m_perFameBufferPS, 0);
-    pContext->PSSetConstantBuffers(1, 1, &m_perFameBufferPS);
+    pContext->PSSetConstantBuffers(0, 1, &m_perFameBufferPS);
 
     ID3D11ShaderResourceView *pSrvs[1] = { pHeightSrv };
     pContext->VSSetShaderResources(0, 1, &pSrvs[0]);
@@ -242,14 +277,18 @@ bool MandelbrotShader::Render(ID3D11DeviceContext *pContext,
                               const XMMATRIX &projectionMatrix,
                               const XMFLOAT3 &lightDir,
                               ID3D11ShaderResourceView *pHeightSrv,
-                              bool wireframe)
+                              bool wireframe,
+                              const Vec2f upperLeft,
+                              const Vec2f lowerRight)
 {
     if (!SetShaderParameters(pContext,
                              worldMatrix,
                              viewMatrix,
                              projectionMatrix,
                              lightDir,
-                             pHeightSrv))
+                             pHeightSrv,
+                             upperLeft,
+                             lowerRight))
     {
         return false;
     }

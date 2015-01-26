@@ -121,7 +121,7 @@ float4 Main(PixelInputType input) : SV_TARGET
 
     //lerp(color, input.color, float4(0.5f, 0.5f, 0.5f, 0.5f));
 
-    color.w = 1.0;
+    color.a = 1.0;
     // DEBUG ONLY
     //color = float4(1,1,1,1);
 

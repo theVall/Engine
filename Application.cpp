@@ -31,7 +31,10 @@ Application::Application()
     m_maxTrianglesQtNode = 5000;
 
     // Mandelbrot settings
-    m_mandelbrotDim = 2048;
+    m_mandelDim = 2048;
+    m_mandelUpperLeft = Vec2f(-2.5f, 1.0f);
+    m_mandelLowerRight = Vec2f(1.0f, -1.0f);
+    m_mandelIterations = 10000.0f;
 
     // ocean settings
     m_oceanTileFactor   = 7;
@@ -409,16 +412,19 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
                                    m_pDirect3D->GetDeviceContext(),
                                    hwnd,
                                    L"MandelbrotCS.hlsl",
-                                   m_mandelbrotDim))
+                                   m_mandelDim))
     {
         MessageBox(hwnd, L"Could not initialize the Mandelbrot object.", L"Error", MB_OK);
         return false;
     }
 
-    m_pMandelbrot->CalcHeightsInRectangle(-1.5f, 0.25f, -1.0f, -0.25f, 10000.0f, m_pDirect3D->GetDeviceContext());
+    m_pMandelbrot->CalcHeightsInRectangle(m_mandelUpperLeft,
+                                          m_mandelLowerRight,
+                                          m_mandelIterations,
+                                          m_pDirect3D->GetDeviceContext());
 
     // Mandelbrot shader program, TODO: magic number...
-    m_pMandelbrotShader = new MandelbrotShader(m_mandelbrotDim);
+    m_pMandelbrotShader = new MandelbrotShader(m_mandelDim);
     if (!m_pMandelbrotShader)
     {
         return false;
@@ -775,7 +781,9 @@ bool Application::RenderGraphics()
                                     projectionMatrix,
                                     m_pLight->GetDirection(),
                                     m_pMandelbrot->GetHeightMap(),
-                                    m_wireframe);
+                                    m_wireframe,
+                                    m_mandelUpperLeft,
+                                    m_mandelLowerRight);
     }
 
     // Render the ocean geometry
