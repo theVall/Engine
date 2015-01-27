@@ -18,7 +18,7 @@ cbuffer PerFrameConstBuf : register(b1)
     float maxIterations;
     // size should be odd to have an unambiguous center
     float maskSize;
-    float4 mask[21];
+    float4 mask[57];
 };
 
 RWStructuredBuffer<float> outHeightBuf : register(u0);
@@ -36,14 +36,14 @@ void Main( uint3 DTid : SV_DispatchThreadID )
                       lowerRightY + (float)DTid.y*yStride);
     float2 z = c;
 
-    outHeightBuf[outputId] = 1.0f;
+    outHeightBuf[outputId] = 0.0f;
 
     for (float i = 0.0f; i < maxIterations; i += 1.0f)
     {
         z = float2(z.x*z.x - z.y*z.y, 2.0f*z.x*z.y) + c;
         if (dot(z, z) > 4.0f)
         {
-            outHeightBuf[outputId] = i / maxIterations;
+            outHeightBuf[outputId] = i;// / maxIterations;
             break;
         }
     }

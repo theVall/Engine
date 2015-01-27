@@ -36,8 +36,8 @@ Application::Application()
     m_mandelUpperLeftY  = m_oldMandelUpperLeftY     = 1.2f;
     m_mandelLowerRightX = m_oldMandelLowerRightX    = 0.6f;
     m_mandelLowerRightY = m_oldMandelLowerRightY    = -1.2f;
-    m_mandelIterations  = m_oldMandelIterations     = 10000.0f;
-    m_mandelMaskSize    = m_oldMandelMaskSize       = 3;
+    m_mandelIterations  = m_oldMandelIterations     = 500.0f;
+    m_mandelMaskSize    = m_oldMandelMaskSize       = 9;
 
     // ocean settings
     m_oceanTileFactor   = 7;
@@ -772,6 +772,7 @@ bool Application::HandleInput(float frameTime)
             m_terrainResolution = 10;
             m_terrainHeightScaling = 1;
             m_terrainScaling = 1;
+            m_terrainVariance = 2.5f;
 
             m_drawTerrain = false;
             m_drawOcean = false;
@@ -781,6 +782,7 @@ bool Application::HandleInput(float frameTime)
             m_terrainResolution = 8;
             m_terrainHeightScaling = 20;
             m_terrainScaling = 14;
+            m_terrainVariance = 1.0f;
 
             m_drawTerrain = true;
             m_drawOcean = true;
@@ -1078,31 +1080,31 @@ bool Application::SetGuiParams()
     {
         if (!m_pGUI->AddFloatVar("Iterations",
                                  m_mandelIterations,
-                                 "min=1000.0 max=100000.0 step=1000 group='Pixel Game Settings'"))
+                                 "min=500.0 max=100000.0 step=500 group='Pixel Game Settings'"))
         {
             return false;
         }
         if (!m_pGUI->AddFloatVar("Upper Left x",
                                  m_mandelUpperLeftX,
-                                 "min=-2.0 max=1.0 step=0.01 group='Pixel Game Settings'"))
+                                 "min=-2.1 max=0.0 step=0.01 group='Pixel Game Settings'"))
         {
             return false;
         }
         if (!m_pGUI->AddFloatVar("Upper Left y",
                                  m_mandelUpperLeftY,
-                                 "min=-1.1 max=1.1 step=0.01 group='Pixel Game Settings'"))
+                                 "min=-1.2 max=1.2 step=0.01 group='Pixel Game Settings'"))
         {
             return false;
         }
         if (!m_pGUI->AddFloatVar("Lower Right x",
                                  m_mandelLowerRightX,
-                                 "min=-2.5 max=1.0 step=0.01 group='Pixel Game Settings'"))
+                                 "min=-2.1 max=0.6 step=0.01 group='Pixel Game Settings'"))
         {
             return false;
         }
         if (!m_pGUI->AddFloatVar("Lower Right y",
                                  m_mandelLowerRightY,
-                                 "min=-1.1 max=1.1 step=0.01 group='Pixel Game Settings'"))
+                                 "min=-1.2 max=0.0 step=0.01 group='Pixel Game Settings'"))
         {
             return false;
         }
@@ -1145,14 +1147,14 @@ bool Application::SetGuiParams()
         {
             if (!m_pGUI->AddIntVar("Gauss Mask Size",
                                    m_mandelMaskSize,
-                                   "min=1 max=9 step=2 group='Terrain Settings'"))
+                                   "min=1 max=15 step=2 group='Terrain Settings'"))
             {
                 return false;
             }
         }
         if (!m_pGUI->AddFloatVar("Variance",
                                  m_terrainVariance,
-                                 "min=0 max=2.5 step=0.01 group='Terrain Settings'"))
+                                 "min=0 max=10.0 step=0.01 group='Terrain Settings'"))
         {
             return false;
         }
