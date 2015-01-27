@@ -21,17 +21,16 @@ float4 Main(PixelInputType input, uint pid : SV_PrimitiveID) : SV_TARGET
     float4 color = float4(0.0f, 0.0f, 0.0f, 1.0f);
     float4 output = float4(1.0f, 1.0f, 1.0f, 1.0f);
 
-    if (height < 0.1f)
-    {
-        color.g = 0.07f;
-        color.b = 0.3f;
-    }
-    else if (height > 0.9f)
+    if (height > 0.99999f)
     {
         color.rgb = float3(0.0f, 0.0f, 0.0f);
     }
     else
     {
+        if (height < 0.01f)
+        {
+            height = 3.0f * sqrt(height);
+        }
         color.r = height / 0.9f;
         color.g = height / 0.9f;
         color.b = height / 0.25f;

@@ -201,7 +201,9 @@ bool MandelbrotShader::SetShaderParameters(ID3D11DeviceContext *pContext,
                                            const XMFLOAT3 &lightDir,
                                            ID3D11ShaderResourceView *pHeightSrv,
                                            const Vec2f upperLeft,
-                                           const Vec2f lowerRight)
+                                           const Vec2f lowerRight,
+                                           const float xyScaling,
+                                           const float heigthScale)
 {
     HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -240,9 +242,9 @@ bool MandelbrotShader::SetShaderParameters(ID3D11DeviceContext *pContext,
 
     PerFrameBufferTypeVS *pPerFrameDataBufferVS = (PerFrameBufferTypeVS *)mappedResource.pData;
     pPerFrameDataBufferVS->heightMapDim = (float)m_meshDim;
-    pPerFrameDataBufferVS->xScale = (fabs(upperLeft.x) + fabs(lowerRight.x)) / 1.0f;
-    pPerFrameDataBufferVS->yScale = (fabs(upperLeft.y) + fabs(lowerRight.y)) / 1.0f;
-    pPerFrameDataBufferVS->padding = 0.0f;
+    pPerFrameDataBufferVS->xScale = (fabs(upperLeft.x) + (lowerRight.x))*xyScaling;
+    pPerFrameDataBufferVS->yScale = ((upperLeft.y) + fabs(lowerRight.y))*xyScaling;
+    pPerFrameDataBufferVS->heigthScale = heigthScale;
     pContext->Unmap(m_perFameBufferVS, 0);
 
     ID3D11Buffer *vsBuffers[2] = { m_pMatrixBuffer, m_perFameBufferVS };
@@ -280,7 +282,9 @@ bool MandelbrotShader::Render(ID3D11DeviceContext *pContext,
                               ID3D11ShaderResourceView *pHeightSrv,
                               bool wireframe,
                               const Vec2f upperLeft,
-                              const Vec2f lowerRight)
+                              const Vec2f lowerRight,
+                              const float xyScaling,
+                              const float heigthScale)
 {
     if (!SetShaderParameters(pContext,
                              worldMatrix,
@@ -289,7 +293,9 @@ bool MandelbrotShader::Render(ID3D11DeviceContext *pContext,
                              lightDir,
                              pHeightSrv,
                              upperLeft,
-                             lowerRight))
+                             lowerRight,
+                             xyScaling,
+                             heigthScale))
     {
         return false;
     }

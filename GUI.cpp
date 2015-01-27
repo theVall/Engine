@@ -46,6 +46,19 @@ void GUI::Shutdown()
 }
 
 
+bool GUI::ClearAll()
+{
+    if (!m_pTweakBar)
+    {
+        return false;
+    }
+
+    TwRemoveAllVars(m_pTweakBar);
+
+    return true;
+}
+
+
 bool GUI::AddFloatVar(const char *name, float &var, const char *params)
 {
     if (!m_pTweakBar)

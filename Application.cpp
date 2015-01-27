@@ -15,9 +15,9 @@ Application::Application()
     m_backFaceCulling   = true;
 
     m_drawSkyDome       = true;
-    m_drawOcean         = false;
-    m_drawTerrain       = false;
-    m_drawMandelbrot    = true;
+    m_drawOcean         = m_oldDrawOcean        = false;
+    m_drawTerrain       = m_oldDrawTerrain      = false;
+    m_drawMandelbrot    = m_oldDrawMandelbrot   = true;
 
     // terrain settings
     m_terrainHurst          = m_oldTerrainHurst         = 0.75f;
@@ -31,10 +31,13 @@ Application::Application()
     m_maxTrianglesQtNode = 5000;
 
     // Mandelbrot settings
-    m_mandelDim = 2048;
-    m_mandelUpperLeft = Vec2f(-2.5f, 1.0f);
-    m_mandelLowerRight = Vec2f(1.0f, -1.0f);
-    m_mandelIterations = 10000.0f;
+    m_mandelChanged     = false;
+    m_mandelUpperLeftX  = m_oldMandelUpperLeftX     = -2.1f;
+    m_mandelUpperLeftY  = m_oldMandelUpperLeftY     = 1.2f;
+    m_mandelLowerRightX = m_oldMandelLowerRightX    = 0.6f;
+    m_mandelLowerRightY = m_oldMandelLowerRightY    = -1.2f;
+    m_mandelIterations  = m_oldMandelIterations     = 10000.0f;
+    m_mandelMaskSize    = m_oldMandelMaskSize       = 3;
 
     // ocean settings
     m_oceanTileFactor   = 7;
@@ -314,7 +317,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
                                 L"../Engine/res/model/dome.txt",
                                 m_pUtil))
     {
-        MessageBox(hwnd, L"Could not initialize the sky dome object.", L"Error", MB_OK);
+        MessageBox(m_hwnd, L"Could not initialize the sky dome object.", L"Error", MB_OK);
         return false;
     }
 
@@ -325,11 +328,11 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
         return false;
     }
     if (!m_pSkyDomeShader->Initialize(m_pDirect3D->GetDevice(),
-                                      hwnd,
+                                      m_hwnd,
                                       L"../Engine/shader/SkyDomeVS.hlsl",
                                       L"../Engine/shader/SkyDomePS.hlsl"))
     {
-        MessageBox(hwnd,
+        MessageBox(m_hwnd,
                    L"Could not initialize the sky dome shader object.",
                    L"Error",
                    MB_OK);
@@ -353,12 +356,12 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     if (!m_pOcean->Initialize(oceanParams,
                               m_pDirect3D->GetDevice(),
                               m_pDirect3D->GetDeviceContext(),
-                              hwnd,
+                              m_hwnd,
                               L"../Engine/shader/OceanSimVS.hlsl",
                               L"../Engine/shader/OceanSimPS.hlsl",
                               L"../Engine/shader/OceanSimCS.hlsl"))
     {
-        MessageBox(hwnd, L"Could not initialize the ocean object.", L"Error", MB_OK);
+        MessageBox(m_hwnd, L"Could not initialize the ocean object.", L"Error", MB_OK);
         return false;
     }
     // generate ocean height map for the first time
@@ -371,11 +374,11 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
         return false;
     }
     if (!m_pOceanShader->Initialize(m_pDirect3D->GetDevice(),
-                                    hwnd,
+                                    m_hwnd,
                                     L"../Engine/shader/OceanVS.hlsl",
                                     L"../Engine/shader/OceanPS.hlsl"))
     {
-        MessageBox(hwnd, L"Could not initialize the ocean shader object.", L"Error", MB_OK);
+        MessageBox(m_hwnd, L"Could not initialize the ocean shader object.", L"Error", MB_OK);
         return false;
     }
     m_pOceanShader->SetTileCount(m_oceanTileFactor);
@@ -410,32 +413,33 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     }
     if (!m_pMandelbrot->Initialize(m_pDirect3D->GetDevice(),
                                    m_pDirect3D->GetDeviceContext(),
-                                   hwnd,
+                                   m_hwnd,
                                    L"MandelbrotCS.hlsl",
-                                   m_mandelDim))
+                                   1 << m_terrainResolution))
     {
-        MessageBox(hwnd, L"Could not initialize the Mandelbrot object.", L"Error", MB_OK);
+        MessageBox(m_hwnd, L"Could not initialize the Mandelbrot object.", L"Error", MB_OK);
         return false;
     }
 
-    m_pMandelbrot->CalcHeightsInRectangle(m_mandelUpperLeft,
-                                          m_mandelLowerRight,
+    m_pMandelbrot->CalcHeightsInRectangle(Vec2f(m_mandelUpperLeftX, m_mandelUpperLeftY),
+                                          Vec2f(m_mandelLowerRightX, m_mandelLowerRightY),
                                           m_mandelIterations,
-                                          1.0f,
+                                          m_terrainVariance,
+                                          m_mandelMaskSize,
                                           m_pDirect3D->GetDeviceContext());
 
-    // Mandelbrot shader program, TODO: magic number...
-    m_pMandelbrotShader = new MandelbrotShader(m_mandelDim);
+    // Mandelbrot shader program
+    m_pMandelbrotShader = new MandelbrotShader(1 << m_terrainResolution);
     if (!m_pMandelbrotShader)
     {
         return false;
     }
     if (!m_pMandelbrotShader->Initialize(m_pDirect3D->GetDevice(),
-                                         hwnd,
+                                         m_hwnd,
                                          L"MandelbrotVS.hlsl",
                                          L"MandelbrotPS.hlsl"))
     {
-        MessageBox(hwnd, L"Could not initialize the Mandelbrot shader object.", L"Error", MB_OK);
+        MessageBox(m_hwnd, L"Could not initialize the Mandelbrot shader object.", L"Error", MB_OK);
         return false;
     }
 
@@ -493,7 +497,7 @@ bool Application::ProcessFrame()
         return false;
     }
 
-    if (m_lockSurfaceCamera)
+    if (m_lockSurfaceCamera && m_drawTerrain)
     {
         Vec3f position = m_pCamera->GetPosition();
         // Get the height of the triangle that is directly underneath the camera position.
@@ -507,13 +511,58 @@ bool Application::ProcessFrame()
     }
 
     // Ocean displacement
-    if (!m_stopAnimation)
+    if (m_drawOcean && !m_stopAnimation)
     {
         m_pOcean->UpdateDisplacement(m_elapsedTime, m_pDirect3D->GetDeviceContext());
     }
 
-    //
-    //m_pMandelbrot->CalcHeightsInRectangle(-2.5f, 1.0f, 1.0f, -1.0f, 10000.0f, m_pDirect3D->GetDeviceContext());
+    if (m_drawMandelbrot && m_mandelChanged)
+    {
+        // On resolution change: create new Mandelbrot and -shader objects
+        if (m_oldTerrainResolution != m_terrainResolution)
+        {
+            // Shutdown old Mandelbrot objects
+            m_pMandelbrotShader->Shutdown();
+            m_pMandelbrot->Shutdown();
+
+            // Create the new objects
+            if (!m_pMandelbrot->Initialize(m_pDirect3D->GetDevice(),
+                                           m_pDirect3D->GetDeviceContext(),
+                                           m_hwnd,
+                                           L"MandelbrotCS.hlsl",
+                                           1 << m_terrainResolution))
+            {
+                MessageBox(m_hwnd, L"Could not initialize the Mandelbrot object.", L"Error", MB_OK);
+                return false;
+            }
+
+            m_pMandelbrotShader = new MandelbrotShader(1 << m_terrainResolution);
+            if (!m_pMandelbrotShader)
+            {
+                return false;
+            }
+            if (!m_pMandelbrotShader->Initialize(m_pDirect3D->GetDevice(),
+                                                 m_hwnd,
+                                                 L"MandelbrotVS.hlsl",
+                                                 L"MandelbrotPS.hlsl"))
+            {
+                MessageBox(m_hwnd, L"Could not initialize the Mandelbrot shader object.", L"Error", MB_OK);
+                return false;
+            }
+
+            // Update resolution memory variable.
+            m_oldTerrainResolution = m_terrainResolution;
+        }
+
+        m_pMandelbrot->CalcHeightsInRectangle(Vec2f(m_mandelUpperLeftX, m_mandelUpperLeftY),
+                                              Vec2f(m_mandelLowerRightX, m_mandelLowerRightY),
+                                              m_mandelIterations,
+                                              m_terrainVariance,
+                                              m_mandelMaskSize,
+                                              m_pDirect3D->GetDeviceContext());
+
+        m_mandelChanged = false;
+    }
 
     // Render the graphics.
     if (!RenderGraphics())
@@ -641,44 +690,112 @@ bool Application::HandleInput(float frameTime)
     m_pOcean->SetTimeScale(m_oceanTimeScale);
     m_pLight->SetDirection(m_guiLightDir[0], m_guiLightDir[1], m_guiLightDir[2]);
 
-    // workaround, TODO: use callback methods...
-    if (m_oldTerrainHurst != m_terrainHurst ||
-            m_oldTerrainVariance != m_terrainVariance ||
-            m_oldTerrainResolution != m_terrainResolution ||
-            m_oldTerrainScaling != m_terrainScaling ||
-            m_oldTerrainHeightScaling != m_terrainHeightScaling ||
-            m_oldUseQuadtree != m_useQuadtree)
+    // Only bother with rebuilding terrain if it is actually drawn...
+    if (m_drawTerrain)
     {
-        m_pQuadTree->Shutdown();
-        m_pTerrain->Shutdown();
-
-        if (!m_pTerrain->GenerateDiamondSquare(m_pUtil,
-                                               m_terrainResolution,
-                                               m_terrainHurst,
-                                               m_terrainVariance,
-                                               m_terrainScaling,
-                                               m_terrainHeightScaling))
+        // workaround, TODO: use callback methods...
+        if (m_oldTerrainHurst != m_terrainHurst ||
+                m_oldTerrainVariance != m_terrainVariance ||
+                m_oldTerrainResolution != m_terrainResolution ||
+                m_oldTerrainScaling != m_terrainScaling ||
+                m_oldTerrainHeightScaling != m_terrainHeightScaling ||
+                m_oldUseQuadtree != m_useQuadtree ||
+                m_oldDrawTerrain != m_drawTerrain)
         {
-            MessageBox(m_hwnd,
-                       L"Something went wrong while generating terrain.",
-                       L"Error",
-                       MB_OK);
+            m_pQuadTree->Shutdown();
+            m_pTerrain->Shutdown();
+
+            if (!m_pTerrain->GenerateDiamondSquare(m_pUtil,
+                                                   m_terrainResolution,
+                                                   m_terrainHurst,
+                                                   m_terrainVariance,
+                                                   m_terrainScaling,
+                                                   m_terrainHeightScaling))
+            {
+                MessageBox(m_hwnd,
+                           L"Something went wrong while generating terrain.",
+                           L"Error",
+                           MB_OK);
+                return false;
+            }
+
+            // rebuild quad-tree
+            m_pQuadTree->Initialize(m_pTerrain,
+                                    m_pDirect3D->GetDevice(),
+                                    m_maxTrianglesQtNode,
+                                    m_useQuadtree);
+
+            // update memory values
+            m_oldTerrainHurst = m_terrainHurst;
+            m_oldTerrainVariance = m_terrainVariance;
+            m_oldTerrainScaling = m_terrainScaling;
+            m_oldTerrainHeightScaling = m_terrainHeightScaling;
+            m_oldTerrainResolution = m_terrainResolution;
+            m_oldUseQuadtree = m_useQuadtree;
+        }
+    }
+    else if (m_drawMandelbrot)
+    {
+        // Check if Mandelbrot terrain parameters have changed.
+        // If so, set flag for recalculating Mandelbrot rectangle.
+        if (m_oldTerrainResolution != m_terrainResolution ||
+                m_oldTerrainVariance != m_terrainVariance ||
+                m_oldMandelUpperLeftX != m_mandelUpperLeftX ||
+                m_oldMandelUpperLeftY != m_mandelUpperLeftY ||
+                m_oldMandelLowerRightX != m_mandelLowerRightX ||
+                m_oldMandelLowerRightY != m_mandelLowerRightY ||
+                m_oldMandelIterations != m_mandelIterations ||
+                m_oldMandelMaskSize != m_mandelMaskSize ||
+                m_oldDrawMandelbrot != m_drawMandelbrot)
+        {
+            m_mandelChanged = true;
+
+            // Update memory variables.
+            // Resolution is updated in process frame because it is needed for a check.
+            m_oldTerrainVariance = m_terrainVariance;
+            m_oldMandelUpperLeftX = m_mandelUpperLeftX;
+            m_oldMandelUpperLeftY = m_mandelUpperLeftY;
+            m_oldMandelLowerRightX = m_mandelLowerRightX;
+            m_oldMandelLowerRightY = m_mandelLowerRightY;
+            m_oldMandelIterations = m_mandelIterations;
+            m_oldMandelMaskSize = m_mandelMaskSize;
+        }
+    }
+
+    if (m_drawMandelbrot != m_oldDrawMandelbrot ||
+            m_drawOcean != m_oldDrawOcean ||
+            m_drawTerrain != m_oldDrawTerrain)
+    {
+        // hide terrain and ocean in Mandelbrot mode
+        if ((m_drawMandelbrot != m_oldDrawMandelbrot) && m_drawMandelbrot)
+        {
+            m_terrainResolution = 10;
+            m_terrainHeightScaling = 1;
+            m_terrainScaling = 1;
+
+            m_drawTerrain = false;
+            m_drawOcean = false;
+        }
+        else if ((m_drawMandelbrot != m_oldDrawMandelbrot) && !m_drawMandelbrot)
+        {
+            m_terrainResolution = 8;
+            m_terrainHeightScaling = 20;
+            m_terrainScaling = 14;
+
+            m_drawTerrain = true;
+            m_drawOcean = true;
+            m_stopAnimation = false;
+        }
+
+        // Adjust GUI according to visible objects.
+        if (!SetGuiParams())
+        {
             return false;
         }
 
-        // rebuild quad-tree
-        m_pQuadTree->Initialize(m_pTerrain,
-                                m_pDirect3D->GetDevice(),
-                                m_maxTrianglesQtNode,
-                                m_useQuadtree);
-
-        // update memory values
-        m_oldTerrainHurst = m_terrainHurst;
-        m_oldTerrainVariance = m_terrainVariance;
-        m_oldTerrainScaling = m_terrainScaling;
-        m_oldTerrainHeightScaling = m_terrainHeightScaling;
-        m_oldTerrainResolution = m_terrainResolution;
-        m_oldUseQuadtree = m_useQuadtree;
+        m_oldDrawMandelbrot = m_drawMandelbrot;
+        m_oldDrawOcean = m_drawOcean;
+        m_oldDrawTerrain = m_drawTerrain;
     }
 
     return true;
@@ -783,8 +900,10 @@ bool Application::RenderGraphics()
                                     m_pLight->GetDirection(),
                                     m_pMandelbrot->GetHeightMap(),
                                     m_wireframe,
-                                    m_mandelUpperLeft,
-                                    m_mandelLowerRight);
+                                    Vec2f(m_mandelUpperLeftX, m_mandelUpperLeftY),
+                                    Vec2f(m_mandelLowerRightX, m_mandelLowerRightY),
+                                    m_terrainScaling,
+                                    m_terrainHeightScaling);
     }
 
     // Render the ocean geometry
@@ -895,6 +1014,8 @@ void Application::SetRightMouseDown(bool state)
 
 bool Application::SetGuiParams()
 {
+    m_pGUI->ClearAll();
+
     // not working yet, re-initialization of D3D required?
     //m_pGUI->AddBoolVar("vSync", m_vSync);
 
@@ -904,10 +1025,7 @@ bool Application::SetGuiParams()
     //    return false;
     //}
 
-    if (!m_pGUI->AddBoolVar("Pause", m_stopAnimation, ""))
-    {
-        return false;
-    }
+    // Standard settings
     if (!m_pGUI->AddBoolVar("Wireframe", m_wireframe, ""))
     {
         return false;
@@ -916,15 +1034,16 @@ bool Application::SetGuiParams()
     {
         return false;
     }
-
-    if (!m_pGUI->AddBoolVar("Walking Mode", m_lockSurfaceCamera, ""))
+    if (m_drawTerrain)
     {
-        return false;
-    }
-
-    if (!m_pGUI->AddBoolVar("Orbital Camera", m_orbitalCamera, ""))
-    {
-        return false;
+        if (!m_pGUI->AddBoolVar("Orbital Camera", m_orbitalCamera, ""))
+        {
+            return false;
+        }
+        if (!m_pGUI->AddBoolVar("Walking Mode", m_lockSurfaceCamera, ""))
+        {
+            return false;
+        }
     }
 
     if (!m_pGUI->AddSeperator(NULL, NULL))
@@ -932,88 +1051,164 @@ bool Application::SetGuiParams()
         return false;
     }
 
+    // Render options
+    if (!m_pGUI->AddBoolVar("Mandelbrot Mode", m_drawMandelbrot, ""))
+    {
+        return false;
+    }
     if (!m_pGUI->AddBoolVar("Render Sky", m_drawSkyDome, ""))
     {
         return false;
     }
-    if (!m_pGUI->AddBoolVar("Render Ocean", m_drawOcean, ""))
+
+    if (!m_drawMandelbrot)
     {
-        return false;
-    }
-    if (!m_pGUI->AddBoolVar("Render Terrain", m_drawTerrain, ""))
-    {
-        return false;
-    }
-    if (!m_pGUI->AddBoolVar("Mandelbrot Terrain", m_drawMandelbrot, ""))
-    {
-        return false;
+        if (!m_pGUI->AddBoolVar("Render Ocean", m_drawOcean, ""))
+        {
+            return false;
+        }
+        if (!m_pGUI->AddBoolVar("Render Terrain", m_drawTerrain, ""))
+        {
+            return false;
+        }
     }
 
-    // Terrain Settings
-    if (!m_pGUI->AddIntVar("Resolution",
-                           m_terrainResolution,
-                           "min=2 max=10 step=1 group='Terrain Settings'"))
+    // Mandelbrot pixel game settings
+    if (m_drawMandelbrot)
     {
-        return false;
+        if (!m_pGUI->AddFloatVar("Iterations",
+                                 m_mandelIterations,
+                                 "min=1000.0 max=100000.0 step=1000 group='Pixel Game Settings'"))
+        {
+            return false;
+        }
+        if (!m_pGUI->AddFloatVar("Upper Left x",
+                                 m_mandelUpperLeftX,
+                                 "min=-2.0 max=1.0 step=0.01 group='Pixel Game Settings'"))
+        {
+            return false;
+        }
+        if (!m_pGUI->AddFloatVar("Upper Left y",
+                                 m_mandelUpperLeftY,
+                                 "min=-1.1 max=1.1 step=0.01 group='Pixel Game Settings'"))
+        {
+            return false;
+        }
+        if (!m_pGUI->AddFloatVar("Lower Right x",
+                                 m_mandelLowerRightX,
+                                 "min=-2.5 max=1.0 step=0.01 group='Pixel Game Settings'"))
+        {
+            return false;
+        }
+        if (!m_pGUI->AddFloatVar("Lower Right y",
+                                 m_mandelLowerRightY,
+                                 "min=-1.1 max=1.1 step=0.01 group='Pixel Game Settings'"))
+        {
+            return false;
+        }
     }
-    if (!m_pGUI->AddFloatVar("Scaling",
-                             m_terrainScaling,
-                             "min=1.0 max=25.0 step=1 group='Terrain Settings'"))
+
+    // Terrain settings
+    if (m_drawTerrain || m_drawMandelbrot)
     {
-        return false;
+        if (m_drawMandelbrot)
+        {
+            if (!m_pGUI->AddIntVar("Resolution",
+                                   m_terrainResolution,
+                                   "min=2 max=12 step=1 group='Terrain Settings'"))
+            {
+                return false;
+            }
+        }
+        else
+        {
+            if (!m_pGUI->AddIntVar("Resolution",
+                                   m_terrainResolution,
+                                   "min=2 max=10 step=1 group='Terrain Settings'"))
+            {
+                return false;
+            }
+        }
+        if (!m_pGUI->AddFloatVar("Scaling",
+                                 m_terrainScaling,
+                                 "min=1.0 max=100.0 step=1 group='Terrain Settings'"))
+        {
+            return false;
+        }
+        if (!m_pGUI->AddFloatVar("Height Scaling",
+                                 m_terrainHeightScaling,
+                                 "min=1.0 max=100.0 step=1 group='Terrain Settings'"))
+        {
+            return false;
+        }
+        if (m_drawMandelbrot)
+        {
+            if (!m_pGUI->AddIntVar("Gauss Mask Size",
+                                   m_mandelMaskSize,
+                                   "min=1 max=9 step=2 group='Terrain Settings'"))
+            {
+                return false;
+            }
+        }
+        if (!m_pGUI->AddFloatVar("Variance",
+                                 m_terrainVariance,
+                                 "min=0 max=2.5 step=0.01 group='Terrain Settings'"))
+        {
+            return false;
+        }
     }
-    if (!m_pGUI->AddFloatVar("Height Scaling",
-                             m_terrainHeightScaling,
-                             "min=1.0 max=100.0 step=1 group='Terrain Settings'"))
+    if (!m_drawMandelbrot)
     {
-        return false;
-    }
-    if (!m_pGUI->AddFloatVar("Hurst Operator",
-                             m_terrainHurst,
-                             "min=0 max=1.0 step=0.01 group='Terrain Settings'"))
-    {
-        return false;
-    }
-    if (!m_pGUI->AddFloatVar("Variance",
-                             m_terrainVariance,
-                             "min=0 max=2.5 step=0.01 group='Terrain Settings'"))
-    {
-        return false;
+        if (!m_pGUI->AddFloatVar("Hurst Operator",
+                                 m_terrainHurst,
+                                 "min=0 max=1.0 step=0.01 group='Terrain Settings'"))
+        {
+            return false;
+        }
+
+        // Quad tree settings
+        if (!m_pGUI->AddBoolVar("Use Quad-Tree", m_useQuadtree, "group='Quad Tree Settings'"))
+        {
+            return false;
+        }
+        if (!m_pGUI->AddIntVar("Max Triangles",
+                               m_maxTrianglesQtNode,
+                               "min=1000 max=500000 step=10000 group='Quad Tree Settings'"))
+        {
+            return false;
+        }
     }
 
     // Ocean Settings
-    if (!m_pGUI->AddIntVar("Tile Factor",
-                           m_oceanTileFactor,
-                           "min=1 max=10 step=1 group='Ocean Settings'"))
+    if (m_drawOcean)
     {
-        return false;
-    }
-    if (!m_pGUI->AddFloatVar("Animation Speed",
-                             m_oceanTimeScale,
-                             "min=0 max=0.005 step=0.00001 group='Ocean Settings'"))
-    {
-        return false;
-    }
-    if (!m_pGUI->AddFloatVar("Sea Level",
-                             m_oceanHeightOffset,
-                             "min=-250 max=250 step=1 group='Ocean Settings'"))
-    {
-        return false;
-    }
-
-    // Quad tree settings
-    if (!m_pGUI->AddBoolVar("Use Quad-Tree", m_useQuadtree, "group='Quad Tree Settings'"))
-    {
-        return false;
-    }
-    if (!m_pGUI->AddIntVar("Max Triangles",
-                           m_maxTrianglesQtNode,
-                           "min=1000 max=500000 step=10000 group='Quad Tree Settings'"))
-    {
-        return false;
+        if (!m_pGUI->AddBoolVar("Pause Animation",
+                                m_stopAnimation,
+                                "group='Ocean Settings'"))
+        {
+            return false;
+        }
+        if (!m_pGUI->AddIntVar("Tile Factor",
+                               m_oceanTileFactor,
+                               "min=1 max=10 step=1 group='Ocean Settings'"))
+        {
+            return false;
+        }
+        if (!m_pGUI->AddFloatVar("Animation Speed",
+                                 m_oceanTimeScale,
+                                 "min=0 max=0.005 step=0.00001 group='Ocean Settings'"))
+        {
+            return false;
+        }
+        if (!m_pGUI->AddFloatVar("Sea Level",
+                                 m_oceanHeightOffset,
+                                 "min=-250 max=250 step=1 group='Ocean Settings'"))
+        {
+            return false;
+        }
     }
 
-    // Light settings
+    // Lighting settings
     if (!m_pGUI->AddVec3fVar("Light Direction", m_guiLightDir[0], ""))
     {
         return false;

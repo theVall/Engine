@@ -16,8 +16,9 @@ cbuffer PerFrameConstBuf : register(b1)
     float lowerRightX;
     float lowerRightY;
     float maxIterations;
+    // size should be odd to have an unambiguous center
     float maskSize;
-    float4 mask[4];
+    float4 mask[21];
 };
 
 RWStructuredBuffer<float> outHeightBuf : register(u0);
@@ -57,7 +58,8 @@ void GaussBlur(uint3 DTid : SV_DispatchThreadID)
     uint maskSz = (uint)maskSize;
 
     float hh = 0.0f;
-    uint halfSize = maskSize / 2;
+    // use integer division to get the down rounded value
+    uint halfSize = maskSz / 2;
     bool border = false;
 
     //check if border
@@ -80,7 +82,7 @@ void GaussBlur(uint3 DTid : SV_DispatchThreadID)
 
                 maskId = i*maskSz + j;
 
-                hh += outHeightBuf[index] * ((float[4])(mask[maskId / 4]))[maskId % 4];
+                hh += outHeightBuf[index] * ((float4)(mask[maskId / 4]))[maskId % 4];
             }
         }
         outFilteredBuf[DTid.y * heightMapDim + DTid.x] = hh;

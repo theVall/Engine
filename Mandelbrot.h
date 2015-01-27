@@ -30,7 +30,8 @@ class Mandelbrot
         float lowerRightY;
         float iterations;
         float maskSize;
-        XMFLOAT4 mask[4];
+        // size for up to 84 floats (i.e. a mask of 9*9 is maximum)
+        XMFLOAT4 mask[21];
     };
 
 public:
@@ -51,6 +52,7 @@ public:
                                 Vec2f lowerRight,
                                 float iterations,
                                 float blurVariance,
+                                const UINT maskSize,
                                 ID3D11DeviceContext *pContext);
 
     ID3D11ShaderResourceView *GetHeightMap();

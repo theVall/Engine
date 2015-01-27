@@ -109,6 +109,10 @@ private:
     bool m_drawOcean;
     bool m_drawTerrain;
     bool m_drawMandelbrot;
+    // TODO callback methods
+    bool m_oldDrawMandelbrot;
+    bool m_oldDrawOcean;
+    bool m_oldDrawTerrain;
 
     // ocean settings
     int m_oceanTileFactor;
@@ -129,10 +133,20 @@ private:
     int m_oldTerrainResolution;
 
     // Mandelbrot settings
-    int m_mandelDim;
-    Vec2f m_mandelUpperLeft;
-    Vec2f m_mandelLowerRight;
+    bool m_mandelChanged;
+    float m_mandelUpperLeftX;
+    float m_mandelUpperLeftY;
+    float m_mandelLowerRightX;
+    float m_mandelLowerRightY;
     float m_mandelIterations;
+    int m_mandelMaskSize;
+    // TODO callbacks
+    float m_oldMandelUpperLeftX;
+    float m_oldMandelUpperLeftY;
+    float m_oldMandelLowerRightX;
+    float m_oldMandelLowerRightY;
+    float m_oldMandelIterations;
+    int m_oldMandelMaskSize;
 
     // quad tree settings
     bool m_useQuadtree;

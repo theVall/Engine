@@ -252,14 +252,14 @@ bool Mandelbrot::CalcHeightsInRectangle(Vec2f upperLeft,
                                         Vec2f lowerRight,
                                         float iterations,
                                         float blurVariance,
+                                        const UINT maskSize,
                                         ID3D11DeviceContext *pContext)
 {
     HRESULT hres;
 
     // Gaussian blur parameters
-    // TODO: user manipulatable -> variable mask size in VS -> mask as buffer
-    const UINT maskSize = 4;
-    float gaussMask[maskSize*maskSize];
+    float *gaussMask;
+    gaussMask = (float *)malloc(sizeof(float)*maskSize*maskSize);
     Math::GetGaussianBlurMask(maskSize, blurVariance, gaussMask);
 
     // set up Mandelbrot compute shader

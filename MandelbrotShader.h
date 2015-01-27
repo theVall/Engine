@@ -22,7 +22,7 @@ class MandelbrotShader :
         float heightMapDim;
         float xScale;
         float yScale;
-        float padding;
+        float heigthScale;
     };
 
 public:
@@ -38,7 +38,9 @@ public:
                 ID3D11ShaderResourceView *pHeightSrv,
                 bool wireframe,
                 Vec2f upperLeft,
-                Vec2f lowerRight);
+                Vec2f lowerRight,
+                float xyScaling,
+                float heigthScale);
 
 private:
     bool InitializeShader(ID3D11Device *pDevice,
@@ -54,7 +56,9 @@ private:
                              const XMFLOAT3 &lightDir,
                              ID3D11ShaderResourceView *pHeightSrv,
                              const Vec2f upperLeft,
-                             const Vec2f lowerRight);
+                             const Vec2f lowerRight,
+                             const float xyScaling,
+                             const float heigthScale);
 
     void RenderShader(ID3D11DeviceContext *pContext, bool wireframe);
 

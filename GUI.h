@@ -16,6 +16,7 @@ public:
                     int windowWidth,
                     int windowHeight);
     void Shutdown();
+    bool ClearAll();
 
     bool AddFloatVar(const char *name, float &var, const char *params);
     bool AddIntVar(const char *name, int &var, const char *params);
