@@ -216,6 +216,12 @@ void System::InitializeWindows(int &screenWidth, int &screenHeight)
         posY = (GetSystemMetrics(SM_CYSCREEN) - screenHeight) / 2;
     }
 
+    int borderCaptionWidth = 2 * GetSystemMetrics(SM_CXSIZEFRAME);
+    borderCaptionWidth += 2 * GetSystemMetrics(SM_CXPADDEDBORDER);
+
+    int borderCaptionHeight = 4 * GetSystemMetrics(SM_CYSIZEFRAME);
+    borderCaptionHeight += GetSystemMetrics(SM_CYCAPTION);
+
     //  Create the window with the screen settings and get the handle to it.
     m_hwnd = CreateWindowEx(WS_EX_APPWINDOW,
                             m_applicationName,
@@ -224,8 +230,8 @@ void System::InitializeWindows(int &screenWidth, int &screenHeight)
                             WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
                             posX,
                             posY,
-                            screenWidth,
-                            screenHeight,
+                            screenWidth + borderCaptionWidth,
+                            screenHeight + borderCaptionHeight,
                             NULL,
                             NULL,
                             m_hinstance,

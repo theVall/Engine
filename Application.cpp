@@ -770,9 +770,9 @@ bool Application::HandleInput(float frameTime)
         if ((m_drawMandelbrot != m_oldDrawMandelbrot) && m_drawMandelbrot)
         {
             m_terrainResolution = 10;
-            m_terrainHeightScaling = 1;
+            m_terrainHeightScaling = 20;
             m_terrainScaling = 1;
-            m_terrainVariance = 2.5f;
+            m_terrainVariance = 5.0f;
 
             m_drawTerrain = false;
             m_drawOcean = false;

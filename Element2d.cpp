@@ -1,6 +1,5 @@
 #include "Element2d.h"
 
-
 Element2d::Element2d()
 {
     m_vertexBuffer = 0;
@@ -22,7 +21,7 @@ Element2d::~Element2d()
 bool Element2d::Initialize(ID3D11Device *pDevice,
                            int screenWidth,
                            int screenHeight,
-                           WCHAR *textureFilename,
+                           WCHAR *pTextureFilename,
                            int bitmapWidth,
                            int bitmapHeight)
 {
@@ -43,7 +42,7 @@ bool Element2d::Initialize(ID3D11Device *pDevice,
         return false;
     }
 
-    result = LoadTexture(pDevice, textureFilename);
+    result = LoadTexture(pDevice, pTextureFilename);
     if (!result)
     {
         return false;

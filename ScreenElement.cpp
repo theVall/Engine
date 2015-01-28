@@ -9,6 +9,11 @@ ScreenElement::ScreenElement(void)
 }
 
 
+ScreenElement::ScreenElement(const ScreenElement &)
+{
+}
+
+
 ScreenElement::~ScreenElement(void)
 {
 }
@@ -59,7 +64,7 @@ void ScreenElement::ReleaseTexture()
 }
 
 
-bool ScreenElement::SetIndexBuffer(ID3D11Device *device, unsigned long *indices)
+bool ScreenElement::SetIndexBuffer(ID3D11Device *pDevice, unsigned long *pIndices)
 {
     D3D11_BUFFER_DESC indexBufferDesc;
     D3D11_SUBRESOURCE_DATA indexData;
@@ -74,18 +79,18 @@ bool ScreenElement::SetIndexBuffer(ID3D11Device *device, unsigned long *indices)
     indexBufferDesc.StructureByteStride = 0;
 
     // Give the sub-resource structure a pointer to the index data.
-    indexData.pSysMem = indices;
+    indexData.pSysMem = pIndices;
     indexData.SysMemPitch = 0;
     indexData.SysMemSlicePitch = 0;
 
-    result = device->CreateBuffer(&indexBufferDesc, &indexData, &m_indexBuffer);
+    result = pDevice->CreateBuffer(&indexBufferDesc, &indexData, &m_indexBuffer);
     if (FAILED(result))
     {
         return false;
     }
 
-    delete[] indices;
-    indices = 0;
+    delete[] pIndices;
+    pIndices = 0;
 
     return true;
 }
