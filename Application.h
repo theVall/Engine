@@ -93,6 +93,8 @@ public:
 private:
     bool SetGuiParams();
 
+    void HandleMinimapClicks(bool isRightMouse);
+
     // Safe shutdown/delete handler
     template<typename T> void SafeShutdown(T *&obj)
     {

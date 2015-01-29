@@ -729,42 +729,8 @@ bool Application::HandleInput(float frameTime)
         {
             if (m_drawMandelbrot && m_drawMinimap)
             {
-                // check if clicked inside the minimap
-                m_pInput->GetMouseLocation(mouseX, mouseY);
-                int minimapLeft = m_screenWidth - m_pMandelMini->width;
-                int minimapTop = m_screenHeight - m_pMandelMini->height;
+                HandleMinimapClicks(false);
 
-                if (mouseX > minimapLeft && mouseY > minimapTop)
-                {
-                    // Map mouse coordinates to minimap coordinate system.
-                    Vec2f mouseMinimapCoords = Vec2f((float)mouseX - minimapLeft,
-                                                     (float)mouseY - minimapTop);
-                    // normalize to 0..1
-                    mouseMinimapCoords.x /= (float)m_pMandelMini->width;
-                    mouseMinimapCoords.y /= (float)m_pMandelMini->height;
-
-                    m_pMandelMini->poi = mouseMinimapCoords;
-
-                    // map mouse minimap coordinates to current displayed
-                    // coordinate system
-                    mouseMinimapCoords.x *= m_pMandelMini->xScale;
-                    mouseMinimapCoords.y *= m_pMandelMini->yScale;
-                    mouseMinimapCoords += Vec2f(m_mandelUpperLeftX, m_mandelLowerRightY);
-                    // sign correction
-                    mouseMinimapCoords.y *= -1;
-
-                    // avoid recognizing the same point more than once
-                    if (m_pMandelMini->upperLeft != mouseMinimapCoords &&
-                            m_pMandelMini->lowerRight != mouseMinimapCoords)
-                    {
-                        // if first selected point
-                        if (m_pMandelMini->clickCnt == 0)
-                        {
-                            m_pMandelMini->upperLeft = mouseMinimapCoords;
-                            m_pMandelMini->clickCnt++;
-                        }
-                    }
-                }
                 m_pInput->GetMouseLocationChange(mouseX, mouseY);
                 m_pPosition->TurnOnMouseMovement(mouseX, mouseY, 0.5f);
             }
@@ -773,50 +739,7 @@ bool Application::HandleInput(float frameTime)
         {
             if (m_drawMandelbrot && m_drawMinimap)
             {
-                // check if clicked inside the minimap
-                m_pInput->GetMouseLocation(mouseX, mouseY);
-                int minimapLeft = m_screenWidth - m_pMandelMini->width;
-                int minimapTop = m_screenHeight - m_pMandelMini->height;
-
-                if (mouseX > minimapLeft && mouseY > minimapTop)
-                {
-                    // Map mouse coordinates to minimap coordinate system.
-                    Vec2f mouseMinimapCoords = Vec2f((float)mouseX - minimapLeft,
-                                                     (float)mouseY - minimapTop);
-                    // normalize to 0..1
-                    mouseMinimapCoords.x /= (float)m_pMandelMini->width;
-                    mouseMinimapCoords.y /= (float)m_pMandelMini->height;
-                    // map mouse minimap coordinates to current displayed
-                    // coordinate system
-                    mouseMinimapCoords.x *= m_pMandelMini->xScale;
-                    mouseMinimapCoords.y *= m_pMandelMini->yScale;
-                    mouseMinimapCoords += Vec2f(m_mandelUpperLeftX, m_mandelLowerRightY);
-                    // sign correction
-                    mouseMinimapCoords.y *= -1;
-
-                    if (m_pMandelMini->clickCnt == 1 &&
-                            ((m_pMandelMini->upperLeft.x < mouseMinimapCoords.x &&
-                              m_pMandelMini->upperLeft.y > mouseMinimapCoords.y) ||
-                             (m_pMandelMini->upperLeft.x > mouseMinimapCoords.x &&
-                              m_pMandelMini->upperLeft.y < mouseMinimapCoords.y)))
-                    {
-                        m_pMandelMini->lowerRight = mouseMinimapCoords;
-                        // match the points depending on position
-                        if (m_pMandelMini->lowerRight.x < m_pMandelMini->upperLeft.x)
-                        {
-                            Vec2f tmp = m_pMandelMini->lowerRight;
-                            m_pMandelMini->lowerRight = m_pMandelMini->upperLeft;
-                            m_pMandelMini->upperLeft = tmp;
-                        }
-
-                        m_mandelUpperLeftX = m_pMandelMini->upperLeft.x;
-                        m_mandelUpperLeftY = m_pMandelMini->upperLeft.y;
-                        m_mandelLowerRightX = m_pMandelMini->lowerRight.x;
-                        m_mandelLowerRightY = m_pMandelMini->lowerRight.y;
-                        m_pMandelMini->clickCnt = 0;
-                        m_pMandelMini->poi = Vec2f(-1.0f);
-                    }
-                }
+                HandleMinimapClicks(true);
             }
             m_pInput->GetMouseLocationChange(mouseX, mouseY);
         }
@@ -1436,4 +1359,73 @@ bool Application::SetGuiParams()
     }
 
     return true;
+}
+
+
+void Application::HandleMinimapClicks(bool isRightMouse)
+{
+    int mouseX;
+    int mouseY;
+
+    // check if clicked inside the minimap
+    m_pInput->GetMouseLocation(mouseX, mouseY);
+    int minimapLeft = m_screenWidth - m_pMandelMini->width;
+    int minimapTop = m_screenHeight - m_pMandelMini->height;
+
+    if (mouseX > minimapLeft && mouseY > minimapTop)
+    {
+        // Map mouse coordinates to minimap coordinate system.
+        Vec2f mouseMinimapCoords = Vec2f((float)mouseX - minimapLeft,
+                                         (float)mouseY - minimapTop);
+        // normalize to 0..1
+        mouseMinimapCoords.x /= (float)m_pMandelMini->width;
+        mouseMinimapCoords.y /= (float)m_pMandelMini->height;
+
+        if (!isRightMouse)
+        {
+            m_pMandelMini->poi = mouseMinimapCoords;
+        }
+
+        // map mouse minimap coordinates to current displayed
+        // coordinate system
+        mouseMinimapCoords.x *= m_pMandelMini->xScale;
+        mouseMinimapCoords.y *= m_pMandelMini->yScale;
+        mouseMinimapCoords += Vec2f(m_mandelUpperLeftX, m_mandelLowerRightY);
+        // sign correction
+        mouseMinimapCoords.y *= -1;
+
+        // avoid recognizing the same point more than once
+        if (m_pMandelMini->upperLeft != mouseMinimapCoords &&
+                m_pMandelMini->lowerRight != mouseMinimapCoords)
+        {
+            // if first selected point
+            if (m_pMandelMini->clickCnt == 0)
+            {
+                m_pMandelMini->upperLeft = mouseMinimapCoords;
+                m_pMandelMini->clickCnt++;
+            }
+            else if (m_pMandelMini->clickCnt == 1 &&
+                     ((m_pMandelMini->upperLeft.x < mouseMinimapCoords.x &&
+                       m_pMandelMini->upperLeft.y > mouseMinimapCoords.y) ||
+                      (m_pMandelMini->upperLeft.x > mouseMinimapCoords.x &&
+                       m_pMandelMini->upperLeft.y < mouseMinimapCoords.y)))
+            {
+                m_pMandelMini->lowerRight = mouseMinimapCoords;
+                // match the points depending on position
+                if (m_pMandelMini->lowerRight.x < m_pMandelMini->upperLeft.x)
+                {
+                    Vec2f tmp = m_pMandelMini->lowerRight;
+                    m_pMandelMini->lowerRight = m_pMandelMini->upperLeft;
+                    m_pMandelMini->upperLeft = tmp;
+                }
+
+                m_mandelUpperLeftX = m_pMandelMini->upperLeft.x;
+                m_mandelUpperLeftY = m_pMandelMini->upperLeft.y;
+                m_mandelLowerRightX = m_pMandelMini->lowerRight.x;
+                m_mandelLowerRightY = m_pMandelMini->lowerRight.y;
+                m_pMandelMini->clickCnt = 0;
+                m_pMandelMini->poi = Vec2f(-1.0f);
+            }
+        }
+    }
 }
