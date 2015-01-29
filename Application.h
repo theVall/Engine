@@ -24,6 +24,10 @@
 #include "GUI.h"
 #include "Mandelbrot.h"
 #include "MandelbrotShader.h"
+#include "Element2d.h"
+#include "TextureShader.h"
+
+#define INITIAL_MINIMAP_SIZE 256
 
 //
 // Wrapper class for terrain application.
@@ -148,10 +152,14 @@ private:
     float m_oldMandelIterations;
     int m_oldMandelMaskSize;
 
-    // quad tree settings
+    // Quad tree settings
     bool m_useQuadtree;
     bool m_oldUseQuadtree;
     int m_maxTrianglesQtNode;
+
+    // Minimap settings
+    int m_minimapWidth;
+    int m_minimapHeight;
 
     // Camera settings
     bool m_orbitalCamera;
@@ -164,7 +172,12 @@ private:
     // misc settings
     float m_guiLightDir[3];
 
+    // window
     HWND m_hwnd;
+    int m_screenWidth;
+    int m_screenHeight;
+
+    XMMATRIX m_baseViewMatrix;;
 
     // object pointer
     Camera *m_pCamera;
@@ -188,6 +201,8 @@ private:
     GUI *m_pGUI;
     Mandelbrot *m_pMandelbrot;
     MandelbrotShader *m_pMandelbrotShader;
+    Element2d *m_pMinimap;
+    TextureShader *m_pMinimapShader;
 
     // textures
     Texture *m_pSkyDomeTex;

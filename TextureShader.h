@@ -5,6 +5,14 @@
 class TextureShader :
     public ShaderProgram
 {
+    struct PerFrameBufferTypePS
+    {
+        float width;
+        float height;
+        float xRes;
+        float yRes;
+    };
+
 public:
     TextureShader();
     TextureShader(const TextureShader &);
@@ -15,7 +23,11 @@ public:
                 const XMMATRIX &worldMatrix,
                 const XMMATRIX &viewMatrix,
                 const XMMATRIX &projectionMatrix,
-                ID3D11ShaderResourceView *texture);
+                ID3D11ShaderResourceView *texture,
+                float width,
+                float height,
+                float xRes,
+                float yRes);
 
 private:
     bool InitializeShader(ID3D11Device *pDevice,
@@ -27,9 +39,19 @@ private:
                              const XMMATRIX &worldMatrix,
                              const XMMATRIX &viewMatrix,
                              const XMMATRIX &projectionMatrix,
-                             ID3D11ShaderResourceView *pSrv);
+                             ID3D11ShaderResourceView *pSrv,
+                             float width,
+                             float height,
+                             float xRes,
+                             float yRes);
 
     void RenderShader(ID3D11DeviceContext *pContext, int indexCount);
+
+    // member
+private:
+
+    ID3D11Buffer *m_perFameBufferPS;
+
 };
 
 

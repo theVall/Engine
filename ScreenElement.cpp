@@ -31,7 +31,7 @@ ID3D11ShaderResourceView *ScreenElement::GetTexture()
 }
 
 
-bool ScreenElement::LoadTexture(ID3D11Device *device, WCHAR *filename)
+bool ScreenElement::LoadTextureFromFile(ID3D11Device *pDevice, WCHAR *pFilename)
 {
     bool result;
 
@@ -41,11 +41,25 @@ bool ScreenElement::LoadTexture(ID3D11Device *device, WCHAR *filename)
         return false;
     }
 
-    result = m_pTexture->LoadFromDDS(device, filename);
+    result = m_pTexture->LoadFromDDS(pDevice, pFilename);
     if (!result)
     {
         return false;
     }
+
+    return true;
+}
+
+
+bool ScreenElement::LoadTextureFromSrv(ID3D11ShaderResourceView *pSrv)
+{
+    m_pTexture = new Texture;
+    if (!m_pTexture)
+    {
+        return false;
+    }
+
+    m_pTexture->SetSrv(pSrv);
 
     return true;
 }
@@ -56,7 +70,6 @@ void ScreenElement::ReleaseTexture()
     if (m_pTexture)
     {
         m_pTexture->Shutdown();
-        delete m_pTexture;
         m_pTexture = 0;
     }
 

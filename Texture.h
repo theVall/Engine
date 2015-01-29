@@ -32,6 +32,7 @@ public:
     // Get the render target view.
     ID3D11RenderTargetView *GetRtv();
 
+    void SetSrv(ID3D11ShaderResourceView *pSrv);
 
 private:
     ID3D11Texture2D *m_pTex2D;

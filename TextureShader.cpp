@@ -16,24 +16,36 @@ TextureShader::~TextureShader(void)
 }
 
 
-bool TextureShader::Render(ID3D11DeviceContext *deviceContext,
+bool TextureShader::Render(ID3D11DeviceContext *pContext,
                            int indexCount,
                            const XMMATRIX &worldMatrix,
                            const XMMATRIX &viewMatrix,
                            const XMMATRIX &projectionMatrix,
-                           ID3D11ShaderResourceView *texture)
+                           ID3D11ShaderResourceView *texture,
+                           float width,
+                           float height,
+                           float xRes,
+                           float yRes)
 {
     bool result;
 
     // Set the shader parameters for rendering.
-    result = SetShaderParameters(deviceContext, worldMatrix, viewMatrix, projectionMatrix, texture);
+    result = SetShaderParameters(pContext,
+                                 worldMatrix,
+                                 viewMatrix,
+                                 projectionMatrix,
+                                 texture,
+                                 width,
+                                 height,
+                                 xRes,
+                                 yRes);
     if (!result)
     {
         return false;
     }
 
     // Render the prepared buffers with the shader.
-    RenderShader(deviceContext, indexCount);
+    RenderShader(pContext, indexCount);
 
     return true;
 }
@@ -178,6 +190,21 @@ bool TextureShader::InitializeShader(ID3D11Device *device,
         return false;
     }
 
+    // Per frame buffer for pixel shader
+    D3D11_BUFFER_DESC perFameBufferDescPS;
+    perFameBufferDescPS.Usage = D3D11_USAGE_DYNAMIC;
+    perFameBufferDescPS.ByteWidth = ((sizeof(PerFrameBufferTypePS) + 15) / 16 * 16);
+    perFameBufferDescPS.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    perFameBufferDescPS.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    perFameBufferDescPS.MiscFlags = 0;
+    perFameBufferDescPS.StructureByteStride = 0;
+
+    result = device->CreateBuffer(&perFameBufferDescPS, NULL, &m_perFameBufferPS);
+    if (FAILED(result))
+    {
+        return false;
+    }
+
     // Texture sampler state description.
     samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
     samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -204,11 +231,15 @@ bool TextureShader::InitializeShader(ID3D11Device *device,
 }
 
 
-bool TextureShader::SetShaderParameters(ID3D11DeviceContext *deviceContext,
+bool TextureShader::SetShaderParameters(ID3D11DeviceContext *pContext,
                                         const XMMATRIX &worldMatrix,
                                         const XMMATRIX &viewMatrix,
                                         const XMMATRIX &projectionMatrix,
-                                        ID3D11ShaderResourceView *texture)
+                                        ID3D11ShaderResourceView *pSrv,
+                                        float width,
+                                        float height,
+                                        float xRes,
+                                        float yRes)
 {
     HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -216,11 +247,11 @@ bool TextureShader::SetShaderParameters(ID3D11DeviceContext *deviceContext,
     unsigned int bufferNumber;
 
     // Lock the constant buffer so it can be written to.
-    result = deviceContext->Map(m_pMatrixBuffer,
-                                0,
-                                D3D11_MAP_WRITE_DISCARD,
-                                0,
-                                &mappedResource);
+    result = pContext->Map(m_pMatrixBuffer,
+                           0,
+                           D3D11_MAP_WRITE_DISCARD,
+                           0,
+                           &mappedResource);
     if (FAILED(result))
     {
         return false;
@@ -234,10 +265,30 @@ bool TextureShader::SetShaderParameters(ID3D11DeviceContext *deviceContext,
     transformDataBuffer->projection = XMMatrixTranspose(projectionMatrix);
 
     // Unlock the constant buffer.
-    deviceContext->Unmap(m_pMatrixBuffer, 0);
+    pContext->Unmap(m_pMatrixBuffer, 0);
     bufferNumber = 0;
-    deviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_pMatrixBuffer);
-    deviceContext->PSSetShaderResources(0, 1, &texture);
+    pContext->VSSetConstantBuffers(bufferNumber, 1, &m_pMatrixBuffer);
+
+    // Pixel shader constant buffer
+    result = pContext->Map(m_perFameBufferPS,
+                           0,
+                           D3D11_MAP_WRITE_DISCARD,
+                           0,
+                           &mappedResource);
+    if (FAILED(result))
+    {
+        return false;
+    }
+
+    PerFrameBufferTypePS *pPerFrameDataBufferPS = (PerFrameBufferTypePS *)mappedResource.pData;
+    pPerFrameDataBufferPS->width = width;
+    pPerFrameDataBufferPS->height = height;
+    pPerFrameDataBufferPS->xRes = xRes;
+    pPerFrameDataBufferPS->yRes = yRes;
+    pContext->Unmap(m_perFameBufferPS, 0);
+    pContext->PSSetConstantBuffers(1, 1, &m_perFameBufferPS);
+
+    pContext->PSSetShaderResources(0, 1, &pSrv);
 
     return true;
 }
@@ -248,20 +299,20 @@ void TextureShader::ShutdownShader()
 }
 
 
-void TextureShader::RenderShader(ID3D11DeviceContext *deviceContext, int indexCount)
+void TextureShader::RenderShader(ID3D11DeviceContext *pContext, int indexCount)
 {
-    deviceContext->IASetInputLayout(m_pLayout);
+    pContext->IASetInputLayout(m_pLayout);
 
     // Set the vertex and pixel shader.
-    deviceContext->VSSetShader(m_pVertexShader, NULL, 0);
-    deviceContext->PSSetShader(m_pPixelShader, NULL, 0);
-    deviceContext->PSSetSamplers(0, 1, &m_pSamplerState);
+    pContext->VSSetShader(m_pVertexShader, NULL, 0);
+    pContext->PSSetShader(m_pPixelShader, NULL, 0);
+    pContext->PSSetSamplers(0, 1, &m_pSamplerState);
 
-    deviceContext->DrawIndexed(indexCount, 0, 0);
+    pContext->DrawIndexed(indexCount, 0, 0);
 
-    // Unbind
+    // Unbind resources
     ID3D11ShaderResourceView *pNullSrv[1] = { NULL };
-    deviceContext->PSSetShaderResources(0, 1, pNullSrv);
+    pContext->PSSetShaderResources(0, 1, pNullSrv);
 
     return;
 }

@@ -138,3 +138,8 @@ ID3D11RenderTargetView *Texture::GetRtv()
 {
     return m_pRtv;
 }
+
+void Texture::SetSrv(ID3D11ShaderResourceView *pSrv)
+{
+    m_pSrv = pSrv;
+}

@@ -83,7 +83,7 @@ bool Mandelbrot::Initialize(ID3D11Device *pDevice,
         return false;
     }
 
-    // Create SRV for filtered height output
+    // Create SRV for filtered height output (view on same buffer as UAV!)
     D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
     srvDesc.Format = DXGI_FORMAT_UNKNOWN;
     srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
@@ -91,6 +91,51 @@ bool Mandelbrot::Initialize(ID3D11Device *pDevice,
     srvDesc.Buffer.NumElements = bufDesc.ByteWidth / bufDesc.StructureByteStride;
 
     result = pDevice->CreateShaderResourceView(m_pGaussBuffer, &srvDesc, &m_pHeightSrv);
+    if (FAILED(result))
+    {
+        return false;
+    }
+
+    // Create texture resource for texture output (used for minimap)
+    D3D11_TEXTURE2D_DESC texDesc;
+    texDesc.ArraySize = 1;
+    texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
+    texDesc.CPUAccessFlags = 0;
+    texDesc.Format = DXGI_FORMAT_R16G16_UNORM;
+    texDesc.Width = heightMapDim;
+    texDesc.Height = heightMapDim;
+    texDesc.MipLevels = 1;
+    texDesc.MiscFlags = 0;
+    texDesc.SampleDesc.Count = 1;
+    texDesc.SampleDesc.Quality = 0;
+    texDesc.Usage = D3D11_USAGE_DEFAULT;
+
+    result = pDevice->CreateTexture2D(&texDesc,
+                                      NULL,
+                                      &m_pTex);
+    if (FAILED(result))
+    {
+        return false;
+    }
+
+    // Create UAV for height to texture output
+    uavDesc.Format = DXGI_FORMAT_R16G16_UNORM;
+    uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+    uavDesc.Texture2D.MipSlice = 0;
+
+    result = pDevice->CreateUnorderedAccessView(m_pTex, &uavDesc, &m_pTexUav);
+    if (FAILED(result))
+    {
+        return false;
+    }
+
+    // finally create SRV for the texture resource so that we can access it from PS
+    srvDesc.Texture2D.MipLevels = 1;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    srvDesc.Format = DXGI_FORMAT_R16G16_UNORM;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+
+    result = pDevice->CreateShaderResourceView(m_pTex, &srvDesc, &m_pTexSrv);
     if (FAILED(result))
     {
         return false;
@@ -114,10 +159,13 @@ void Mandelbrot::Shutdown()
 {
     m_pHeightBuffer->Release();
     m_pGaussBuffer->Release();
+    m_pTex->Release();
 
     m_pHeightSrv->Release();
+    m_pTexSrv->Release();
     m_pHeightUav->Release();
     m_pGaussUav->Release();
+    m_pTexUav->Release();
 
     m_pImmutableConstBuf->Release();
     m_pPerFrameConstBuf->Release();
@@ -267,8 +315,8 @@ bool Mandelbrot::CalcHeightsInRectangle(Vec2f upperLeft,
     pContext->CSSetShader(m_pMandelbrotCS, NULL, 0);
 
     // Set output buffers
-    ID3D11UnorderedAccessView *cs0Uavs[2] = { m_pHeightUav, m_pGaussUav };
-    pContext->CSSetUnorderedAccessViews(0, 2, cs0Uavs, (UINT *)(&cs0Uavs[0]));
+    ID3D11UnorderedAccessView *cs0Uavs[3] = { m_pHeightUav, m_pGaussUav, m_pTexUav };
+    pContext->CSSetUnorderedAccessViews(0, 3, cs0Uavs, (UINT *)(&cs0Uavs[0]));
 
     // set coordinates and iterations in per frame constant buffer
     D3D11_MAPPED_SUBRESOURCE mappedRes;
@@ -311,7 +359,8 @@ bool Mandelbrot::CalcHeightsInRectangle(Vec2f upperLeft,
     // unbind resources
     cs0Uavs[0] = NULL;
     cs0Uavs[1] = NULL;
-    pContext->CSSetUnorderedAccessViews(0, 2, cs0Uavs, (UINT *)(&cs0Uavs[0]));
+    cs0Uavs[2] = NULL;
+    pContext->CSSetUnorderedAccessViews(0, 3, cs0Uavs, (UINT *)(&cs0Uavs[0]));
 
     return true;
 }
@@ -320,6 +369,12 @@ bool Mandelbrot::CalcHeightsInRectangle(Vec2f upperLeft,
 ID3D11ShaderResourceView *Mandelbrot::GetHeightMap()
 {
     return m_pHeightSrv;
+}
+
+
+ID3D11ShaderResourceView *Mandelbrot::GetHeightTex()
+{
+    return m_pTexSrv;
 }
 
 

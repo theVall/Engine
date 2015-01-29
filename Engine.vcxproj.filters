@@ -338,13 +338,16 @@
     <FxCompile Include="shader\OceanVS.hlsl">
       <Filter>Shader Files</Filter>
     </FxCompile>
-    <FxCompile Include="MandelbrotCS.hlsl">
+    <FxCompile Include="shader\MandelbrotCS.hlsl">
       <Filter>Shader Files</Filter>
     </FxCompile>
-    <FxCompile Include="MandelbrotVS.hlsl">
+    <FxCompile Include="shader\MandelbrotPS.hlsl">
       <Filter>Shader Files</Filter>
     </FxCompile>
-    <FxCompile Include="MandelbrotPS.hlsl">
+    <FxCompile Include="shader\MandelbrotVS.hlsl">
+      <Filter>Shader Files</Filter>
+    </FxCompile>
+    <FxCompile Include="shader\MinimapPS.hlsl">
       <Filter>Shader Files</Filter>
     </FxCompile>
   </ItemGroup>

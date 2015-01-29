@@ -56,6 +56,8 @@ public:
                                 ID3D11DeviceContext *pContext);
 
     ID3D11ShaderResourceView *GetHeightMap();
+    ID3D11ShaderResourceView *GetHeightTex();
+
 
 private:
 
@@ -87,12 +89,14 @@ private:
     ID3D11Buffer *m_pHeightBuffer;
     ID3D11Buffer *m_pGaussBuffer;
 
-    ID3D11ShaderResourceView *m_pHeightSrv;
+    ID3D11Texture2D *m_pTex;
+
     ID3D11UnorderedAccessView *m_pHeightUav;
     ID3D11UnorderedAccessView *m_pGaussUav;
+    ID3D11UnorderedAccessView *m_pTexUav;
 
-    //ID3D11Buffer *m_pColorBuffer;
-    //ID3D11ShaderResourceView *m_pColorSrv;
+    ID3D11ShaderResourceView *m_pHeightSrv;
+    ID3D11ShaderResourceView *m_pTexSrv;
 
     // Shader
     ID3D11ComputeShader *m_pMandelbrotCS;

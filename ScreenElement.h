@@ -26,9 +26,13 @@ public:
 
 protected:
     //
-    // Methods to load a texture from file.
+    // Method to load a texture from DDS file.
     //
-    bool LoadTexture(ID3D11Device *pDevice, WCHAR *pName);
+    bool LoadTextureFromFile(ID3D11Device *pDevice, WCHAR *pName);
+    //
+    // Load texture with a shader resource view.
+    //
+    bool LoadTextureFromSrv(ID3D11ShaderResourceView *pSrv);
     //
     // Methods to release a texture safely.
     //

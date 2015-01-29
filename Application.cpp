@@ -44,6 +44,10 @@ Application::Application()
     m_oceanTimeScale    = 0.0003f;
     m_oceanHeightOffset = -m_terrainHeightScaling - 5.0f;
 
+    // minimap settings
+    m_minimapWidth = INITIAL_MINIMAP_SIZE;
+    m_minimapHeight = INITIAL_MINIMAP_SIZE;
+
     // camera settings
     m_orbitalCamera     = false;
     m_zoom              = 1.0f;
@@ -74,6 +78,13 @@ Application::Application()
     m_pProfiler         = nullptr;
     m_pSkyDome          = nullptr;
     m_pSkyDomeShader    = nullptr;
+    m_pOcean            = nullptr;
+    m_pOceanShader      = nullptr;
+    m_pGUI              = nullptr;
+    m_pMandelbrot       = nullptr;
+    m_pMandelbrotShader = nullptr;
+    m_pMinimap          = nullptr;
+    m_pMinimapShader    = nullptr;
 }
 
 
@@ -91,13 +102,14 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
 {
     bool result;
 
-    XMMATRIX baseViewMatrix;
-
 // TODO: advanced profiling output
 //    char videoCard[128];
 //    int videoMemory;
 
+    // set window parameters
     m_hwnd = hwnd;
+    m_screenWidth = screenWidth;
+    m_screenHeight = screenHeight;
 
     // Create and initialize __input__ object for keyboard and mouse handling.
     m_pInput = new Input;
@@ -105,7 +117,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     {
         return false;
     }
-    result = m_pInput->Initialize(m_hwnd, screenWidth, screenHeight);
+    result = m_pInput->Initialize(m_hwnd, m_screenWidth, m_screenHeight);
     if (!result)
     {
         MessageBox(m_hwnd, L"Could not initialize the input object.", L"Error", MB_OK);
@@ -140,7 +152,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     // Initialize a base view matrix with the camera for 2D user interface rendering.
     m_pCamera->SetPosition(Vec3f(0.0f, 0.0f, -1.0f));
     m_pCamera->Render();
-    m_pCamera->GetViewMatrix(baseViewMatrix);
+    m_pCamera->GetViewMatrix(m_baseViewMatrix);
     // Set the initial position of the camera.
     Vec3f camPos;
     camPos.x = 100.0f * m_terrainScaling;
@@ -391,8 +403,8 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     }
     if (!m_pGUI->Initialize(m_pDirect3D->GetDevice(),
                             "Settings",
-                            screenWidth,
-                            screenHeight))
+                            m_screenWidth,
+                            m_screenHeight))
     {
         MessageBox(hwnd, L"Could not initialize the GUI object.", L"Error", MB_OK);
         return false;
@@ -405,7 +417,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
         return false;
     }
 
-    // Create Mandelbrot object
+    //  Create and initialize the __Mandelbrot__ object
     m_pMandelbrot = new Mandelbrot;
     if (!m_pMandelbrot)
     {
@@ -414,7 +426,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     if (!m_pMandelbrot->Initialize(m_pDirect3D->GetDevice(),
                                    m_pDirect3D->GetDeviceContext(),
                                    m_hwnd,
-                                   L"MandelbrotCS.hlsl",
+                                   L"../Engine/shader/MandelbrotCS.hlsl",
                                    1 << m_terrainResolution))
     {
         MessageBox(m_hwnd, L"Could not initialize the Mandelbrot object.", L"Error", MB_OK);
@@ -428,7 +440,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
                                           m_mandelMaskSize,
                                           m_pDirect3D->GetDeviceContext());
 
-    // Mandelbrot shader program
+    //  Create and initialize the __Mandelbrot Shader__ program
     m_pMandelbrotShader = new MandelbrotShader(1 << m_terrainResolution);
     if (!m_pMandelbrotShader)
     {
@@ -436,12 +448,46 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     }
     if (!m_pMandelbrotShader->Initialize(m_pDirect3D->GetDevice(),
                                          m_hwnd,
-                                         L"MandelbrotVS.hlsl",
-                                         L"MandelbrotPS.hlsl"))
+                                         L"../Engine/shader/MandelbrotVS.hlsl",
+                                         L"../Engine/shader/MandelbrotPS.hlsl"))
     {
         MessageBox(m_hwnd, L"Could not initialize the Mandelbrot shader object.", L"Error", MB_OK);
         return false;
     }
+
+    //  Create and initialize the __Minimap__ object.
+    m_pMinimap = new Element2d;
+    if (!m_pMinimap)
+    {
+        return false;
+    }
+    m_minimapWidth = (int)(INITIAL_MINIMAP_SIZE / 2.0f * (fabs(m_mandelUpperLeftX) + (m_mandelLowerRightX)));
+    m_minimapHeight = (int)(INITIAL_MINIMAP_SIZE / 2.0f * ((m_mandelUpperLeftY)+fabs(m_mandelLowerRightY)));
+    if (!m_pMinimap->Initialize(m_pDirect3D->GetDevice(),
+                                m_screenWidth,
+                                m_screenHeight,
+                                m_minimapWidth,
+                                m_minimapHeight,
+                                m_pMandelbrot->GetHeightMap()))
+    {
+        MessageBox(m_hwnd, L"Could not initialize the Minimap object.", L"Error", MB_OK);
+        return false;
+    }
+    //  Create and initialize the __Minimap Shader__ object.
+    m_pMinimapShader = new TextureShader;
+    if (!m_pMinimapShader)
+    {
+        return false;
+    }
+    if (!m_pMinimapShader->Initialize(m_pDirect3D->GetDevice(),
+                                      m_hwnd,
+                                      L"../Engine/shader/TextureVS.hlsl",
+                                      L"../Engine/shader/MinimapPS.hlsl"))
+    {
+        MessageBox(m_hwnd, L"Could not initialize the Minimap Shader object.", L"Error", MB_OK);
+        return false;
+    }
+
 
     return true;
 }
@@ -462,6 +508,9 @@ void Application::Shutdown()
     SafeShutdown(m_pGUI);
     SafeShutdown(m_pMandelbrot);
     SafeShutdown(m_pMandelbrotShader);
+    //SafeShutdown(m_pMinimap);
+    // TODO: error on SRV release
+    SafeShutdown(m_pMinimapShader);
 
     SafeDelete(m_pProfiler);
     SafeDelete(m_pPosition);
@@ -529,7 +578,7 @@ bool Application::ProcessFrame()
             if (!m_pMandelbrot->Initialize(m_pDirect3D->GetDevice(),
                                            m_pDirect3D->GetDeviceContext(),
                                            m_hwnd,
-                                           L"MandelbrotCS.hlsl",
+                                           L"../Engine/shader/MandelbrotCS.hlsl",
                                            1 << m_terrainResolution))
             {
                 MessageBox(m_hwnd, L"Could not initialize the Mandelbrot object.", L"Error", MB_OK);
@@ -543,8 +592,8 @@ bool Application::ProcessFrame()
             }
             if (!m_pMandelbrotShader->Initialize(m_pDirect3D->GetDevice(),
                                                  m_hwnd,
-                                                 L"MandelbrotVS.hlsl",
-                                                 L"MandelbrotPS.hlsl"))
+                                                 L"../Engine/shader/MandelbrotVS.hlsl",
+                                                 L"../Engine/shader/MandelbrotPS.hlsl"))
             {
                 MessageBox(m_hwnd, L"Could not initialize the Mandelbrot shader object.", L"Error", MB_OK);
                 return false;
@@ -560,6 +609,12 @@ bool Application::ProcessFrame()
                                               m_terrainVariance,
                                               m_mandelMaskSize,
                                               m_pDirect3D->GetDeviceContext());
+
+        // update minimap scaling
+        m_minimapWidth = (int)(INITIAL_MINIMAP_SIZE/2.0f * (fabs(m_mandelUpperLeftX) + (m_mandelLowerRightX)));
+        m_minimapHeight = (int)(INITIAL_MINIMAP_SIZE / 2.0f * ((m_mandelUpperLeftY)+fabs(m_mandelLowerRightY)));
+        m_pMinimap->SetElementWidth(m_minimapWidth);
+        m_pMinimap->SetElementHeight(m_minimapHeight);
 
         m_mandelChanged = false;
     }
@@ -964,6 +1019,25 @@ bool Application::RenderGraphics()
 
     // gender AntTweakBar
     m_pGUI->RenderGUI();
+
+    if (m_drawMandelbrot)
+    {
+        // create minimap render object
+        m_pMinimap->Render(m_pDirect3D->GetDeviceContext(),
+                           m_screenWidth - m_minimapWidth - 10,
+                           m_screenHeight - m_minimapHeight - 10);
+        // render minimap
+        m_pMinimapShader->Render(m_pDirect3D->GetDeviceContext(),
+                                 2 * 3, // two triangles
+                                 worldMatrix,
+                                 m_baseViewMatrix,
+                                 orthoMatrix,
+                                 m_pMandelbrot->GetHeightTex(),
+                                 (float)m_minimapWidth,
+                                 (float)m_minimapHeight,
+                                 (float)(1 << m_terrainResolution),
+                                 (float)(1 << m_terrainResolution));
+    }
 
     // Present the rendered scene to the screen.
     m_pDirect3D->EndScene();

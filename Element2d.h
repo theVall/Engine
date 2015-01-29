@@ -11,11 +11,24 @@ public:
     bool Initialize(ID3D11Device *pDevice,
                     int screenWidth,
                     int screenHeight,
-                    WCHAR *textureFilename,
+                    WCHAR *pTextureFilename,
                     int bitmapWidth,
                     int bitmapHeight);
+
+    bool Initialize(ID3D11Device *pDevice,
+                    int screenWidth,
+                    int screenHeight,
+                    int bitmapWidth,
+                    int bitmapHeight,
+                    ID3D11ShaderResourceView *pSrv);
+
     void Shutdown();
+
     bool Render(ID3D11DeviceContext *pContext, int positionX, int positionY);
+
+    void SetElementWidth(int width);
+    void SetElementHeight(int width);
+
 
 private:
 
@@ -35,8 +48,8 @@ private:
     int m_screenWidth;
     int m_screenHeight;
 
-    int m_bitmapWidth;
-    int m_bitmapHeight;
+    int m_elementWidth;
+    int m_elementHeight;
 
     int m_previousPosX;
     int m_previousPosY;

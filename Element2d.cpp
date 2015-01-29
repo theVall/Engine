@@ -22,16 +22,16 @@ bool Element2d::Initialize(ID3D11Device *pDevice,
                            int screenWidth,
                            int screenHeight,
                            WCHAR *pTextureFilename,
-                           int bitmapWidth,
-                           int bitmapHeight)
+                           int elementWidth,
+                           int elementHeight)
 {
     bool result;
 
     m_screenWidth = screenWidth;
     m_screenHeight = screenHeight;
 
-    m_bitmapWidth = bitmapWidth;
-    m_bitmapHeight = bitmapHeight;
+    m_elementWidth = elementWidth;
+    m_elementHeight = elementHeight;
 
     m_previousPosX = -1;
     m_previousPosY = -1;
@@ -42,7 +42,40 @@ bool Element2d::Initialize(ID3D11Device *pDevice,
         return false;
     }
 
-    result = LoadTexture(pDevice, pTextureFilename);
+    result = LoadTextureFromFile(pDevice, pTextureFilename);
+    if (!result)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool Element2d::Initialize(ID3D11Device *pDevice,
+                           int screenWidth,
+                           int screenHeight,
+                           int elementWidth,
+                           int elementHeight,
+                           ID3D11ShaderResourceView *pSrv)
+{
+    bool result;
+
+    m_screenWidth = screenWidth;
+    m_screenHeight = screenHeight;
+
+    m_elementWidth = elementWidth;
+    m_elementHeight = elementHeight;
+
+    m_previousPosX = -1;
+    m_previousPosY = -1;
+
+    result = InitializeBuffers(pDevice);
+    if (!result)
+    {
+        return false;
+    }
+
+    result = LoadTextureFromSrv(pSrv);
     if (!result)
     {
         return false;
@@ -63,12 +96,9 @@ void Element2d::Shutdown()
 
 bool Element2d::Render(ID3D11DeviceContext *pContext, int positionX, int positionY)
 {
-    bool result;
-
     // Re-build the dynamic vertex buffer for rendering to possibly a different
     // location on the screen.
-    result = UpdateBuffers(pContext, positionX, positionY);
-    if (!result)
+    if (!UpdateBuffers(pContext, positionX, positionY))
     {
         return false;
     }
@@ -191,9 +221,9 @@ bool Element2d::UpdateBuffers(ID3D11DeviceContext *pContext,
 
         // Calculate the screen coordinates.
         left = (float)((m_screenWidth / 2.0f) * -1.0f) + (float)positionX;
-        right = left + (float)m_bitmapWidth;
+        right = left + (float)m_elementWidth;
         top = (float)(m_screenHeight / 2) - (float)positionY;
-        bottom = top - (float)m_bitmapHeight;
+        bottom = top - (float)m_elementHeight;
 
         // Create the vertex array.
         vertices = new VertexType[m_vertexCount];
@@ -259,4 +289,16 @@ void Element2d::RenderBuffers(ID3D11DeviceContext *pContext)
     pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     return;
+}
+
+
+void Element2d::SetElementWidth(int newWidth)
+{
+    m_elementWidth = newWidth;
+}
+
+
+void Element2d::SetElementHeight(int newHeight)
+{
+    m_elementHeight = newHeight;
 }

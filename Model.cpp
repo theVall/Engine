@@ -15,23 +15,25 @@ Model::~Model(void)
 }
 
 
-bool Model::Initialize(ID3D11Device *device, WCHAR *modelFilename, WCHAR *textureFilename)
+bool Model::Initialize(ID3D11Device *pDevice,
+                       WCHAR *pModelFilename,
+                       WCHAR *pTextureFilename)
 {
     bool result;
 
-    result = LoadModel(modelFilename);
+    result = LoadModel(pModelFilename);
     if (!result)
     {
         return false;
     }
 
-    result = InitializeBuffers(device);
+    result = InitializeBuffers(pDevice);
     if(!result)
     {
         return false;
     }
 
-    result = LoadTexture(device, textureFilename);
+    result = LoadTextureFromFile(pDevice, pTextureFilename);
     if (!result)
     {
         return false;
@@ -51,7 +53,7 @@ void Model::Shutdown()
 }
 
 
-void Model::Render(ID3D11DeviceContext* deviceContext)
+void Model::Render(ID3D11DeviceContext *deviceContext)
 {
     //  Put the vertex and index buffers on the graphics pipeline to prepare them for drawing.
     RenderBuffers(deviceContext);
@@ -60,10 +62,10 @@ void Model::Render(ID3D11DeviceContext* deviceContext)
 }
 
 
-bool Model::InitializeBuffers(ID3D11Device* device)
+bool Model::InitializeBuffers(ID3D11Device *device)
 {
-    VertexType* vertices;
-    unsigned long* indices;
+    VertexType *vertices;
+    unsigned long *indices;
     D3D11_BUFFER_DESC vertexBufferDesc;
     D3D11_SUBRESOURCE_DATA vertexData;
     HRESULT result;
@@ -144,14 +146,14 @@ void Model::ShutdownBuffers()
 }
 
 
-void Model::RenderBuffers(ID3D11DeviceContext* deviceContext)
+void Model::RenderBuffers(ID3D11DeviceContext *deviceContext)
 {
     unsigned int stride;
     unsigned int offset;
 
-    stride = sizeof(VertexType); 
+    stride = sizeof(VertexType);
     offset = 0;
-    
+
     deviceContext->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
     deviceContext->IASetIndexBuffer(m_indexBuffer, DXGI_FORMAT_R32_UINT, 0);
     deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -164,7 +166,7 @@ bool Model::LoadModel(WCHAR *filename)
 {
     ifstream fin;
     char input;
-    
+
     fin.open(filename);
     if (fin.fail())
     {
