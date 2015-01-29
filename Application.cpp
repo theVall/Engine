@@ -18,6 +18,7 @@ Application::Application()
     m_drawOcean         = m_oldDrawOcean        = false;
     m_drawTerrain       = m_oldDrawTerrain      = false;
     m_drawMandelbrot    = m_oldDrawMandelbrot   = true;
+    m_drawMinimap       = true;
 
     // terrain settings
     m_terrainHurst          = m_oldTerrainHurst         = 0.75f;
@@ -43,10 +44,6 @@ Application::Application()
     m_oceanTileFactor   = 7;
     m_oceanTimeScale    = 0.0003f;
     m_oceanHeightOffset = -m_terrainHeightScaling - 5.0f;
-
-    // minimap settings
-    m_minimapWidth = INITIAL_MINIMAP_SIZE;
-    m_minimapHeight = INITIAL_MINIMAP_SIZE;
 
     // camera settings
     m_orbitalCamera     = false;
@@ -461,13 +458,21 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     {
         return false;
     }
-    m_minimapWidth = (int)(INITIAL_MINIMAP_SIZE / 2.0f * (fabs(m_mandelUpperLeftX) + (m_mandelLowerRightX)));
-    m_minimapHeight = (int)(INITIAL_MINIMAP_SIZE / 2.0f * ((m_mandelUpperLeftY)+fabs(m_mandelLowerRightY)));
+    // Mandelbrot Minimap settings struct
+    m_pMandelMini = new MandelMinimap;
+    m_pMandelMini->clickCnt = 0;
+    m_pMandelMini->upperLeft = Vec2f(m_mandelUpperLeftX, m_mandelUpperLeftY);
+    m_pMandelMini->lowerRight = Vec2f(m_mandelLowerRightX, m_mandelLowerRightY);
+    m_pMandelMini->xScale = fabs(m_mandelUpperLeftX) + m_mandelLowerRightX;
+    m_pMandelMini->yScale = m_mandelUpperLeftY + fabs(m_mandelLowerRightY);
+    m_pMandelMini->width = (int)(INITIAL_MINIMAP_SIZE / 2.0f * m_pMandelMini->xScale);
+    m_pMandelMini->height = (int)(INITIAL_MINIMAP_SIZE / 2.0f * m_pMandelMini->yScale);
+
     if (!m_pMinimap->Initialize(m_pDirect3D->GetDevice(),
                                 m_screenWidth,
                                 m_screenHeight,
-                                m_minimapWidth,
-                                m_minimapHeight,
+                                m_pMandelMini->width,
+                                m_pMandelMini->height,
                                 m_pMandelbrot->GetHeightMap()))
     {
         MessageBox(m_hwnd, L"Could not initialize the Minimap object.", L"Error", MB_OK);
@@ -519,6 +524,7 @@ void Application::Shutdown()
     SafeDelete(m_pLight);
     SafeDelete(m_pUtil);
     SafeDelete(m_pCamera);
+    SafeDelete(m_pMandelMini);
 
     SafeDelete(m_pSkyDomeTex);
     for (size_t i = 0; i < m_vTerrainTextures.size(); ++i)
@@ -611,10 +617,20 @@ bool Application::ProcessFrame()
                                               m_pDirect3D->GetDeviceContext());
 
         // update minimap scaling
-        m_minimapWidth = (int)(INITIAL_MINIMAP_SIZE/2.0f * (fabs(m_mandelUpperLeftX) + (m_mandelLowerRightX)));
-        m_minimapHeight = (int)(INITIAL_MINIMAP_SIZE / 2.0f * ((m_mandelUpperLeftY)+fabs(m_mandelLowerRightY)));
-        m_pMinimap->SetElementWidth(m_minimapWidth);
-        m_pMinimap->SetElementHeight(m_minimapHeight);
+        m_pMandelMini->xScale = fabs(m_mandelUpperLeftX) + m_mandelLowerRightX;
+        m_pMandelMini->yScale = m_mandelUpperLeftY + fabs(m_mandelLowerRightY);
+        m_pMandelMini->width = (int)(INITIAL_MINIMAP_SIZE / 2.0f * m_pMandelMini->xScale);
+        m_pMandelMini->height = (int)(INITIAL_MINIMAP_SIZE / 2.0f * m_pMandelMini->yScale);
+
+        if (m_pMandelMini->width*(1.0f + 0.1f*m_terrainScaling) < INITIAL_MINIMAP_SIZE &&
+                m_pMandelMini->height*(1.0f + 0.1f*m_terrainScaling) < INITIAL_MINIMAP_SIZE)
+        {
+            m_pMandelMini->width *= (int)m_terrainScaling;
+            m_pMandelMini->height *= (int)m_terrainScaling;
+        }
+
+        m_pMinimap->SetElementWidth(m_pMandelMini->width);
+        m_pMinimap->SetElementHeight(m_pMandelMini->height);
 
         m_mandelChanged = false;
     }
@@ -683,10 +699,27 @@ bool Application::HandleInput(float frameTime)
     }
 
     keyDown = GetAsyncKeyState('R');
-    if (keyDown != 0)
+    // Terrain mode: generate new random terrain.
+    if (keyDown != 0 && m_drawTerrain)
     {
         m_pTerrain->GenNewRand();
         m_terrainHurst += 0.000001f;
+    }
+    // Mandelbrot mode: reset terrain.
+    else if (keyDown != 0 && m_drawMandelbrot)
+    {
+        m_mandelChanged = true;
+        // Reset Mandelbrot area coordinates
+        m_mandelUpperLeftX = -2.1f;
+        m_mandelUpperLeftY = 1.2f;
+        m_mandelLowerRightX = 0.6f;
+        m_mandelLowerRightY = -1.2f;
+        // Reset terrain scaling parameters
+        m_terrainHeightScaling = 20;
+        m_terrainScaling = 1;
+        // Reset minimap
+        m_pMandelMini->width = INITIAL_MINIMAP_SIZE;
+        m_pMandelMini->height = INITIAL_MINIMAP_SIZE;
     }
 
     // Yaw and pitch with __mouse__ movement.
@@ -694,8 +727,100 @@ bool Application::HandleInput(float frameTime)
     {
         if (m_leftMouseDown)
         {
+            if (m_drawMandelbrot && m_drawMinimap)
+            {
+                // check if clicked inside the minimap
+                m_pInput->GetMouseLocation(mouseX, mouseY);
+                int minimapLeft = m_screenWidth - m_pMandelMini->width;
+                int minimapTop = m_screenHeight - m_pMandelMini->height;
+
+                if (mouseX > minimapLeft && mouseY > minimapTop)
+                {
+                    // Map mouse coordinates to minimap coordinate system.
+                    Vec2f mouseMinimapCoords = Vec2f((float)mouseX - minimapLeft,
+                                                     (float)mouseY - minimapTop);
+                    // normalize to 0..1
+                    mouseMinimapCoords.x /= (float)m_pMandelMini->width;
+                    mouseMinimapCoords.y /= (float)m_pMandelMini->height;
+
+                    m_pMandelMini->poi = mouseMinimapCoords;
+
+                    // map mouse minimap coordinates to current displayed
+                    // coordinate system
+                    mouseMinimapCoords.x *= m_pMandelMini->xScale;
+                    mouseMinimapCoords.y *= m_pMandelMini->yScale;
+                    mouseMinimapCoords += Vec2f(m_mandelUpperLeftX, m_mandelLowerRightY);
+                    // sign correction
+                    mouseMinimapCoords.y *= -1;
+
+                    // avoid recognizing the same point more than once
+                    if (m_pMandelMini->upperLeft != mouseMinimapCoords &&
+                            m_pMandelMini->lowerRight != mouseMinimapCoords &&
+                            mouseMinimapCoords.x <= 0.0f)
+                    {
+                        // if first selected point
+                        if (m_pMandelMini->clickCnt == 0)
+                        {
+                            m_pMandelMini->upperLeft = mouseMinimapCoords;
+                            m_pMandelMini->clickCnt++;
+                        }
+                    }
+                }
+                m_pInput->GetMouseLocationChange(mouseX, mouseY);
+                m_pPosition->TurnOnMouseMovement(mouseX, mouseY, 0.5f);
+            }
+        }
+        if (m_rightMouseDown)
+        {
+            if (m_drawMandelbrot && m_drawMinimap)
+            {
+                // check if clicked inside the minimap
+                m_pInput->GetMouseLocation(mouseX, mouseY);
+                int minimapLeft = m_screenWidth - m_pMandelMini->width;
+                int minimapTop = m_screenHeight - m_pMandelMini->height;
+
+                if (mouseX > minimapLeft && mouseY > minimapTop)
+                {
+                    // Map mouse coordinates to minimap coordinate system.
+                    Vec2f mouseMinimapCoords = Vec2f((float)mouseX - minimapLeft,
+                                                     (float)mouseY - minimapTop);
+                    // normalize to 0..1
+                    mouseMinimapCoords.x /= (float)m_pMandelMini->width;
+                    mouseMinimapCoords.y /= (float)m_pMandelMini->height;
+                    // map mouse minimap coordinates to current displayed
+                    // coordinate system
+                    mouseMinimapCoords.x *= m_pMandelMini->xScale;
+                    mouseMinimapCoords.y *= m_pMandelMini->yScale;
+                    mouseMinimapCoords += Vec2f(m_mandelUpperLeftX, m_mandelLowerRightY);
+                    // sign correction
+                    mouseMinimapCoords.y *= -1;
+
+                    if (m_pMandelMini->clickCnt == 1 &&
+                            mouseMinimapCoords.y < 0.0 &&
+                            ((m_pMandelMini->upperLeft.x < mouseMinimapCoords.x &&
+                              m_pMandelMini->upperLeft.y > mouseMinimapCoords.y) ||
+                             (m_pMandelMini->upperLeft.x > mouseMinimapCoords.x &&
+                              m_pMandelMini->upperLeft.y < mouseMinimapCoords.y)))
+                    {
+                        m_pMandelMini->lowerRight = mouseMinimapCoords;
+                        // match the points depending on position
+                        if (m_pMandelMini->lowerRight.x < m_pMandelMini->upperLeft.x)
+                        {
+                            Vec2f tmp = m_pMandelMini->lowerRight;
+                            m_pMandelMini->lowerRight = m_pMandelMini->upperLeft;
+                            m_pMandelMini->upperLeft = tmp;
+                        }
+
+                        m_mandelUpperLeftX = m_pMandelMini->upperLeft.x;
+                        m_mandelUpperLeftY = m_pMandelMini->upperLeft.y;
+                        m_mandelLowerRightX = m_pMandelMini->lowerRight.x;
+                        m_mandelLowerRightY = m_pMandelMini->lowerRight.y;
+                        m_pMandelMini->clickCnt = 0;
+                        m_pMandelMini->poi = Vec2f(-1.0f);
+                    }
+                }
+            }
             m_pInput->GetMouseLocationChange(mouseX, mouseY);
-            m_pPosition->TurnOnMouseMovement(mouseX, mouseY, 0.5f);
         }
     }
     else
@@ -725,18 +850,18 @@ bool Application::HandleInput(float frameTime)
     Vec3f pos;
     Vec3f rot;
 
-    // Get the view point position/rotation.
+// Get the view point position/rotation.
     m_pPosition->GetPosition(pos);
     m_pPosition->GetRotation(rot);
 
-    // Set the position of the camera.
+// Set the position of the camera.
     m_pCamera->SetPosition(pos);
     m_pCamera->SetRotation(rot);
 
-    // Handle GUI parameters
+// Handle GUI parameters
     m_pDirect3D->SetFullscreen(m_fullScreen);
     m_pDirect3D->SetWireframe(m_wireframe);
-    // workaround. TODO: fix wireframe ocean animation
+// workaround. TODO: fix wireframe ocean animation
     if (m_wireframe)
     {
         m_stopAnimation = true;
@@ -745,7 +870,7 @@ bool Application::HandleInput(float frameTime)
     m_pOcean->SetTimeScale(m_oceanTimeScale);
     m_pLight->SetDirection(m_guiLightDir[0], m_guiLightDir[1], m_guiLightDir[2]);
 
-    // Only bother with rebuilding terrain if it is actually drawn...
+// Only bother with rebuilding terrain if it is actually drawn...
     if (m_drawTerrain)
     {
         // workaround, TODO: use callback methods...
@@ -795,6 +920,7 @@ bool Application::HandleInput(float frameTime)
         // If so, set flag for recalculating Mandelbrot rectangle.
         if (m_oldTerrainResolution != m_terrainResolution ||
                 m_oldTerrainVariance != m_terrainVariance ||
+                m_oldTerrainScaling != m_terrainScaling ||
                 m_oldMandelUpperLeftX != m_mandelUpperLeftX ||
                 m_oldMandelUpperLeftY != m_mandelUpperLeftY ||
                 m_oldMandelLowerRightX != m_mandelLowerRightX ||
@@ -808,6 +934,7 @@ bool Application::HandleInput(float frameTime)
             // Update memory variables.
             // Resolution is updated in process frame because it is needed for a check.
             m_oldTerrainVariance = m_terrainVariance;
+            m_oldTerrainScaling = m_terrainScaling;
             m_oldMandelUpperLeftX = m_mandelUpperLeftX;
             m_oldMandelUpperLeftY = m_mandelUpperLeftY;
             m_oldMandelLowerRightX = m_mandelLowerRightX;
@@ -1020,12 +1147,12 @@ bool Application::RenderGraphics()
     // gender AntTweakBar
     m_pGUI->RenderGUI();
 
-    if (m_drawMandelbrot)
+    if (m_drawMandelbrot && m_drawMinimap)
     {
         // create minimap render object
         m_pMinimap->Render(m_pDirect3D->GetDeviceContext(),
-                           m_screenWidth - m_minimapWidth - 10,
-                           m_screenHeight - m_minimapHeight - 10);
+                           m_screenWidth - m_pMandelMini->width,
+                           m_screenHeight - m_pMandelMini->height);
         // render minimap
         m_pMinimapShader->Render(m_pDirect3D->GetDeviceContext(),
                                  2 * 3, // two triangles
@@ -1033,10 +1160,12 @@ bool Application::RenderGraphics()
                                  m_baseViewMatrix,
                                  orthoMatrix,
                                  m_pMandelbrot->GetHeightTex(),
-                                 (float)m_minimapWidth,
-                                 (float)m_minimapHeight,
+                                 (float)m_pMandelMini->width,
+                                 (float)m_pMandelMini->height,
                                  (float)(1 << m_terrainResolution),
-                                 (float)(1 << m_terrainResolution));
+                                 (float)(1 << m_terrainResolution),
+                                 m_pMandelMini->poi.x,
+                                 m_pMandelMini->poi.y);
     }
 
     // Present the rendered scene to the screen.
@@ -1148,6 +1277,14 @@ bool Application::SetGuiParams()
             return false;
         }
     }
+    else
+    {
+        if (!m_pGUI->AddBoolVar("Render Minimap", m_drawMinimap, ""))
+        {
+            return false;
+        }
+    }
+
 
     // Mandelbrot pixel game settings
     if (m_drawMandelbrot)

@@ -34,6 +34,22 @@
 //
 class Application
 {
+
+    struct MandelMinimap
+    {
+        int width;
+        int height;
+
+        float xScale;
+        float yScale;
+
+        Vec2f upperLeft;
+        Vec2f lowerRight;
+        Vec2f poi;
+
+        int clickCnt;
+    };
+
 public:
     //  Constructor
     Application(void);
@@ -117,6 +133,7 @@ private:
     bool m_oldDrawMandelbrot;
     bool m_oldDrawOcean;
     bool m_oldDrawTerrain;
+    bool m_drawMinimap;
 
     // ocean settings
     int m_oceanTileFactor;
@@ -157,9 +174,8 @@ private:
     bool m_oldUseQuadtree;
     int m_maxTrianglesQtNode;
 
-    // Minimap settings
-    int m_minimapWidth;
-    int m_minimapHeight;
+    // Minimap settings struct
+    MandelMinimap *m_pMandelMini;
 
     // Camera settings
     bool m_orbitalCamera;

@@ -11,6 +11,8 @@ class TextureShader :
         float height;
         float xRes;
         float yRes;
+        float poiX;
+        float poiY;
     };
 
 public:
@@ -27,7 +29,9 @@ public:
                 float width,
                 float height,
                 float xRes,
-                float yRes);
+                float yRes,
+                float poiX,
+                float poiY);
 
 private:
     bool InitializeShader(ID3D11Device *pDevice,
@@ -43,7 +47,9 @@ private:
                              float width,
                              float height,
                              float xRes,
-                             float yRes);
+                             float yRes,
+                             float poiX,
+                             float poiY);
 
     void RenderShader(ID3D11DeviceContext *pContext, int indexCount);
 

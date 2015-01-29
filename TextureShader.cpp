@@ -25,7 +25,9 @@ bool TextureShader::Render(ID3D11DeviceContext *pContext,
                            float width,
                            float height,
                            float xRes,
-                           float yRes)
+                           float yRes,
+                           float poiX,
+                           float poiY)
 {
     bool result;
 
@@ -38,7 +40,9 @@ bool TextureShader::Render(ID3D11DeviceContext *pContext,
                                  width,
                                  height,
                                  xRes,
-                                 yRes);
+                                 yRes,
+                                 poiX,
+                                 poiY);
     if (!result)
     {
         return false;
@@ -239,7 +243,9 @@ bool TextureShader::SetShaderParameters(ID3D11DeviceContext *pContext,
                                         float width,
                                         float height,
                                         float xRes,
-                                        float yRes)
+                                        float yRes,
+                                        float poiX,
+                                        float poiY)
 {
     HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -285,6 +291,8 @@ bool TextureShader::SetShaderParameters(ID3D11DeviceContext *pContext,
     pPerFrameDataBufferPS->height = height;
     pPerFrameDataBufferPS->xRes = xRes;
     pPerFrameDataBufferPS->yRes = yRes;
+    pPerFrameDataBufferPS->poiX = poiX;
+    pPerFrameDataBufferPS->poiY = poiY;
     pContext->Unmap(m_perFameBufferPS, 0);
     pContext->PSSetConstantBuffers(1, 1, &m_perFameBufferPS);
 

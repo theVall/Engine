@@ -10,6 +10,8 @@ cbuffer PerFrameConstBufPS : register(b1)
     float mapHeight;
     float xRes;
     float yRes;
+    float poiX;
+    float poiY;
 };
 
 struct PixelInputType
@@ -31,6 +33,14 @@ float4 Main(PixelInputType input) : SV_TARGET
     if (tex.y*mapWidth > mapWidth - 5 || tex.y*mapWidth < 5 ||
     tex.x*mapHeight > mapHeight - 5 || tex.x*mapHeight < 5)
     {
+        return output;
+    }
+
+    // selected point
+    if (tex.x > poiY - 0.01f && tex.y > poiX - 0.01f &&
+    tex.x < poiY + 0.01f && tex.y < poiX + 0.01f)
+    {
+        output = float4(1.0f, 0.0f, 0.0f, 1.0f);
         return output;
     }
 
