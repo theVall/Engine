@@ -16,8 +16,8 @@ Application::Application()
 
     m_drawSkyDome       = true;
     m_drawOcean         = m_oldDrawOcean        = false;
-    m_drawTerrain       = m_oldDrawTerrain      = false;
-    m_drawMandelbrot    = m_oldDrawMandelbrot   = true;
+    m_drawTerrain       = m_oldDrawTerrain      = true;
+    m_drawMandelbrot    = m_oldDrawMandelbrot   = false;
     m_drawMinimap       = true;
 
     // terrain settings
@@ -28,7 +28,7 @@ Application::Application()
     m_terrainResolution     = m_oldTerrainResolution    = 8;
 
     // Quad tree
-    m_useQuadtree        = m_oldUseQuadtree = false;
+    m_useQuadtree        = m_oldUseQuadtree = true;
     m_maxTrianglesQtNode = 5000;
 
     // Mandelbrot settings
@@ -229,12 +229,19 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
 
     m_pDirect3D->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
     m_pFont->drawText(m_pDirect3D->GetDeviceContext(),
-                      L"Initializing...\n",
-                      20.0f,
+                      L"VallEngine",
                       50.0f,
-                      50.0f,
-                      0xff8cc63e,
-                      0);
+                      m_screenWidth / 2.0f,
+                      m_screenHeight / 2.0f - 25.0f,
+                      0xff00ffff, // yellow
+                      0x1 | 0x4); // center text
+    m_pFont->drawText(m_pDirect3D->GetDeviceContext(),
+                      L"Initializing...",
+                      25.0f,
+                      m_screenWidth / 2.0f,
+                      m_screenHeight / 2.0f + 50.0f,
+                      0xff00ffff, // yellow
+                      0x1 | 0x4); // center text
     m_pDirect3D->EndScene();
 
     // Create and initialize the __quad tree__.
@@ -730,10 +737,10 @@ bool Application::HandleInput(float frameTime)
             if (m_drawMandelbrot && m_drawMinimap)
             {
                 HandleMinimapClicks(false);
-
-                m_pInput->GetMouseLocationChange(mouseX, mouseY);
-                m_pPosition->TurnOnMouseMovement(mouseX, mouseY, 0.5f);
             }
+
+            m_pInput->GetMouseLocationChange(mouseX, mouseY);
+            m_pPosition->TurnOnMouseMovement(mouseX, mouseY, 0.5f);
         }
         if (m_rightMouseDown)
         {
