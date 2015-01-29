@@ -242,8 +242,8 @@ bool MandelbrotShader::SetShaderParameters(ID3D11DeviceContext *pContext,
 
     PerFrameBufferTypeVS *pPerFrameDataBufferVS = (PerFrameBufferTypeVS *)mappedResource.pData;
     pPerFrameDataBufferVS->heightMapDim = (float)m_meshDim;
-    pPerFrameDataBufferVS->xScale = (fabs(upperLeft.x) + (lowerRight.x))*xyScaling;
-    pPerFrameDataBufferVS->yScale = ((upperLeft.y) + fabs(lowerRight.y))*xyScaling;
+    pPerFrameDataBufferVS->xScale = fabs(upperLeft.x - lowerRight.x)*xyScaling;
+    pPerFrameDataBufferVS->yScale = fabs(upperLeft.y - lowerRight.y)*xyScaling;
     pPerFrameDataBufferVS->heigthScale = heigthScale;
     pContext->Unmap(m_perFameBufferVS, 0);
 
@@ -379,7 +379,7 @@ bool MandelbrotShader::CreateSurfaceVertices(ID3D11Device *pDevice)
     delete(pVertices);
 
     // Index buffer
-    m_numIndices = ((m_meshDim + 1) * 2) * (m_meshDim)+(m_meshDim - 1);
+    m_numIndices = ((m_meshDim + 1) * 2) * m_meshDim + (m_meshDim - 1);
 
     int idDim = m_meshDim + 1;
 

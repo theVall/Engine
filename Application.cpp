@@ -463,8 +463,8 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     m_pMandelMini->clickCnt = 0;
     m_pMandelMini->upperLeft = Vec2f(m_mandelUpperLeftX, m_mandelUpperLeftY);
     m_pMandelMini->lowerRight = Vec2f(m_mandelLowerRightX, m_mandelLowerRightY);
-    m_pMandelMini->xScale = fabs(m_mandelUpperLeftX) + m_mandelLowerRightX;
-    m_pMandelMini->yScale = m_mandelUpperLeftY + fabs(m_mandelLowerRightY);
+    m_pMandelMini->xScale = fabs(m_mandelUpperLeftX - m_mandelLowerRightX);
+    m_pMandelMini->yScale = fabs(m_mandelUpperLeftY - m_mandelLowerRightY);
     m_pMandelMini->width = (int)(INITIAL_MINIMAP_SIZE / 2.0f * m_pMandelMini->xScale);
     m_pMandelMini->height = (int)(INITIAL_MINIMAP_SIZE / 2.0f * m_pMandelMini->yScale);
 
@@ -617,8 +617,8 @@ bool Application::ProcessFrame()
                                               m_pDirect3D->GetDeviceContext());
 
         // update minimap scaling
-        m_pMandelMini->xScale = fabs(m_mandelUpperLeftX) + m_mandelLowerRightX;
-        m_pMandelMini->yScale = m_mandelUpperLeftY + fabs(m_mandelLowerRightY);
+        m_pMandelMini->xScale = fabs(m_mandelUpperLeftX - m_mandelLowerRightX);
+        m_pMandelMini->yScale = fabs(m_mandelUpperLeftY - m_mandelLowerRightY);
         m_pMandelMini->width = (int)(INITIAL_MINIMAP_SIZE / 2.0f * m_pMandelMini->xScale);
         m_pMandelMini->height = (int)(INITIAL_MINIMAP_SIZE / 2.0f * m_pMandelMini->yScale);
 
@@ -755,8 +755,7 @@ bool Application::HandleInput(float frameTime)
 
                     // avoid recognizing the same point more than once
                     if (m_pMandelMini->upperLeft != mouseMinimapCoords &&
-                            m_pMandelMini->lowerRight != mouseMinimapCoords &&
-                            mouseMinimapCoords.x <= 0.0f)
+                            m_pMandelMini->lowerRight != mouseMinimapCoords)
                     {
                         // if first selected point
                         if (m_pMandelMini->clickCnt == 0)
@@ -796,7 +795,6 @@ bool Application::HandleInput(float frameTime)
                     mouseMinimapCoords.y *= -1;
 
                     if (m_pMandelMini->clickCnt == 1 &&
-                            mouseMinimapCoords.y < 0.0 &&
                             ((m_pMandelMini->upperLeft.x < mouseMinimapCoords.x &&
                               m_pMandelMini->upperLeft.y > mouseMinimapCoords.y) ||
                              (m_pMandelMini->upperLeft.x > mouseMinimapCoords.x &&
@@ -850,18 +848,18 @@ bool Application::HandleInput(float frameTime)
     Vec3f pos;
     Vec3f rot;
 
-// Get the view point position/rotation.
+    // Get the view point position/rotation.
     m_pPosition->GetPosition(pos);
     m_pPosition->GetRotation(rot);
 
-// Set the position of the camera.
+    // Set the position of the camera.
     m_pCamera->SetPosition(pos);
     m_pCamera->SetRotation(rot);
 
-// Handle GUI parameters
+    // Handle GUI parameters
     m_pDirect3D->SetFullscreen(m_fullScreen);
     m_pDirect3D->SetWireframe(m_wireframe);
-// workaround. TODO: fix wireframe ocean animation
+    // workaround. TODO: fix wireframe ocean animation
     if (m_wireframe)
     {
         m_stopAnimation = true;
@@ -870,7 +868,7 @@ bool Application::HandleInput(float frameTime)
     m_pOcean->SetTimeScale(m_oceanTimeScale);
     m_pLight->SetDirection(m_guiLightDir[0], m_guiLightDir[1], m_guiLightDir[2]);
 
-// Only bother with rebuilding terrain if it is actually drawn...
+    // Only bother with rebuilding terrain if it is actually drawn...
     if (m_drawTerrain)
     {
         // workaround, TODO: use callback methods...
@@ -1297,25 +1295,25 @@ bool Application::SetGuiParams()
         }
         if (!m_pGUI->AddFloatVar("Upper Left x",
                                  m_mandelUpperLeftX,
-                                 "min=-2.1 max=0.0 step=0.01 group='Pixel Game Settings'"))
+                                 "min=-2.1 max=0.6 step=0.01 precision=5 group='Pixel Game Settings'"))
         {
             return false;
         }
         if (!m_pGUI->AddFloatVar("Upper Left y",
                                  m_mandelUpperLeftY,
-                                 "min=-1.2 max=1.2 step=0.01 group='Pixel Game Settings'"))
+                                 "min=-1.2 max=1.2 step=0.01 precision=5 group='Pixel Game Settings'"))
         {
             return false;
         }
         if (!m_pGUI->AddFloatVar("Lower Right x",
                                  m_mandelLowerRightX,
-                                 "min=-2.1 max=0.6 step=0.01 group='Pixel Game Settings'"))
+                                 "min=-2.1 max=0.6 step=0.01 precision=5 group='Pixel Game Settings'"))
         {
             return false;
         }
         if (!m_pGUI->AddFloatVar("Lower Right y",
                                  m_mandelLowerRightY,
-                                 "min=-1.2 max=0.0 step=0.01 group='Pixel Game Settings'"))
+                                 "min=-1.2 max=1.2 step=0.01 precision=5 group='Pixel Game Settings'"))
         {
             return false;
         }
