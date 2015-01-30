@@ -363,7 +363,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     }
     Ocean::OceanParameter oceanParams = { 512,                  // map dim
                                           m_oceanTimeScale,     // time factor
-                                          0.3f,                // amplitude
+                                          0.3f,                 // amplitude
                                           Vec2f(0.3f, 0.6f),    // wind direction
                                           400.0f,               // wind speed
                                           0.07f,                // wind dependency
@@ -748,7 +748,8 @@ bool Application::HandleInput(float frameTime)
             {
                 HandleMinimapClicks(true);
             }
-            m_pInput->GetMouseLocationChange(mouseX, mouseY);
+
+            //m_pInput->GetMouseLocationChange(mouseX, mouseY);
         }
     }
     else
@@ -929,8 +930,20 @@ bool Application::RenderGraphics()
     if (m_orbitalCamera)
     {
         // Calculate target point from terrain size for orbital cam.
-        float target = (float)m_pTerrain->GetWidth() * (float)m_terrainScaling / 2.0f;
-        m_pCamera->RenderOrbital(Vec3f(target, 0.0f, target), m_zoom);
+        float target = (float)(1 << m_terrainResolution) * (float)m_terrainScaling / 2.0f;
+        if (m_drawTerrain)
+        {
+            m_pCamera->RenderOrbital(Vec3f(target, 0.0f, target), m_zoom);
+        }
+        else if (m_drawMandelbrot)
+        {
+            // Care: Mandelbrot terrain is not square. Use scaling factors from minimap.
+            m_pCamera->RenderOrbital(Vec3f(target * m_pMandelMini->xScale,
+                                           0.0f,
+                                           target * m_pMandelMini->yScale),
+                                     m_zoom);
+        }
+
     }
     else
     {
@@ -1167,12 +1180,12 @@ bool Application::SetGuiParams()
     {
         return false;
     }
+    if (!m_pGUI->AddBoolVar("Orbital Camera", m_orbitalCamera, ""))
+    {
+        return false;
+    }
     if (m_drawTerrain)
     {
-        if (!m_pGUI->AddBoolVar("Orbital Camera", m_orbitalCamera, ""))
-        {
-            return false;
-        }
         if (!m_pGUI->AddBoolVar("Walking Mode", m_lockSurfaceCamera, ""))
         {
             return false;
