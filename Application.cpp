@@ -53,10 +53,6 @@ Application::Application()
     m_spectatorHeight   = 10.0f;
     m_elapsedTime       = 0;
 
-    m_guiLightDir[0] = 0.2f;
-    m_guiLightDir[1] = -0.33f;
-    m_guiLightDir[2] = 0.3f;
-
     // set pointer to null
     m_pInput            = nullptr;
     m_pDirect3D         = nullptr;
@@ -209,7 +205,11 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     }
     m_pLight->SetAmbientColor(0.05f, 0.05f, 0.05f, 1.0f);
     m_pLight->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
-    m_pLight->SetDirection(0.2f, -0.33f, 0.3f);
+    m_pLight->SetDirection(0.40f, -0.30f, 0.15f);
+    // light vector in GUI
+    m_guiLightDir[0] = m_pLight->GetDirection().x;
+    m_guiLightDir[1] = m_pLight->GetDirection().y;
+    m_guiLightDir[2] = m_pLight->GetDirection().z;
 
     // Create the __frustum__ for view frustum culling
     m_pFrustum = new Frustum;
@@ -267,7 +267,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
         return false;
     }
     if (!m_pSkyDomeTex->LoadFromDDS(m_pDirect3D->GetDevice(),
-                                    L"../Engine/res/tex/sky2.dds"))
+                                    L"../Engine/res/tex/sky2_new.dds"))
     {
         MessageBox(m_hwnd, L"Error loading sky dome texture.", L"Error", MB_OK);
         return false;
@@ -363,7 +363,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     }
     Ocean::OceanParameter oceanParams = { 512,                  // map dim
                                           m_oceanTimeScale,     // time factor
-                                          0.25f,                // amplitude
+                                          0.3f,                // amplitude
                                           Vec2f(0.3f, 0.6f),    // wind direction
                                           400.0f,               // wind speed
                                           0.07f,                // wind dependency

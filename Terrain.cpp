@@ -6,7 +6,7 @@ Terrain::Terrain()
     m_Util = 0;
     m_scaling = 1.0f;
     m_heightScaling = 1.0f;
-    m_rand = 156;
+    m_rand = 14875;
 
     // random seed
     srand((int)time(NULL));

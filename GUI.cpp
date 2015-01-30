@@ -28,7 +28,7 @@ bool GUI::Initialize(ID3D11Device *pDevice,
     m_pTweakBar = TwNewBar(name);
 
     //TwDefine(" Settings color='255 255 0' ");
-    TwDefine(" Settings position='10 50' ");
+    TwDefine(" Settings position='10 10' ");
     TwDefine(" Settings iconified=false ");
     TwDefine(" Settings fontsize=2 ");
     TwDefine(" Settings size='220 380' ");
