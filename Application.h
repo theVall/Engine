@@ -46,6 +46,7 @@ class Application
         Vec2f upperLeft;
         Vec2f lowerRight;
         Vec2f poi;
+        Vec2f poi2;
 
         int clickCnt;
     };
@@ -93,7 +94,8 @@ public:
 private:
     bool SetGuiParams();
 
-    void HandleMinimapClicks(bool isRightMouse);
+    void HandleMinimapClicks(int mouseX, int mouseY,
+                             bool isRightMouse, bool isLeftMouse);
 
     // Safe shutdown/delete handler
     template<typename T> void SafeShutdown(T *&obj)

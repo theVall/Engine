@@ -10,8 +10,8 @@ cbuffer PerFrameConstBufPS : register(b1)
     float mapHeight;
     float xRes;
     float yRes;
-    float poiX;
-    float poiY;
+    float2 poi;
+    float2 poi2;
 };
 
 struct PixelInputType
@@ -19,6 +19,30 @@ struct PixelInputType
 float4 position : SV_POSITION;
 float2 tex : TEXCOORD0;
 };
+
+// returns true if it is POI
+bool HighlightPoi(float2 poi, float2 tex, inout float4 color)
+{
+    float2 scaling = float2(1.0f / mapWidth, 1.0f / mapHeight);
+
+    // highlight point of interest
+    if (tex.x > poi.y - scaling.y && tex.y > poi.x - scaling.x &&
+            tex.x < poi.y + scaling.y && tex.y < poi.x + scaling.x)
+    {
+        return true;
+    }
+    // draw guidelines
+    if (tex.x > poi.y - scaling.y && tex.x < poi.y + scaling.y)
+    {
+        color.r = 0.5f;
+    }
+    if (tex.y > poi.x - scaling.x && tex.y < poi.x + scaling.x)
+    {
+        color.r = 0.5f;
+    }
+
+    return false;
+}
 
 
 // Entry point main method.
@@ -36,20 +60,23 @@ float4 Main(PixelInputType input) : SV_TARGET
         return output;
     }
 
-    // selected point
-    if (tex.x > poiY - 0.01f && tex.y > poiX - 0.01f &&
-    tex.x < poiY + 0.01f && tex.y < poiX + 0.01f)
+    output = float4(1.0f, 0.0f, 0.0f, 1.0f);
+    if (HighlightPoi(poi, tex, color) || HighlightPoi(poi2, tex, color))
     {
-        output = float4(1.0f, 0.0f, 0.0f, 1.0f);
         return output;
     }
+    else
+    {
+        output = float4(0.0f, 0.0f, 0.0f, 1.0f);
+    }
 
+    // color mapping based on height value
     float height = (texHeight.Sample(sampleType, tex).r);
     height /= 10.0f;
 
     if (height == 0.0f)
     {
-        color.rgb = float3(0.9f, 0.9f, 0.0f);
+        color.rgb += float3(0.9f, 0.9f, 0.0f);
     }
     else
     {
@@ -57,7 +84,7 @@ float4 Main(PixelInputType input) : SV_TARGET
         {
             height = 3.0f * sqrt(height);
         }
-        color.r = height / 0.9f;
+        color.r += height / 0.9f;
         color.g = height / 0.9f;
         color.b = height / 0.3f;
     }

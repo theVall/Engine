@@ -734,22 +734,52 @@ bool Application::HandleInput(float frameTime)
     {
         if (m_leftMouseDown)
         {
+            m_pInput->GetMouseLocationChange(mouseX, mouseY);
+
+            // select first minimap point with left mouse click
             if (m_drawMandelbrot && m_drawMinimap)
             {
-                HandleMinimapClicks(false);
+                HandleMinimapClicks(mouseX, mouseY, false, true);
             }
 
-            m_pInput->GetMouseLocationChange(mouseX, mouseY);
             m_pPosition->TurnOnMouseMovement(mouseX, mouseY, 0.5f);
         }
-        if (m_rightMouseDown)
+        else if (m_rightMouseDown)
         {
+            m_pInput->GetMouseLocationChange(mouseX, mouseY);
+
+            // select second minimap point with right mouse click
             if (m_drawMandelbrot && m_drawMinimap)
             {
-                HandleMinimapClicks(true);
+                HandleMinimapClicks(mouseX, mouseY, true, false);
             }
 
-            //m_pInput->GetMouseLocationChange(mouseX, mouseY);
+            // zoom on right mouse button down
+            if (m_orbitalCamera)
+            {
+                int mouseXLoc;
+                int mouseYLoc;
+                m_pInput->GetMouseLocation(mouseXLoc, mouseYLoc);
+
+                if (mouseY > 0)
+                {
+                    m_zoom += (mouseY + mouseYLoc) / (m_pProfiler->GetFps() / 10.0f);
+                }
+                else if (mouseY < 0)
+                {
+                    m_zoom -= (-mouseY + mouseYLoc) / (m_pProfiler->GetFps() / 10.0f);
+                }
+            }
+        }
+        else
+        {
+            m_pInput->GetMouseLocationChange(mouseX, mouseY);
+
+            // select second minimap point with right mouse click
+            if (m_drawMandelbrot && m_drawMinimap)
+            {
+                HandleMinimapClicks(mouseX, mouseY, false, false);
+            }
         }
     }
     else
@@ -758,23 +788,6 @@ bool Application::HandleInput(float frameTime)
         m_pPosition->TurnOnMouseMovement(mouseX, mouseY, 0.5f);
     }
 
-    // zoom on right mouse button down
-    if (m_rightMouseDown && m_orbitalCamera)
-    {
-        int mouseXLoc;
-        int mouseYLoc;
-
-        m_pInput->GetMouseLocation(mouseXLoc, mouseYLoc);
-        m_pInput->GetMouseLocationChange(mouseX, mouseY);
-        if (mouseY > 0)
-        {
-            m_zoom += (mouseY + mouseYLoc) / (m_pProfiler->GetFps() / 10.0f);
-        }
-        else if (mouseY < 0)
-        {
-            m_zoom -= (-mouseY + mouseYLoc) / (m_pProfiler->GetFps() / 10.0f);
-        }
-    }
 
     Vec3f pos;
     Vec3f rot;
@@ -1105,8 +1118,8 @@ bool Application::RenderGraphics()
                                  (float)m_pMandelMini->height,
                                  (float)(1 << m_terrainResolution),
                                  (float)(1 << m_terrainResolution),
-                                 m_pMandelMini->poi.x,
-                                 m_pMandelMini->poi.y);
+                                 m_pMandelMini->poi,
+                                 m_pMandelMini->poi2);
     }
 
     // Present the rendered scene to the screen.
@@ -1382,11 +1395,9 @@ bool Application::SetGuiParams()
 }
 
 
-void Application::HandleMinimapClicks(bool isRightMouse)
+void Application::HandleMinimapClicks(int mouseX, int mouseY,
+                                      bool isRightMouse, bool isLeftMouse)
 {
-    int mouseX;
-    int mouseY;
-
     // check if clicked inside the minimap
     m_pInput->GetMouseLocation(mouseX, mouseY);
     int minimapLeft = m_screenWidth - m_pMandelMini->width;
@@ -1401,9 +1412,14 @@ void Application::HandleMinimapClicks(bool isRightMouse)
         mouseMinimapCoords.x /= (float)m_pMandelMini->width;
         mouseMinimapCoords.y /= (float)m_pMandelMini->height;
 
-        if (!isRightMouse)
+        if (!isRightMouse && isLeftMouse)
         {
             m_pMandelMini->poi = mouseMinimapCoords;
+        }
+        else if (!isRightMouse && !isLeftMouse)
+        {
+            m_pMandelMini->poi2 = mouseMinimapCoords;
+            return;
         }
 
         // map mouse minimap coordinates to current displayed
@@ -1419,12 +1435,13 @@ void Application::HandleMinimapClicks(bool isRightMouse)
                 m_pMandelMini->lowerRight != mouseMinimapCoords)
         {
             // if first selected point
-            if (m_pMandelMini->clickCnt == 0)
+            if (m_pMandelMini->clickCnt == 0 && !isRightMouse)
             {
                 m_pMandelMini->upperLeft = mouseMinimapCoords;
                 m_pMandelMini->clickCnt++;
             }
             else if (m_pMandelMini->clickCnt == 1 &&
+                     isRightMouse &&
                      ((m_pMandelMini->upperLeft.x < mouseMinimapCoords.x &&
                        m_pMandelMini->upperLeft.y > mouseMinimapCoords.y) ||
                       (m_pMandelMini->upperLeft.x > mouseMinimapCoords.x &&
@@ -1439,13 +1456,17 @@ void Application::HandleMinimapClicks(bool isRightMouse)
                     m_pMandelMini->upperLeft = tmp;
                 }
 
+                // set new border points
                 m_mandelUpperLeftX = m_pMandelMini->upperLeft.x;
                 m_mandelUpperLeftY = m_pMandelMini->upperLeft.y;
                 m_mandelLowerRightX = m_pMandelMini->lowerRight.x;
                 m_mandelLowerRightY = m_pMandelMini->lowerRight.y;
+                // clear POI
                 m_pMandelMini->clickCnt = 0;
-                m_pMandelMini->poi = Vec2f(-1.0f);
+                m_pMandelMini->poi = Vec2f(-10.0f);
             }
         }
     }
+    // clear POI
+    m_pMandelMini->poi2 = Vec2f(-10.0f);
 }
