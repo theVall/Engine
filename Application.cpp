@@ -1103,6 +1103,9 @@ bool Application::RenderGraphics()
 
     if (m_drawMandelbrot && m_drawMinimap)
     {
+        // disable wireframe mode
+        m_pDirect3D->SetWireframe(false);
+
         // create minimap render object
         m_pMinimap->Render(m_pDirect3D->GetDeviceContext(),
                            m_screenWidth - m_pMandelMini->width,
@@ -1120,6 +1123,8 @@ bool Application::RenderGraphics()
                                  (float)(1 << m_terrainResolution),
                                  m_pMandelMini->poi,
                                  m_pMandelMini->poi2);
+
+        m_pDirect3D->SetWireframe(m_wireframe);
     }
 
     // Present the rendered scene to the screen.
@@ -1440,12 +1445,7 @@ void Application::HandleMinimapClicks(int mouseX, int mouseY,
                 m_pMandelMini->upperLeft = mouseMinimapCoords;
                 m_pMandelMini->clickCnt++;
             }
-            else if (m_pMandelMini->clickCnt == 1 &&
-                     isRightMouse &&
-                     ((m_pMandelMini->upperLeft.x < mouseMinimapCoords.x &&
-                       m_pMandelMini->upperLeft.y > mouseMinimapCoords.y) ||
-                      (m_pMandelMini->upperLeft.x > mouseMinimapCoords.x &&
-                       m_pMandelMini->upperLeft.y < mouseMinimapCoords.y)))
+            else if (m_pMandelMini->clickCnt == 1 && isRightMouse)
             {
                 m_pMandelMini->lowerRight = mouseMinimapCoords;
                 // match the points depending on position
