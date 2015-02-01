@@ -112,54 +112,59 @@ bool Frustum::CheckPoint(Vec3f vec)
 }
 
 
-bool Frustum::CheckCube(float xCenter, float yCenter, float zCenter, float radius)
+bool Frustum::CheckCube(Vec3f center, float radius)
 {
     // Check if any one point of the cube is in the view frustum.
-    // ATTENTION: y-value is taken 4x because of terrain quad-tree (got no y-Center)
-    // for the use with other cubes a separate function should be used/implemented
+    // __NOTE__ Workaround: y-value is taken 4x because of terrain quad-tree
+    // (got no y-Center).
+    // For the use with other cubes a separate function should be used/implemented.
     for (int i = 0; i < NUM_PLANES; i++)
     {
-        if (m_planes[i].IsInside(Vec3f((xCenter), (yCenter), (zCenter))))
+        if (m_planes[i].IsInside(center))
         {
             continue;
         }
-
-        if (m_planes[i].IsInside(Vec3f((xCenter - radius), (yCenter - 4*radius), (zCenter - radius))))
+        if (m_planes[i].IsInside(center - Vec3f(radius, 4.0f*radius, radius)))
         {
             continue;
         }
-
-        if (m_planes[i].IsInside(Vec3f((xCenter + radius), (yCenter - 4*radius), (zCenter - radius))))
+        if (m_planes[i].IsInside(Vec3f(center.x + radius,
+                                       center.y - 4.0f*radius,
+                                       center.z - radius)))
         {
             continue;
         }
-
-        if (m_planes[i].IsInside(Vec3f((xCenter - radius), (yCenter + 4*radius), (zCenter - radius))))
+        if (m_planes[i].IsInside(Vec3f(center.x - radius,
+                                       center.y + 4.0f*radius,
+                                       center.z - radius)))
         {
             continue;
         }
-
-        if (m_planes[i].IsInside(Vec3f((xCenter + radius), (yCenter + 4*radius), (zCenter - radius))))
+        if (m_planes[i].IsInside(Vec3f(center.x + radius,
+                                       center.y + 4.0f*radius,
+                                       center.z - radius)))
         {
             continue;
         }
-
-        if (m_planes[i].IsInside(Vec3f((xCenter - radius), (yCenter - 4*radius), (zCenter + radius))))
+        if (m_planes[i].IsInside(Vec3f(center.x - radius,
+                                       center.y - 4.0f*radius,
+                                       center.z + radius)))
         {
             continue;
         }
-
-        if (m_planes[i].IsInside(Vec3f((xCenter + radius), (yCenter - 4*radius), (zCenter + radius))))
+        if (m_planes[i].IsInside(Vec3f(center.x + radius,
+                                       center.y - 4.0f*radius,
+                                       center.z + radius)))
         {
             continue;
         }
-
-        if (m_planes[i].IsInside(Vec3f((xCenter - radius), (yCenter + 4*radius), (zCenter + radius))))
+        if (m_planes[i].IsInside(Vec3f(center.x - radius,
+                                       center.y + 4.0f*radius,
+                                       center.z + radius)))
         {
             continue;
         }
-
-        if (m_planes[i].IsInside(Vec3f((xCenter + radius), (yCenter + 4*radius), (zCenter + radius))))
+        if (m_planes[i].IsInside(center + Vec3f(radius, 4.0f*radius, radius)))
         {
             continue;
         }
@@ -171,17 +176,12 @@ bool Frustum::CheckCube(float xCenter, float yCenter, float zCenter, float radiu
 }
 
 
-bool Frustum::CheckSphere(float xCenter, float yCenter, float zCenter, float radius)
+bool Frustum::CheckSphere(Vec3f center, float radius)
 {
     // Check if the radius of the sphere is inside the view frustum.
     for (int i = 0; i < NUM_PLANES; i++)
     {
-        // TODO negative radius?
-        //if (m_planes[i].GetDistance(Vec3f(xCenter, yCenter, zCenter)) < -radius)
-        //{
-        //    return false;
-        //}
-        if (m_planes[i].IsInside(Vec3f(xCenter, yCenter, zCenter), -radius))
+        if (m_planes[i].IsInside(center, -radius))
         {
             return false;
         }
@@ -191,52 +191,59 @@ bool Frustum::CheckSphere(float xCenter, float yCenter, float zCenter, float rad
 }
 
 
-bool Frustum::CheckRectangle(float xCenter,
-                             float yCenter,
-                             float zCenter,
-                             float xSize,
-                             float ySize,
-                             float zSize)
+bool Frustum::CheckRectangle(Vec3f center, Vec3f size)
 {
     // Check if any of the 6 planes of the rectangle are inside the view frustum.
     for (int i = 0; i < NUM_PLANES; i++)
     {
-        if (m_planes[i].IsInside(Vec3f((xCenter - xSize), (yCenter - ySize), (zCenter - zSize))))
+        if (m_planes[i].IsInside(center - size))
         {
             continue;
         }
 
-        if (m_planes[i].IsInside(Vec3f((xCenter + xSize), (yCenter - ySize), (zCenter - zSize))))
+        if (m_planes[i].IsInside(Vec3f(center.x + size.x,
+                                       center.y - size.y,
+                                       center.z - size.z)))
         {
             continue;
         }
 
-        if (m_planes[i].IsInside(Vec3f((xCenter - xSize), (yCenter + ySize), (zCenter - zSize))))
+        if (m_planes[i].IsInside(Vec3f(center.x - size.x,
+                                       center.y + size.y,
+                                       center.z - size.z)))
         {
             continue;
         }
 
-        if (m_planes[i].IsInside(Vec3f((xCenter - xSize), (yCenter - ySize), (zCenter + zSize))))
+        if (m_planes[i].IsInside(Vec3f(center.x - size.x,
+                                       center.y - size.y,
+                                       center.z + size.z)))
         {
             continue;
         }
 
-        if (m_planes[i].IsInside(Vec3f((xCenter + xSize), (yCenter + ySize), (zCenter - zSize))))
+        if (m_planes[i].IsInside(Vec3f(center.x + size.x,
+                                       center.y + size.y,
+                                       center.z - size.z)))
         {
             continue;
         }
 
-        if (m_planes[i].IsInside(Vec3f((xCenter + xSize), (yCenter - ySize), (zCenter + zSize))))
+        if (m_planes[i].IsInside(Vec3f(center.x + size.x,
+                                       center.y - size.y,
+                                       center.z + size.z)))
         {
             continue;
         }
 
-        if (m_planes[i].IsInside(Vec3f((xCenter - xSize), (yCenter + ySize), (zCenter + zSize))))
+        if (m_planes[i].IsInside(Vec3f(center.x - size.x,
+                                       center.y + size.y,
+                                       center.z + size.z)))
         {
             continue;
         }
 
-        if (m_planes[i].IsInside(Vec3f((xCenter + xSize), (yCenter + ySize), (zCenter + zSize))))
+        if (m_planes[i].IsInside(center + size))
         {
             continue;
         }

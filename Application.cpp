@@ -314,7 +314,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     }
     // Set the initial position and rotation of the viewer to the initial camera position.
     m_pPosition->SetPosition(camPos);
-    m_pPosition->TurnOnMouseMovement(90.0f, 0.0f, 1.0f);
+    m_pPosition->TurnOnMouseMovement(90, 0, 1.0f);
 
     // Create and initialize the __profiler__ object.
     m_pProfiler = new Profiler;

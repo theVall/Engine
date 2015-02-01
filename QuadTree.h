@@ -32,19 +32,19 @@ private:
         XMFLOAT4 color;
     };
 
+    // tree node
     struct NodeType
     {
-        float positionX;
-        float positionZ;
+        Vec3f position;
         float width;
 
         int triangleCount;
 
-        vector<Vec3f> vertexList;
+        vector<Vec3f> vVertexList;
 
-        ID3D11Buffer *vertexBuffer;
-        ID3D11Buffer *indexBuffer;
-        NodeType *nodes[MAX_CHILDREN];
+        ID3D11Buffer *pVertexBuffer;
+        ID3D11Buffer *pIndexBuffer;
+        NodeType *pChildNodes[MAX_CHILDREN];
     };
 
 public:
@@ -66,19 +66,15 @@ public:
     bool GetHeightAtPosition(float posX, float posZ, float &height);
 
 private:
-    void CalculateMeshDimensions(int vertexCount,
-                                 float &centerX,
-                                 float &centerZ,
-                                 float &width);
+    void CalculateMeshDimensions(int vertexCount, Vec3f &center, float &width);
 
     void CreateTreeNode(NodeType *pNode,
-                        float centerX,
-                        float centerZ,
+                        Vec3f center,
                         float width,
                         ID3D11Device *pDevice);
 
-    int CountTriangles(float posX, float posY, float width);
-    bool IsTriangleContained(int index, float posX, float posZ, float width);
+    int CountTriangles(Vec3f position, float width);
+    bool IsTriangleContained(int index, Vec3f position, float width);
     void ReleaseNode(NodeType *pNode);
     void RenderNode(NodeType *pNode,
                     Frustum *pFrustum,
@@ -88,20 +84,23 @@ private:
 
     void FindNode(NodeType *node, float posX, float posZ, float &height);
 
-    // Checks if the y-parallel line with posX and posZ intersects the triangle (v0, v1, v2).
-    // <param> posX x-position of the point which height is to be determined.
-    // <param> posZ z-position of the point which height is to be determined.
-    // <returns> height the height value of the triangle on the position.
-    bool CheckHeightOfTriangle(float posX, float posZ, float &height, Vec3f v0, Vec3f v1, Vec3f v2);
+    // Checks if the y-parallel line with posX and posZ intersects the triangle
+    // (v0, v1, v2). Height of the triangle is returned.
+    bool CheckHeightOfTriangle(float posX,
+                               float posZ,
+                               float &height,
+                               Vec3f v0,
+                               Vec3f v1,
+                               Vec3f v2);
 
-// member
 private:
+    // member
     int m_triangleCount;
     int m_drawCount;
     int m_maxTrianges;
     bool m_quadTreeEnabled;
 
-    vector<VertexType> m_vertexList;
+    vector<VertexType> m_vVertexList;
     NodeType *m_pParentNode;
 };
 

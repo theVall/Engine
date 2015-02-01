@@ -53,9 +53,8 @@ private:
 
     void RenderShader(ID3D11DeviceContext *pContext, int indexCount);
 
-    // member
 private:
-
+    // member
     ID3D11Buffer *m_perFameBufferPS;
 
 };

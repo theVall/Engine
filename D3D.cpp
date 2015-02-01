@@ -96,7 +96,8 @@ bool D3D::Initialize(int screenWidth,
         return false;
     }
 
-    //  Create a list to hold all the possible display modes for this monitor/GPU combination.
+    //  Create a list to hold all the possible display modes for this monitor/GPU
+    //  combination.
     displayModeList = new DXGI_MODE_DESC[numModes];
     if(!displayModeList)
     {
@@ -113,8 +114,8 @@ bool D3D::Initialize(int screenWidth,
         return false;
     }
 
-    // Find the display mode that matches the screen width and height. When a match is found
-    // store the numerator and denominator of the refresh rate for that monitor.
+    // Find the display mode that matches the screen width and height. When a match is
+    // found store the numerator and denominator of the refresh rate for that monitor.
     for (i = 0; i < numModes; ++i)
     {
         if (displayModeList[i].Width == (unsigned int)screenWidth)
@@ -137,7 +138,11 @@ bool D3D::Initialize(int screenWidth,
     m_videoCardMemory = (int)(adapterDesc.DedicatedVideoMemory / 1024 / 1024);
 
     //  Convert the name of the video card to a character array and store it.
-    error = wcstombs_s(&stringLength, m_videoCardDescription, 128, adapterDesc.Description, 128);
+    error = wcstombs_s(&stringLength,
+                       m_videoCardDescription,
+                       128,
+                       adapterDesc.Description,
+                       128);
     if(error != 0)
     {
         return false;
@@ -346,7 +351,6 @@ bool D3D::Initialize(int screenWidth,
     }
 
     // Wire frame state
-    rasterDesc.CullMode = D3D11_CULL_BACK;
     rasterDesc.FillMode = D3D11_FILL_WIREFRAME;
     result = m_device->CreateRasterizerState(&rasterDesc, &m_rasterStateWireFrame);
     if (FAILED(result))

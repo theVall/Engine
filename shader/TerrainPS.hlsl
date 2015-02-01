@@ -35,7 +35,7 @@ float4 Main(PixelInputType input) : SV_TARGET
     float3 lightDir;
     float lightIntensity;
     float4 color = ambientColor;
-    float4 textureColor;
+    float4 textureColor = float4(0.0f, 0.0f, 0.0f, 1.0f);
     float blendFactor;
 
     // TODO texArray
