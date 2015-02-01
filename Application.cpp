@@ -8,14 +8,14 @@ Application::Application()
     m_fullScreen        = false;
     m_vSync             = false;
     m_lockSurfaceCamera = false;
-    m_stopAnimation     = true;
+    m_stopAnimation     = false;
     m_leftMouseDown     = false;
     m_rightMouseDown    = false;
     m_wireframe         = false;
     m_backFaceCulling   = true;
 
     m_drawSkyDome       = true;
-    m_drawOcean         = m_oldDrawOcean        = false;
+    m_drawOcean         = m_oldDrawOcean        = true;
     m_drawTerrain       = m_oldDrawTerrain      = true;
     m_drawMandelbrot    = m_oldDrawMandelbrot   = false;
     m_drawMinimap       = true;
@@ -28,7 +28,7 @@ Application::Application()
     m_terrainResolution     = m_oldTerrainResolution    = 8;
 
     // Quad tree
-    m_useQuadtree        = m_oldUseQuadtree = true;
+    m_useQuadtree        = m_oldUseQuadtree = false;
     m_maxTrianglesQtNode = 5000;
 
     // Mandelbrot settings
@@ -38,7 +38,7 @@ Application::Application()
     m_mandelLowerRightX = m_oldMandelLowerRightX    = 0.6f;
     m_mandelLowerRightY = m_oldMandelLowerRightY    = -1.2f;
     m_mandelIterations  = m_oldMandelIterations     = 500.0f;
-    m_mandelMaskSize    = m_oldMandelMaskSize       = 9;
+    m_mandelMaskSize    = m_oldMandelMaskSize       = 15;
 
     // ocean settings
     m_oceanTileFactor   = 7;
@@ -153,6 +153,32 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     camPos.z = 100.0f * m_terrainScaling;
     m_pCamera->SetPosition(camPos);
 
+    // Create and initialize the __font wrapper__ object.
+    m_pFont = new Font;
+    if (!m_pFont)
+    {
+        MessageBox(m_hwnd, L"Could not font wrapper object.", L"Error", MB_OK);
+        return false;
+    }
+    m_pFont->Initialize(L"Arial", m_pDirect3D->GetDevice());
+
+    m_pDirect3D->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
+    m_pFont->drawText(m_pDirect3D->GetDeviceContext(),
+                      L"VallEngine",
+                      50.0f,
+                      m_screenWidth / 2.0f,
+                      m_screenHeight / 2.0f - 25.0f,
+                      0xff00ffff, // yellow
+                      0x1 | 0x4); // center text
+    m_pFont->drawText(m_pDirect3D->GetDeviceContext(),
+                      L"Initializing...",
+                      25.0f,
+                      m_screenWidth / 2.0f,
+                      m_screenHeight / 2.0f + 50.0f,
+                      0xff00ffff, // yellow
+                      0x1 | 0x4); // center text
+    m_pDirect3D->EndScene();
+
     // image loading utility object
     m_pUtil = new Util;
     if (!m_pUtil)
@@ -217,32 +243,6 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     {
         return false;
     }
-
-    // Create and initialize the __font wrapper__ object.
-    m_pFont = new Font;
-    if (!m_pFont)
-    {
-        MessageBox(m_hwnd, L"Could not font wrapper object.", L"Error", MB_OK);
-        return false;
-    }
-    m_pFont->Initialize(L"Arial", m_pDirect3D->GetDevice());
-
-    m_pDirect3D->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
-    m_pFont->drawText(m_pDirect3D->GetDeviceContext(),
-                      L"VallEngine",
-                      50.0f,
-                      m_screenWidth / 2.0f,
-                      m_screenHeight / 2.0f - 25.0f,
-                      0xff00ffff, // yellow
-                      0x1 | 0x4); // center text
-    m_pFont->drawText(m_pDirect3D->GetDeviceContext(),
-                      L"Initializing...",
-                      25.0f,
-                      m_screenWidth / 2.0f,
-                      m_screenHeight / 2.0f + 50.0f,
-                      0xff00ffff, // yellow
-                      0x1 | 0x4); // center text
-    m_pDirect3D->EndScene();
 
     // Create and initialize the __quad tree__.
     m_pQuadTree = new QuadTree;
@@ -1087,15 +1087,15 @@ bool Application::RenderGraphics()
                       0xff8cc63e,
                       0);
 
-    std::wostringstream randSeed;
-    randSeed << m_pTerrain->GetRand() << " Seed";
-    m_pFont->drawText(m_pDirect3D->GetDeviceContext(),
-                      (WCHAR *)randSeed.str().c_str(),
-                      16.0f,
-                      1150.0f,
-                      60.0f,
-                      0xff8cc63e,
-                      0);
+    //std::wostringstream randSeed;
+    //randSeed << m_pTerrain->GetRand() << " Seed";
+    //m_pFont->drawText(m_pDirect3D->GetDeviceContext(),
+    //                  (WCHAR *)randSeed.str().c_str(),
+    //                  16.0f,
+    //                  1150.0f,
+    //                  60.0f,
+    //                  0xff8cc63e,
+    //                  0);
 #endif
 
     // gender AntTweakBar
@@ -1317,7 +1317,7 @@ bool Application::SetGuiParams()
         {
             if (!m_pGUI->AddIntVar("Gauss Mask Size",
                                    m_mandelMaskSize,
-                                   "min=1 max=15 step=2 group='Terrain Settings'"))
+                                   "min=1 max=45 step=2 group='Terrain Settings'"))
             {
                 return false;
             }
@@ -1331,7 +1331,7 @@ bool Application::SetGuiParams()
     }
     if (!m_drawMandelbrot)
     {
-        if (!m_pGUI->AddFloatVar("Hurst Operator",
+        if (!m_pGUI->AddFloatVar("Hurst Exponent",
                                  m_terrainHurst,
                                  "min=0 max=1.0 step=0.01 group='Terrain Settings'"))
         {

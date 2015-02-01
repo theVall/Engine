@@ -146,7 +146,7 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
     // generate a normal distribution with initial variance and n = 0
     normal_distribution<float> distr(0.0f, variance*variance);
 
-    // initially set the four corner points
+    // initially set the four corner points with random y-offset
     int index = 0;
     // upper left
     m_heightMap[index].position = Vec3f(0.0f, 0.0f, 0.0f);
@@ -266,31 +266,24 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
 void Terrain::InterpolateHightValues(int index, int divSegment, int idWidth, float &height)
 {
     // interpolate between neighboring points (von Neumann neighborhood)
-    // special cases: border points => assume a height of 1/heightScale for outlying points
+    // special cases: border points
+    // => mirrored repeat, assume the value of the opposite neighbor
     height = 0.0f;
     int tmpIndex = 0;
 
     // upper neighbor
     tmpIndex = index - (divSegment*idWidth);;
-    if (!(tmpIndex < 0))
-    {
-    }
-    else
+    if (tmpIndex < 0)
     {
         tmpIndex = index + (divSegment*idWidth);
-        //height -= 1.0f / m_heightScaling;
     }
     height += m_heightMap[tmpIndex].position.y;
 
     // lower neighbor
     tmpIndex = index + (divSegment*idWidth);
-    if (!(tmpIndex >= idWidth * idWidth))
-    {
-    }
-    else
+    if (tmpIndex >= idWidth * idWidth)
     {
         tmpIndex = index - (divSegment*idWidth);;
-        //height -= 1.0f / m_heightScaling;
     }
     height += m_heightMap[tmpIndex].position.y;
 
@@ -302,7 +295,6 @@ void Terrain::InterpolateHightValues(int index, int divSegment, int idWidth, flo
     else
     {
         tmpIndex = index - divSegment;
-        //height -= 1.0f / m_heightScaling;
     }
     height += m_heightMap[tmpIndex].position.y;
 
@@ -314,7 +306,6 @@ void Terrain::InterpolateHightValues(int index, int divSegment, int idWidth, flo
     else
     {
         tmpIndex = index + divSegment;
-        //height -= 1.0f / m_heightScaling;
     }
     height += m_heightMap[tmpIndex].position.y;
 

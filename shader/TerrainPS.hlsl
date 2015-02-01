@@ -119,11 +119,10 @@ float4 Main(PixelInputType input) : SV_TARGET
     // combine with color map value
     color = saturate(color);
 
+    // colormap is not used atm
     //lerp(color, input.color, float4(0.5f, 0.5f, 0.5f, 0.5f));
 
     color.a = 1.0;
-    // DEBUG ONLY
-    //color = float4(1,1,1,1);
 
     return color;
 }

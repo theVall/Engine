@@ -19,8 +19,9 @@ cbuffer PerFrameConstBuf : register(b1)
     float maxIterations;
     // Size should be odd to have an unambiguous center. Maximum size is 15 (see below).
     float maskSize;
-    // maximum mask size is 4*57=228 i.e. 15*15=225 is the biggest mask with this setup
-    float4 mask[57];
+    // maximum mask size is 4*512=2048 i.e. 45*45=2025 is the biggest mask with this setup
+    // Note: maximum constant buffer size in DX11 is 4096
+    float4 mask[512];
 };
 
 // output buffers

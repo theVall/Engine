@@ -68,7 +68,7 @@ private:
                                    float hurst,
                                    float initialVariance);
     // Interpolate the height values of the points in von-Neumann-neighborhood
-    // border treatment: assume 0.0 for outlying points
+    // border treatment: mirrored repeat
     void InterpolateHightValues(int index, int divSegment, int idWidth, float &height);
 
     // Initialization helper methods

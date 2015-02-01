@@ -30,8 +30,8 @@ class Mandelbrot
         float lowerRightY;
         float iterations;
         float maskSize;
-        // size for up to 57*4 floats (i.e. a mask of 15*15 is maximum)
-        XMFLOAT4 mask[57];
+        // size for up to 157*4 floats (i.e. a mask of 25*25 is maximum)
+        XMFLOAT4 mask[512];
     };
 
 public:

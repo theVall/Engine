@@ -21,14 +21,18 @@ float4 Main(PixelInputType input, uint pid : SV_PrimitiveID) : SV_TARGET
     float4 color = float4(0.0f, 0.0f, 0.0f, 1.0f);
     float4 output = float4(1.0f, 1.0f, 1.0f, 1.0f);
 
+    // color mapping
     if (height == 0.0f)
     {
+        // yellow for everything inside the Mandelbrot set
         color.rgb = float3(0.9f, 0.9f, 0.0f);
     }
     else
     {
         if (height < 0.01f)
         {
+            // Use square root function to better highlight height differences
+            // for small heights
             height = 3.0f * sqrt(height);
         }
         color.r = height / 0.9f;
@@ -36,6 +40,7 @@ float4 Main(PixelInputType input, uint pid : SV_PrimitiveID) : SV_TARGET
         color.b = height / 0.25f;
     }
 
+    // lighting
     float3 invLightDir = -lightDir;
     float lightIntensity = saturate(dot(input.normal, invLightDir));
 
@@ -47,6 +52,5 @@ float4 Main(PixelInputType input, uint pid : SV_PrimitiveID) : SV_TARGET
     output = color * output;
     output = saturate(output);
 
-    //output.rgb = input.normal;
     return output;
 }
