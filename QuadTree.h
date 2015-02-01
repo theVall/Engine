@@ -57,6 +57,7 @@ public:
                     const int maxTriangles,
                     bool enabled);
     void Shutdown();
+
     void Render(Frustum *pFrustum,
                 ID3D11DeviceContext *pContext,
                 TerrainShader *pShader,
@@ -66,16 +67,23 @@ public:
     bool GetHeightAtPosition(float posX, float posZ, float &height);
 
 private:
+    // calculate center point and width of the mesh
     void CalculateMeshDimensions(int vertexCount, Vec3f &center, float &width);
 
+    // create a tree node
     void CreateTreeNode(NodeType *pNode,
                         Vec3f center,
                         float width,
                         ID3D11Device *pDevice);
 
+    // count number of triangles in node
     int CountTriangles(Vec3f position, float width);
+
+    // check if a triangle is contained in the node
     bool IsTriangleContained(int index, Vec3f position, float width);
+
     void ReleaseNode(NodeType *pNode);
+
     void RenderNode(NodeType *pNode,
                     Frustum *pFrustum,
                     ID3D11DeviceContext *pContext,
@@ -101,6 +109,6 @@ private:
     bool m_quadTreeEnabled;
 
     vector<VertexType> m_vVertexList;
-    NodeType *m_pParentNode;
+    NodeType *m_pRootNode;
 };
 

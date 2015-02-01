@@ -3,13 +3,13 @@
 
 QuadTree::QuadTree()
 {
+    m_pRootNode = nullptr;
+    omp_set_num_threads(NUM_THREADS);
 }
 
 
 QuadTree::QuadTree(const QuadTree &)
 {
-    m_pParentNode = nullptr;
-    omp_set_num_threads(NUM_THREADS);
 }
 
 
@@ -33,20 +33,20 @@ bool QuadTree::Initialize(Terrain *pTerrain,
     m_vVertexList.resize(vertexCount);
     m_vVertexList = pTerrain->GetVertices();
 
-    Vec3f center = Vec3f();
+    Vec3f center = Vec3f(0.0f);
     float width;
 
     CalculateMeshDimensions(vertexCount, center, width);
 
-    // Create the parent node for the quad tree.
-    m_pParentNode = new NodeType;
-    if (!m_pParentNode)
+    // Create the root node for the quad tree.
+    m_pRootNode = new NodeType;
+    if (!m_pRootNode)
     {
         return false;
     }
 
     // Recursively build the quad tree based on the vertex list data and mesh dimensions.
-    CreateTreeNode(m_pParentNode, center, width, pDevice);
+    CreateTreeNode(m_pRootNode, center, width, pDevice);
 
     // Release the vertex list since the quad tree now has the vertices in the nodes.
     m_vVertexList.clear();
@@ -57,12 +57,12 @@ bool QuadTree::Initialize(Terrain *pTerrain,
 
 void QuadTree::Shutdown()
 {
-    // Recursively release the quad tree data.
-    if (m_pParentNode)
+    // Recursively release the quad tree node data.
+    if (m_pRootNode)
     {
-        ReleaseNode(m_pParentNode);
-        delete m_pParentNode;
-        m_pParentNode = 0;
+        ReleaseNode(m_pRootNode);
+        delete m_pRootNode;
+        m_pRootNode = 0;
     }
 
     return;
@@ -74,11 +74,11 @@ void QuadTree::Render(Frustum *pFrustum,
                       TerrainShader *pShader,
                       bool wireframe)
 {
-    // Reset the number of triangles that are drawn for this frame.
+    // Reset triangle draw count.
     m_drawCount = 0;
 
-    // Render each node that is visible.
-    RenderNode(m_pParentNode, pFrustum, pContext, pShader, wireframe);
+    // Render all visible nodes.
+    RenderNode(m_pRootNode, pFrustum, pContext, pShader, wireframe);
 
     return;
 }
@@ -94,18 +94,16 @@ void QuadTree::CalculateMeshDimensions(int vertexCount,
                                        Vec3f &center,
                                        float &meshWidth)
 {
-    // Sum all the vertices in the mesh.
+    // Sum of the positions of all the vertices in the mesh.
     for (int i = 0; i < vertexCount - 1; i++)
     {
         center.x += m_vVertexList[i].position.x;
         center.z += m_vVertexList[i].position.z;
     }
-
-    // And then divide it by the number of vertices to find the mid-point of the mesh.
+    // Divide by the number of vertices to find the mid-point.
     center.x = center.x / (float) vertexCount;
     center.z = center.z / (float) vertexCount;
 
-    // Initialize the maximum and minimum size of the mesh.
     float maxWidth = 0.0f;
     float maxDepth = 0.0f;
 
@@ -158,16 +156,15 @@ void QuadTree::CreateTreeNode(NodeType *pNode,
     // set node parameters
     pNode->position = position;
     pNode->width = width;
-
     pNode->triangleCount = 0;
-    pNode->pVertexBuffer = 0;
-    pNode->pIndexBuffer = 0;
+    pNode->pVertexBuffer = nullptr;
+    pNode->pIndexBuffer = nullptr;
 
     // initialize children
-    pNode->pChildNodes[0] = 0;
-    pNode->pChildNodes[1] = 0;
-    pNode->pChildNodes[2] = 0;
-    pNode->pChildNodes[3] = 0;
+    pNode->pChildNodes[0] = nullptr;
+    pNode->pChildNodes[1] = nullptr;
+    pNode->pChildNodes[2] = nullptr;
+    pNode->pChildNodes[3] = nullptr;
 
     // Count the number of triangles inside this node.
     int numTriangles = CountTriangles(position, width);
@@ -240,7 +237,7 @@ void QuadTree::CreateTreeNode(NodeType *pNode,
             }
         }
 
-        // Set up the description of the vertex buffer.
+        // Vertex buffer description.
         D3D11_BUFFER_DESC vertexBufferDesc;
         vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
         vertexBufferDesc.ByteWidth = sizeof(VertexType) * vertexCount;
@@ -249,7 +246,7 @@ void QuadTree::CreateTreeNode(NodeType *pNode,
         vertexBufferDesc.MiscFlags = 0;
         vertexBufferDesc.StructureByteStride = 0;
 
-        // Give the sub-resource structure a pointer to the vertex data.
+        // Vertex data.
         D3D11_SUBRESOURCE_DATA vertexData;
         vertexData.pSysMem = pVertices;
         vertexData.SysMemPitch = 0;
@@ -257,7 +254,7 @@ void QuadTree::CreateTreeNode(NodeType *pNode,
 
         pDevice->CreateBuffer(&vertexBufferDesc, &vertexData, &pNode->pVertexBuffer);
 
-        // Set up the description of the index buffer.
+        // Index buffer description.
         D3D11_BUFFER_DESC indexBufferDesc;
         indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
         indexBufferDesc.ByteWidth = sizeof(unsigned long) * vertexCount;
@@ -266,7 +263,7 @@ void QuadTree::CreateTreeNode(NodeType *pNode,
         indexBufferDesc.MiscFlags = 0;
         indexBufferDesc.StructureByteStride = 0;
 
-        // Give the sub-resource structure a pointer to the index data.
+        // Index buffer.
         D3D11_SUBRESOURCE_DATA indexData;
         indexData.pSysMem = pIndices;
         indexData.SysMemPitch = 0;
@@ -315,10 +312,10 @@ bool QuadTree::IsTriangleContained(int index, Vec3f position, float width)
 {
     float radius = width / 2.0f;
 
-    // Get the index into the vertex list.
+    // Map the index.
     int vertexId = index * 3;
 
-    // Get the three vertices of this triangle.
+    // Get the vertices of the triangle.
     Vec3f xCoord;
     Vec3f zCoord;
     xCoord.x = m_vVertexList[vertexId].position.x;
@@ -362,7 +359,7 @@ bool QuadTree::IsTriangleContained(int index, Vec3f position, float width)
 
 void QuadTree::ReleaseNode(NodeType *pNode)
 {
-    // Recursively go down the tree and release the bottom nodes first.
+    // Recursively release the tree nodes.
     for (int i = 0; i < MAX_CHILDREN; i++)
     {
         if (pNode->pChildNodes[i] != 0)
@@ -427,24 +424,22 @@ void QuadTree::RenderNode(NodeType *pNode,
         return;
     }
 
-    // Render
-    // Set vertex buffer stride and offset.
     unsigned int stride = sizeof(VertexType);
     unsigned int offset = 0;
 
-    // Set the vertex and index buffers to active in the input assembler for rendered.
+    // Set the vertex and index buffers to active in the input assembler.
     pContext->IASetVertexBuffers(0, 1, &pNode->pVertexBuffer, &stride, &offset);
     pContext->IASetIndexBuffer(pNode->pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
     pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    // Determine the number of indices in this node.
+    // Number of indices is trice the triangle amount.
     int indexCount = pNode->triangleCount * 3;
 
-    // Render the polygons in this node.
+    // The actual render call.
     pShader->RenderShader(pContext, indexCount, wireframe);
 
-    // Increase the count of the number of polygons that have been rendered during this frame.
+    // Update the number of triangles to contain the newly rendered ones.
     m_drawCount += pNode->triangleCount;
 
     return;
@@ -453,11 +448,11 @@ void QuadTree::RenderNode(NodeType *pNode,
 
 bool QuadTree::GetHeightAtPosition(float posX, float posZ, float &height)
 {
-    float meshMinX = m_pParentNode->position.x - (m_pParentNode->width / 2.0f);
-    float meshMaxX = m_pParentNode->position.x + (m_pParentNode->width / 2.0f);
+    float meshMinX = m_pRootNode->position.x - (m_pRootNode->width / 2.0f);
+    float meshMaxX = m_pRootNode->position.x + (m_pRootNode->width / 2.0f);
 
-    float meshMinZ = m_pParentNode->position.z - (m_pParentNode->width / 2.0f);
-    float meshMaxZ = m_pParentNode->position.z + (m_pParentNode->width / 2.0f);
+    float meshMinZ = m_pRootNode->position.z - (m_pRootNode->width / 2.0f);
+    float meshMaxZ = m_pRootNode->position.z + (m_pRootNode->width / 2.0f);
 
     // Make sure the coordinates are actually above a polygon.
     if ((posX < meshMinX) || (posX > meshMaxX) || (posZ < meshMinZ) || (posZ > meshMaxZ))
@@ -466,7 +461,7 @@ bool QuadTree::GetHeightAtPosition(float posX, float posZ, float &height)
     }
 
     // Find the node which contains the polygon for this position.
-    FindNode(m_pParentNode, posX, posZ, height);
+    FindNode(m_pRootNode, posX, posZ, height);
 
     return true;
 }
@@ -488,7 +483,7 @@ void QuadTree::FindNode(NodeType *pNode, float x, float z, float &height)
     float zMin = pNode->position.z - (pNode->width / 2.0f);
     float zMax = pNode->position.z + (pNode->width / 2.0f);
 
-    // Check if the x and z coordinate are in this node.
+    // Check if the x and z coordinate are inside this node.
     if ((x < xMin) || (x > xMax) || (z < zMin) || (z > zMax))
     {
         return;
@@ -506,7 +501,7 @@ void QuadTree::FindNode(NodeType *pNode, float x, float z, float &height)
         }
     }
 
-    // If there are child nodes, return since the polygon will be in one of these.
+    // If there are child nodes, return. The polygon will be in one of these.
     if (count > 0)
     {
         return;
@@ -537,13 +532,12 @@ void QuadTree::FindNode(NodeType *pNode, float x, float z, float &height)
 bool QuadTree::CheckHeightOfTriangle(float x, float z, float &height,
                                      Vec3f v0, Vec3f v1, Vec3f v2)
 {
-    // Starting position of the ray that is being cast.
+    // Starting position of ray cast.
     Vec3f startVector = Vec3f(x, 0.0f, z);
-
     // The direction the ray is being cast (straight down).
     Vec3f directionVector = Vec3f(0.0f, -1.0f, 0.0f);
 
-    // Calculate the three edges of the triangle from the three points given.
+    // Calculate the three edges of the triangle from the given points.
     Vec3f edge1 = v1 - v0;
     Vec3f edge2 = v2 - v0;
     Vec3f normal = normal.GetCross(edge1, edge2);
@@ -552,7 +546,7 @@ bool QuadTree::CheckHeightOfTriangle(float x, float z, float &height,
     float numerator = -normal.Dot(w0);
     float denominator = normal.Dot(directionVector);
 
-    // Make sure the result does not get too close to zero to prevent division overflow.
+    // Prevent division overflow.
     if (fabs(denominator) < 0.000001f)
     {
         return false;
@@ -560,8 +554,6 @@ bool QuadTree::CheckHeightOfTriangle(float x, float z, float &height,
 
     // Calculate triangle intersection.
     float r = numerator / denominator;
-
-    // Find the intersection vector.
     Vec3f intersectionVec = startVector + directionVector*r;
 
     // check if intersection occurs inside the triangle
@@ -576,20 +568,20 @@ bool QuadTree::CheckHeightOfTriangle(float x, float z, float &height,
 
     // get and test parametric coordinates
     float s = (uv * wv - vv * wu) / D;
-    // Intersection is outside the triangle
+    // Intersection outside the triangle
     if (s < 0.0 || s > 1.0)
     {
         return false;
     }
 
     float t = (uv * wu - uu * wv) / D;
-    // Intersection is outside the triangle
+    // Intersection outside the triangle
     if (t < 0.0 || (s + t) > 1.0)
     {
         return false;
     }
 
-    // intersection is inside the triangle
+    // intersection inside the triangle
     height = intersectionVec.y;
 
     return true;
