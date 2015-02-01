@@ -166,7 +166,7 @@ void System::InitializeWindows(int &screenWidth, int &screenHeight)
 
     // Icon
     wc.hIcon = (HICON)LoadImage(NULL,
-                                L"vallEngine.ico",
+                                L"../Engine/res/vallEngine.ico",
                                 IMAGE_ICON,
                                 0,
                                 0,

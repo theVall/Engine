@@ -149,9 +149,10 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     // Set the initial position of the camera.
     Vec3f camPos;
     camPos.x = 100.0f * m_terrainScaling;
-    camPos.y = 20.0f * m_terrainHeightScaling;
+    camPos.y = 10.0f * m_terrainHeightScaling;
     camPos.z = 100.0f * m_terrainScaling;
     m_pCamera->SetPosition(camPos);
+    m_pCamera->SetRotation(Vec3f(0.0f, 270.0f, 0.0f));
 
     // Create and initialize the __font wrapper__ object.
     m_pFont = new Font;
@@ -311,8 +312,9 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
         MessageBox(m_hwnd, L"Could not initialize the position object.", L"Error", MB_OK);
         return false;
     }
-    // Set the initial position of the viewer to the same as the initial camera position.
+    // Set the initial position and rotation of the viewer to the initial camera position.
     m_pPosition->SetPosition(camPos);
+    m_pPosition->TurnOnMouseMovement(90.0f, 0.0f, 1.0f);
 
     // Create and initialize the __profiler__ object.
     m_pProfiler = new Profiler;
@@ -364,7 +366,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     Ocean::OceanParameter oceanParams = { 512,                  // map dim
                                           m_oceanTimeScale,     // time factor
                                           0.3f,                 // amplitude
-                                          Vec2f(0.3f, 0.6f),    // wind direction
+                                          Vec2f(-0.3f, -0.6f),  // wind direction
                                           400.0f,               // wind speed
                                           0.07f,                // wind dependency
                                           1.3f                  // choppy
