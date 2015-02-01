@@ -1,6 +1,5 @@
 #include "D3D.h"
 
-
 D3D::D3D(void)
 {
     m_swapChain            = 0;
@@ -65,9 +64,10 @@ bool D3D::Initialize(int screenWidth,
     m_vSyncEnabled = vSync;
 
     //  Create a DirectX graphics interface factory.
-    result = CreateDXGIFactory(__uuidof(IDXGIFactory), (void **)&factory);
+    result = CreateDXGIFactory1(__uuidof(IDXGIFactory1), (void **)&factory);
     if (FAILED(result))
     {
+        MessageBox(hwnd, L"CreateDXGIFactory", L"Error", MB_OK);
         return false;
     }
 
@@ -75,6 +75,7 @@ bool D3D::Initialize(int screenWidth,
     result = factory->EnumAdapters(0, &adapter);
     if (FAILED(result))
     {
+        MessageBox(hwnd, L"EnumAdapters", L"Error", MB_OK);
         return false;
     }
 
@@ -82,6 +83,7 @@ bool D3D::Initialize(int screenWidth,
     result = adapter->EnumOutputs(0, &adapterOutput);
     if (FAILED(result))
     {
+        MessageBox(hwnd, L"EnumOutputs", L"Error", MB_OK);
         return false;
     }
 
@@ -93,6 +95,7 @@ bool D3D::Initialize(int screenWidth,
                                                NULL);
     if (FAILED(result))
     {
+        MessageBox(hwnd, L"GetDisplayModeList", L"Error", MB_OK);
         return false;
     }
 
@@ -101,6 +104,8 @@ bool D3D::Initialize(int screenWidth,
     displayModeList = new DXGI_MODE_DESC[numModes];
     if(!displayModeList)
     {
+        MessageBox(hwnd, L"displayModeList", L"Error", MB_OK);
+
         return false;
     }
 
@@ -111,6 +116,8 @@ bool D3D::Initialize(int screenWidth,
                                                displayModeList);
     if (FAILED(result))
     {
+        MessageBox(hwnd, L"GetDisplayModeList2", L"Error", MB_OK);
+
         return false;
     }
 
@@ -131,6 +138,8 @@ bool D3D::Initialize(int screenWidth,
     result = adapter->GetDesc(&adapterDesc);
     if (FAILED(result))
     {
+        MessageBox(hwnd, L"GetDesc adapter", L"Error", MB_OK);
+
         return false;
     }
 
@@ -145,8 +154,18 @@ bool D3D::Initialize(int screenWidth,
                        128);
     if(error != 0)
     {
+        MessageBox(hwnd, L"wcstombs_s", L"Error", MB_OK);
+
         return false;
     }
+
+
+    // debug
+    //wchar_t widearray[128];
+    //size_t *numOfCharsConverted = new size_t(128);
+    //mbstowcs_s(numOfCharsConverted, widearray, m_videoCardDescription, 128);
+    //MessageBox(hwnd, widearray, L"Graphics Adapter", MB_OK);
+    //
 
     //  Release structures and interfaces used to gather the system information.
     delete [] displayModeList;
@@ -217,7 +236,7 @@ bool D3D::Initialize(int screenWidth,
     result = D3D11CreateDeviceAndSwapChain(NULL,
                                            D3D_DRIVER_TYPE_HARDWARE,
                                            NULL,
-                                           D3D11_CREATE_DEVICE_DEBUG,
+                                           NULL, // D3D11_CREATE_DEVICE_DEBUG // only SDK!!
                                            &featureLevel,
                                            1,
                                            D3D11_SDK_VERSION,
@@ -229,6 +248,8 @@ bool D3D::Initialize(int screenWidth,
 
     if (FAILED(result))
     {
+        MessageBox(hwnd, L"D3D11CreateDeviceAndSwapChain", L"Error", MB_OK);
+
         return false;
     }
 
@@ -236,12 +257,16 @@ bool D3D::Initialize(int screenWidth,
     result = m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID *) &backBufferPtr);
     if (FAILED(result))
     {
+        MessageBox(hwnd, L"GetBuffer", L"Error", MB_OK);
+
         return false;
     }
 
     result = m_device->CreateRenderTargetView(backBufferPtr, NULL, &m_renderTargetView);
     if (FAILED(result))
     {
+        MessageBox(hwnd, L"CreateRenderTargetView", L"Error", MB_OK);
+
         return false;
     }
 
@@ -268,6 +293,8 @@ bool D3D::Initialize(int screenWidth,
     result = m_device->CreateTexture2D(&depthBufferDesc, NULL, &m_depthStencilBuffer);
     if (FAILED(result))
     {
+        MessageBox(hwnd, L"CreateTexture2D", L"Error", MB_OK);
+
         return false;
     }
 
@@ -298,6 +325,8 @@ bool D3D::Initialize(int screenWidth,
     result = m_device->CreateDepthStencilState(&depthStencilDesc, &m_depthStencilState);
     if (FAILED(result))
     {
+        MessageBox(hwnd, L"CreateDepthStencilState", L"Error", MB_OK);
+
         return false;
     }
 
@@ -316,6 +345,8 @@ bool D3D::Initialize(int screenWidth,
                                               &m_depthStencilView);
     if (FAILED(result))
     {
+        MessageBox(hwnd, L"CreateDepthStencilView", L"Error", MB_OK);
+
         return false;
     }
 
@@ -339,6 +370,8 @@ bool D3D::Initialize(int screenWidth,
     result = m_device->CreateRasterizerState(&rasterDesc, &m_rasterStateSolid);
     if (FAILED(result))
     {
+        MessageBox(hwnd, L"CreateRasterizerState basic", L"Error", MB_OK);
+
         return false;
     }
 
@@ -347,6 +380,8 @@ bool D3D::Initialize(int screenWidth,
     result = m_device->CreateRasterizerState(&rasterDesc, &m_rasterStateNoCulling);
     if (FAILED(result))
     {
+        MessageBox(hwnd, L"CreateRasterizerState no culling", L"Error", MB_OK);
+
         return false;
     }
 
@@ -355,6 +390,8 @@ bool D3D::Initialize(int screenWidth,
     result = m_device->CreateRasterizerState(&rasterDesc, &m_rasterStateWireFrame);
     if (FAILED(result))
     {
+        MessageBox(hwnd, L"CreateRasterizerState wireframe", L"Error", MB_OK);
+
         return false;
     }
 
@@ -412,6 +449,8 @@ bool D3D::Initialize(int screenWidth,
                                                &m_depthDisabledStencilState);
     if (FAILED(result))
     {
+        MessageBox(hwnd, L"CreateDepthStencilState disabled", L"Error", MB_OK);
+
         return false;
     }
 

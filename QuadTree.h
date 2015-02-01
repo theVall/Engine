@@ -17,6 +17,7 @@ using namespace std;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
+// maximum number of node children (4 for quad tree obviously...)
 const int MAX_CHILDREN = 4;
 
 class QuadTree
@@ -32,7 +33,7 @@ private:
         XMFLOAT4 color;
     };
 
-    // tree node
+    // tree node type
     struct NodeType
     {
         Vec3f position;

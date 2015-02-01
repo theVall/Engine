@@ -90,6 +90,7 @@ public:
     // Setter
     void SetLeftMouseDown(bool state);
     void SetRightMouseDown(bool state);
+    void SetWindowActive(bool isActive);
 
     // guarantee align 16 for heap allocations
     void *operator new(size_t size) throw()
@@ -138,6 +139,7 @@ private:
     bool m_rightMouseDown;
     bool m_wireframe;
     bool m_backFaceCulling;
+    bool m_windowActive;
 
     // draw object bools
     bool m_drawSkyDome;

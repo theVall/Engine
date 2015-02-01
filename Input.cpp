@@ -59,8 +59,8 @@ bool Input::ReadMouse()
     GetWindowRect(m_hwnd, &rc);
 
     // Clip cursor to DX window
-    RECT *pRc = &rc;
-    ClipCursor(pRc);
+    //RECT *pRc = &rc;
+    //ClipCursor(pRc);
 
     return true;
 }

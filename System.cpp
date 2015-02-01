@@ -100,33 +100,91 @@ LRESULT CALLBACK System::MessageHandler(HWND hwnd, UINT umsg, WPARAM wParam, LPA
     // first handle AntTweakBar events
     if (TwEventWin(hwnd, umsg, wParam, lParam))
     {
-        return 0;
+        // we need that without the LBUTTONDOWN event handling
+        // so that the camera stays constant when we use roto-sliders
+        switch (umsg)
+        {
+        case WM_LBUTTONUP:
+        {
+            m_Application->SetLeftMouseDown(false);
+            ShowCursor(true);
+            break;
+        }
+        case WM_RBUTTONDOWN:
+        {
+            m_Application->SetRightMouseDown(true);
+            break;
+        }
+        case WM_RBUTTONUP:
+        {
+            m_Application->SetRightMouseDown(false);
+            break;
+        }
+        case WM_SETFOCUS:
+        {
+            m_Application->SetWindowActive(true);
+            break;
+        }
+        case WM_KILLFOCUS:
+        {
+            m_Application->SetWindowActive(false);
+            break;
+        }
+        case WM_ACTIVATE:
+        {
+            if (LOWORD(wParam) == WA_ACTIVE)
+                m_Application->SetWindowActive(true);
+            else
+                m_Application->SetWindowActive(false);
+            break;
+        }
+        }
     }
-
-    switch (umsg)
+    else
     {
-    case WM_LBUTTONDOWN:
-    {
-        m_Application->SetLeftMouseDown(true);
-        while (ShowCursor(false) >= 0);
-        break;
-    }
-    case WM_LBUTTONUP:
-    {
-        m_Application->SetLeftMouseDown(false);
-        ShowCursor(true);
-        break;
-    }
-    case WM_RBUTTONDOWN:
-    {
-        m_Application->SetRightMouseDown(true);
-        break;
-    }
-    case WM_RBUTTONUP:
-    {
-        m_Application->SetRightMouseDown(false);
-        break;
-    }
+        switch (umsg)
+        {
+        case WM_LBUTTONDOWN:
+        {
+            m_Application->SetLeftMouseDown(true);
+            while (ShowCursor(false) >= 0);
+            break;
+        }
+        case WM_LBUTTONUP:
+        {
+            m_Application->SetLeftMouseDown(false);
+            ShowCursor(true);
+            break;
+        }
+        case WM_RBUTTONDOWN:
+        {
+            m_Application->SetRightMouseDown(true);
+            break;
+        }
+        case WM_RBUTTONUP:
+        {
+            m_Application->SetRightMouseDown(false);
+            break;
+        }
+        case WM_SETFOCUS:
+        {
+            m_Application->SetWindowActive(true);
+            break;
+        }
+        case WM_KILLFOCUS:
+        {
+            m_Application->SetWindowActive(false);
+            break;
+        }
+        case WM_ACTIVATE:
+        {
+            if (LOWORD(wParam) == WA_ACTIVE)
+                m_Application->SetWindowActive(true);
+            else
+                m_Application->SetWindowActive(false);
+            break;
+        }
+        }
     }
 
     return DefWindowProc(hwnd, umsg, wParam, lParam);

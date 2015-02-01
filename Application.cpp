@@ -13,6 +13,7 @@ Application::Application()
     m_rightMouseDown    = false;
     m_wireframe         = false;
     m_backFaceCulling   = true;
+    m_windowActive      = false;
 
     m_drawSkyDome       = true;
     m_drawOcean         = m_oldDrawOcean        = true;
@@ -680,7 +681,7 @@ bool Application::HandleInput(float frameTime)
         sensitivity = 0.75f;
     }
 
-    if (!m_orbitalCamera)
+    if (!m_orbitalCamera && m_windowActive)
     {
         keyDown = GetAsyncKeyState(VK_UP) || GetAsyncKeyState('W');
         m_pPosition->MoveForward((keyDown == 1) || (keyDown == 0x8000), sensitivity);
@@ -707,7 +708,10 @@ bool Application::HandleInput(float frameTime)
         m_lockSurfaceCamera = false;
     }
 
-    keyDown = GetAsyncKeyState('R');
+    if (m_windowActive)
+    {
+        keyDown = GetAsyncKeyState('R');
+    }
     // Terrain mode: generate new random terrain.
     if (keyDown != 0 && m_drawTerrain)
     {
@@ -1176,6 +1180,11 @@ void Application::SetRightMouseDown(bool state)
     m_rightMouseDown = state;
 }
 
+
+void Application::SetWindowActive(bool isActive)
+{
+    m_windowActive = isActive;
+}
 
 
 bool Application::SetGuiParams()
