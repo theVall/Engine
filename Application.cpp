@@ -619,8 +619,26 @@ bool Application::ProcessFrame()
             m_oldTerrainResolution = m_terrainResolution;
         }
 
-        m_pMandelbrot->CalcHeightsInRectangle(Vec2f(m_mandelUpperLeftX, m_mandelUpperLeftY),
-                                              Vec2f(m_mandelLowerRightX, m_mandelLowerRightY),
+        // scale terrain on minimap selection proportional to the size difference
+        Vec2f oldUL = Vec2f(m_oldMandelUpperLeftX, m_oldMandelUpperLeftY);
+        Vec2f oldLR = Vec2f(m_oldMandelLowerRightX, m_oldMandelLowerRightY);
+
+        Vec2f newUL = Vec2f(m_mandelUpperLeftX, m_mandelUpperLeftY);
+        Vec2f newLR = Vec2f(m_mandelLowerRightX, m_mandelLowerRightY);
+
+        float delta = (oldUL - oldLR).Length() - (newUL - newLR).Length();
+
+        if (delta*m_terrainScaling > 0.5f)
+        {
+            // use square root function to enhance small changes
+            m_terrainScaling *= (1.0f + sqrt(delta*m_terrainScaling));
+        }
+
+        // calculate the Mandelbrot values of the new selection
+        m_pMandelbrot->CalcHeightsInRectangle(Vec2f(m_mandelUpperLeftX,
+                                                    m_mandelUpperLeftY),
+                                              Vec2f(m_mandelLowerRightX,
+                                                    m_mandelLowerRightY),
                                               m_mandelIterations,
                                               m_terrainVariance,
                                               m_mandelMaskSize,
@@ -635,12 +653,18 @@ bool Application::ProcessFrame()
         if (m_pMandelMini->width*(1.0f + 0.1f*m_terrainScaling) < INITIAL_MINIMAP_SIZE &&
                 m_pMandelMini->height*(1.0f + 0.1f*m_terrainScaling) < INITIAL_MINIMAP_SIZE)
         {
-            m_pMandelMini->width *= (int)m_terrainScaling;
-            m_pMandelMini->height *= (int)m_terrainScaling;
+            m_pMandelMini->width = (int)(m_pMandelMini->width*0.75f*m_terrainScaling);
+            m_pMandelMini->height = (int)(m_pMandelMini->height*0.75f*m_terrainScaling);
         }
 
         m_pMinimap->SetElementWidth(m_pMandelMini->width);
         m_pMinimap->SetElementHeight(m_pMandelMini->height);
+
+        // update 'memory' parameters of coordinates
+        m_oldMandelUpperLeftX = m_mandelUpperLeftX;
+        m_oldMandelUpperLeftY = m_mandelUpperLeftY;
+        m_oldMandelLowerRightX = m_mandelLowerRightX;
+        m_oldMandelLowerRightY = m_mandelLowerRightY;
 
         m_mandelChanged = false;
     }
@@ -749,6 +773,7 @@ bool Application::HandleInput(float frameTime)
             }
 
             m_pPosition->TurnOnMouseMovement(mouseX, mouseY, 0.5f);
+
         }
         else if (m_rightMouseDown)
         {
@@ -883,10 +908,7 @@ bool Application::HandleInput(float frameTime)
             // Resolution is updated in process frame because it is needed for a check.
             m_oldTerrainVariance = m_terrainVariance;
             m_oldTerrainScaling = m_terrainScaling;
-            m_oldMandelUpperLeftX = m_mandelUpperLeftX;
-            m_oldMandelUpperLeftY = m_mandelUpperLeftY;
-            m_oldMandelLowerRightX = m_mandelLowerRightX;
-            m_oldMandelLowerRightY = m_mandelLowerRightY;
+
             m_oldMandelIterations = m_mandelIterations;
             m_oldMandelMaskSize = m_mandelMaskSize;
         }

@@ -29,12 +29,10 @@ float4 Main(PixelInputType input, uint pid : SV_PrimitiveID) : SV_TARGET
     }
     else
     {
-        if (height < 0.01f)
-        {
-            // Use square root function to better highlight height differences
-            // for small heights
-            height = 3.0f * sqrt(height);
-        }
+        // Use square root function to better highlight height differences
+        // for small heights
+        height = 3.0f * sqrt(height);
+
         color.r = height / 0.9f;
         color.g = height / 0.9f;
         color.b = height / 0.25f;

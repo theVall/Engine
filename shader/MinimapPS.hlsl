@@ -83,10 +83,8 @@ float4 Main(PixelInputType input) : SV_TARGET
     }
     else
     {
-        if (height < 0.04f)
-        {
-            height = 3.0f * sqrt(height);
-        }
+        height = 3.0f * sqrt(height);
+
         color.r += height / 0.9f;
         color.g = height / 0.9f;
         color.b = height / 0.3f;

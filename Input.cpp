@@ -55,10 +55,10 @@ bool Input::ReadMouse()
         return false;
     }
 
-    RECT rc;
-    GetWindowRect(m_hwnd, &rc);
-
     // Clip cursor to DX window
+    //RECT rc;
+    //GetWindowRect(m_hwnd, &rc);
+
     //RECT *pRc = &rc;
     //ClipCursor(pRc);
 
@@ -82,6 +82,7 @@ void Input::GetMouseLocationChange(int &dX, int &dY)
 
     dX = lastMousePoint.x - m_mousePoint.x;
     dY = lastMousePoint.y - m_mousePoint.y;
+
     return;
 }
 
