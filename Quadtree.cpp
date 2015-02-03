@@ -174,6 +174,12 @@ void QuadTree::CreateTreeNode(NodeType *pNode,
 
     // Count the number of triangles inside this node.
     int numTriangles = CountTriangles(position, width);
+    // if quad tree is disabled: put all triangles in root node
+    if (!m_quadTreeEnabled)
+    {
+        numTriangles = m_triangleCount;
+    }
+
     // return if empty
     if (numTriangles == 0)
     {
@@ -182,6 +188,8 @@ void QuadTree::CreateTreeNode(NodeType *pNode,
     // Node too big -> create new nodes.
     else if (numTriangles > m_maxTrianges && m_quadTreeEnabled)
     {
+        omp_set_num_threads(MAX_CHILDREN);
+        #pragma omp parallel for
         for (int i = 0; i < MAX_CHILDREN; i++)
         {
             // Calculate the position offsets for the new child node.
@@ -202,6 +210,7 @@ void QuadTree::CreateTreeNode(NodeType *pNode,
                                pDevice);
             }
         }
+        omp_set_num_threads(NUM_THREADS);
 
         return;
     }
@@ -219,15 +228,13 @@ void QuadTree::CreateTreeNode(NodeType *pNode,
 
         for (int i = 0; i < m_triangleCount; ++i)
         {
-            // If the triangle is inside this node then add it to the vertex array.
+            // If the triangle is inside this node, add it to the vertex buffer array.
             if (IsTriangleContained(i, position, width))
             {
-                // Calculate the index for the terrain vertex list.
-                int vertexId = i * 3;
-
-                for (int j = 0; j < 3; j++)
+                for (int j = 0; j < 3; ++j)
                 {
-                    // Get the three vertices of this triangle from the vertex list.
+                    int vertexId = i * 3 + j;
+                    // Get the data of this triangle from the vertex vectors.
                     pVertices[index].position = m_vVertexPositions->at(vertexId).GetAsXMFloat3();
                     pVertices[index].texture = m_vVertexTexCoords->at(vertexId).GetAsXMFloat3();
                     pVertices[index].normal = m_vVertexNormals->at(vertexId).GetAsXMFloat3();
@@ -235,10 +242,8 @@ void QuadTree::CreateTreeNode(NodeType *pNode,
                     pIndices[index] = index;
                     // Store the vertex position information in the vertex list for
                     // intersection test (height based movement)
-                    //tmpVertex.Set(m_vVertexPositions->at(vertexId));
                     pNode->vVertexList.push_back(m_vVertexPositions->at(vertexId));
                     index++;
-                    vertexId++;
                 }
             }
         }
@@ -515,12 +520,11 @@ void QuadTree::FindNode(NodeType *pNode, float x, float z, float &height)
 
     // If there are no children, the polygon must be in this node.
     // Check polygons in this node to find the height.
-    int index = 0;
-    for (int i = 0; i < pNode->triangleCount; i++)
+    for (int i = 0; i < pNode->triangleCount; i += 3)
     {
-        v0 = pNode->vVertexList.at(index++);
-        v1 = pNode->vVertexList.at(index++);
-        v2 = pNode->vVertexList.at(index++);
+        v0 = pNode->vVertexList.at(i);
+        v1 = pNode->vVertexList.at(i + 1);
+        v2 = pNode->vVertexList.at(i + 2);
 
         // Check if this is the polygon we are looking for.
         foundHeight = CheckHeightOfTriangle(x, z, height, v0, v1, v2);

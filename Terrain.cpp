@@ -31,8 +31,8 @@ bool Terrain::GenerateDiamondSquare(Util *util,
                                     float scaling,
                                     float heightScaling)
 {
-    m_pGridData.Init();
-    m_pVertexData.Init();
+    m_pGridData.InitAll();
+    m_pVertexData.InitAll();
 
     m_scaling = scaling;
     m_heightScaling = heightScaling;
@@ -62,8 +62,8 @@ bool Terrain::GenerateDiamondSquare(Util *util,
 
 bool Terrain::GenerateFromFile(Util *util, WCHAR *heightmapFilename)
 {
-    m_pGridData.Init();
-    m_pVertexData.Init();
+    m_pGridData.InitAll();
+    m_pVertexData.InitAll();
 
     if (!m_Util)
     {
@@ -114,8 +114,8 @@ void Terrain::Shutdown()
     m_pGridData.ClearAll();
     m_pVertexData.ClearAll();
 
-    ShutdownBuffers();
-    ShutdownHeightMap();
+    m_pGridData.DeleteAll();
+    m_pVertexData.DeleteAll();
 
     return;
 }
@@ -474,12 +474,6 @@ bool Terrain::CalculateNormals()
 }
 
 
-void Terrain::ShutdownHeightMap()
-{
-    return;
-}
-
-
 void Terrain::CalculateTextureCoordinates()
 {
     int tuCount = 0;
@@ -550,6 +544,7 @@ bool Terrain::LoadColorMap(WCHAR *filename)
     }
 
     // Read the image color data into the struct.
+    #pragma omp parallel for
     for (int j = 0; j < m_terrainHeight; j++)
     {
         for (i = 0; i < m_terrainWidth; i++)
@@ -582,7 +577,6 @@ bool Terrain::InitializeBuffers()
     int index3;
     int index4;
 
-    Vec2f texCoord;
 
     // Calculate the number of vertices in the terrain mesh.
     // Consider a grid of squares (resolution-1 per dimension).
@@ -590,9 +584,11 @@ bool Terrain::InitializeBuffers()
     // 2*3=6 times the number of squares.
     m_vertexCount = (m_terrainWidth - 1)*(m_terrainHeight - 1)*6;
 
-    // Resize the vertex data vector.
+    // Clear and resize the vertex data vectors.
+    m_pVertexData.ClearAll();
     m_pVertexData.ResizeAll(m_vertexCount);
 
+    #pragma omp parallel for
     for (int j = 0; j < (m_terrainHeight - 1); j++)
     {
         for (int i = 0; i < (m_terrainWidth - 1); i++)
@@ -604,7 +600,7 @@ bool Terrain::InitializeBuffers()
 
             // Upper left.
             // Modify the texture coordinates to cover the top edge.
-            texCoord = m_pGridData.vTexCoords->at(index3).uv;
+            Vec2f texCoord = m_pGridData.vTexCoords->at(index3).uv;
             texCoord.v = (texCoord.v == 1.0f) ? 0.0f : texCoord.v;
 
             m_pVertexData.TransferData(&m_pGridData, index, index3);
@@ -648,12 +644,6 @@ bool Terrain::InitializeBuffers()
     }
 
     return true;
-}
-
-
-void Terrain::ShutdownBuffers()
-{
-    return;
 }
 
 

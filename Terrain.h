@@ -35,13 +35,37 @@ class Terrain
         vector<Vec3f> *vNormals;
         vector<Vec4f> *vColors;
 
-        void Init()
+        void InitAll()
         {
             vPostion = new vector<Vec3f>;
             vTexCoords = new vector<Vec3f>;
             vNormals = new vector<Vec3f>;
             vColors = new vector<Vec4f>;
         }
+
+        void DeleteAll()
+        {
+            if (vPostion)
+            {
+                delete vPostion;
+                vPostion = 0;
+            }
+            if (vTexCoords)
+            {
+                delete vTexCoords;
+                vTexCoords = 0;
+            }
+            if (vNormals)
+            {
+                delete vNormals;
+                vNormals = 0;
+            }
+            if (vColors)
+            {
+                delete vColors;
+                vColors = 0;
+            }
+        };
 
         void ClearAll()
         {
