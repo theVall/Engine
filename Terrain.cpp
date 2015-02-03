@@ -31,6 +31,9 @@ bool Terrain::GenerateDiamondSquare(Util *util,
                                     float scaling,
                                     float heightScaling)
 {
+    m_pGridData.Init();
+    m_pVertexData.Init();
+
     m_scaling = scaling;
     m_heightScaling = heightScaling;
 
@@ -59,6 +62,9 @@ bool Terrain::GenerateDiamondSquare(Util *util,
 
 bool Terrain::GenerateFromFile(Util *util, WCHAR *heightmapFilename)
 {
+    m_pGridData.Init();
+    m_pVertexData.Init();
+
     if (!m_Util)
     {
         m_Util = util;
@@ -105,6 +111,9 @@ bool Terrain::Initialize()
 
 void Terrain::Shutdown()
 {
+    m_pGridData.ClearAll();
+    m_pVertexData.ClearAll();
+
     ShutdownBuffers();
     ShutdownHeightMap();
 
@@ -133,8 +142,8 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
     // terrain is always quadratic
     m_terrainWidth = m_terrainHeight;
 
-    m_heightMap.clear();
-    m_heightMap.resize(m_terrainWidth * m_terrainHeight);
+    m_pGridData.ClearAll();
+    m_pGridData.ResizeAll(m_terrainWidth * m_terrainHeight);
 
     // terrain height offset
     float D = 0.0f;
@@ -149,22 +158,22 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
     // initially set the four corner points with random y-offset
     int index = 0;
     // upper left
-    m_heightMap[index].position = Vec3f(0.0f, 0.0f, 0.0f);
+    m_pGridData.vPostion->at(index) = Vec3f(0.0f);
     // upper right
     index = m_terrainWidth - 1;
-    m_heightMap[index].position = Vec3f((float)(m_terrainWidth - 1),
-                                        distr(gen),
-                                        0.0f);
+    m_pGridData.vPostion->at(index) = Vec3f((float)(m_terrainWidth - 1),
+                                            distr(gen),
+                                            0.0f);
     // lower left
     index = m_terrainWidth*(m_terrainHeight - 1);
-    m_heightMap[index].position = Vec3f(0.0f,
-                                        distr(gen),
-                                        (float)(m_terrainHeight - 1));
+    m_pGridData.vPostion->at(index) = Vec3f(0.0f,
+                                            distr(gen),
+                                            (float)(m_terrainHeight - 1));
     // lower right
     index = m_terrainWidth*m_terrainHeight - 1;
-    m_heightMap[index].position = Vec3f((float)(m_terrainHeight - 1),
-                                        distr(gen),
-                                        (float)(m_terrainWidth - 1));
+    m_pGridData.vPostion->at(index) = Vec3f((float)(m_terrainHeight - 1),
+                                            distr(gen),
+                                            (float)(m_terrainWidth - 1));
 
     int idWidth = m_terrainWidth;
 
@@ -194,25 +203,25 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
             height = 0.0f;
             // upper left
             int tmpIndex = index - (divSegment + divSegment*idWidth);
-            height += m_heightMap[tmpIndex].position.y;
+            height += m_pGridData.vPostion->at(tmpIndex).y;
             // upper right
             tmpIndex += 2 * divSegment;
-            height += m_heightMap[tmpIndex].position.y;
+            height += m_pGridData.vPostion->at(tmpIndex).y;
             // lower right
             tmpIndex = index + (divSegment + divSegment*idWidth);
-            height += m_heightMap[tmpIndex].position.y;
+            height += m_pGridData.vPostion->at(tmpIndex).y;
             // lower left
             tmpIndex -= 2 * divSegment;
-            height += m_heightMap[tmpIndex].position.y;
+            height += m_pGridData.vPostion->at(tmpIndex).y;
             // normalize
             height /= 4.0f;
 #undef min
             // generate random value in range [0,1]
             D = distr(gen);
 
-            m_heightMap[index].position = Vec3f((float)(index % m_terrainWidth),
-                                                height + D,
-                                                (float)(index / m_terrainHeight));
+            m_pGridData.vPostion->at(index) = Vec3f((float)(index % m_terrainWidth),
+                                                    height + D,
+                                                    (float)(index / m_terrainHeight));
         }
 
         // Second step: generate squares.
@@ -232,9 +241,9 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
             // generate random value in range [0,1]
             D = distr(gen);
 
-            m_heightMap[index].position = Vec3f((float)(index % m_terrainWidth),
-                                                height + D,
-                                                (float)(index / m_terrainHeight));
+            m_pGridData.vPostion->at(index) = Vec3f((float)(index % m_terrainWidth),
+                                                    height + D,
+                                                    (float)(index / m_terrainHeight));
         }
 
         // odd rows 1, 3, 5,...
@@ -253,9 +262,9 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
             // generate random value in range [0,1]
             D = distr(gen);
 
-            m_heightMap[index].position = Vec3f((float)(index % m_terrainWidth),
-                                                height + D,
-                                                (float)(index / m_terrainHeight));
+            m_pGridData.vPostion->at(index) = Vec3f((float)(index % m_terrainWidth),
+                                                    height + D,
+                                                    (float)(index / m_terrainHeight));
         }
     }
 
@@ -277,7 +286,7 @@ void Terrain::InterpolateHightValues(int index, int divSegment, int idWidth, flo
     {
         tmpIndex = index + (divSegment*idWidth);
     }
-    height += m_heightMap[tmpIndex].position.y;
+    height += m_pGridData.vPostion->at(tmpIndex).y;
 
     // lower neighbor
     tmpIndex = index + (divSegment*idWidth);
@@ -285,7 +294,7 @@ void Terrain::InterpolateHightValues(int index, int divSegment, int idWidth, flo
     {
         tmpIndex = index - (divSegment*idWidth);;
     }
-    height += m_heightMap[tmpIndex].position.y;
+    height += m_pGridData.vPostion->at(tmpIndex).y;
 
     // right neighbor
     if (!((index % idWidth) == (idWidth - 1)))
@@ -296,7 +305,7 @@ void Terrain::InterpolateHightValues(int index, int divSegment, int idWidth, flo
     {
         tmpIndex = index - divSegment;
     }
-    height += m_heightMap[tmpIndex].position.y;
+    height += m_pGridData.vPostion->at(tmpIndex).y;
 
     // left neighbor
     if (!(index % idWidth) == 0)
@@ -307,7 +316,7 @@ void Terrain::InterpolateHightValues(int index, int divSegment, int idWidth, flo
     {
         tmpIndex = index + divSegment;
     }
-    height += m_heightMap[tmpIndex].position.y;
+    height += m_pGridData.vPostion->at(tmpIndex).y;
 
     // normalize
     height /= 4.0f;
@@ -327,7 +336,7 @@ bool Terrain::LoadHeightMap(WCHAR *hightmapFilename)
     }
 
     // Create the structure to hold the height map data.
-    m_heightMap.resize(m_terrainWidth * m_terrainHeight);
+    m_pGridData.ResizeAll(m_terrainWidth * m_terrainHeight);
 
     // Read the image data into the height map.
     // parallel section
@@ -337,10 +346,9 @@ bool Terrain::LoadHeightMap(WCHAR *hightmapFilename)
         for (int i = 0; i < m_terrainWidth; i++)
         {
             index = (m_terrainHeight * j) + i;
-
-            m_heightMap[index].position = Vec3f((float)i, (float)pixelData[k], (float)j);
-
-            k += 3;
+            m_pGridData.vPostion->at(index) = Vec3f((float)i,
+                                                    (float)pixelData[k],
+                                                    (float)j);
         }
     }
 
@@ -360,8 +368,8 @@ void Terrain::NormalizeHeightMap()
     {
         for (int i = 0; i  <m_terrainWidth; i++)
         {
-            m_heightMap[(m_terrainHeight * j) + i].position *= m_scaling;
-            m_heightMap[(m_terrainHeight * j) + i].position.y *= m_heightScaling;
+            m_pGridData.vPostion->at((m_terrainHeight * j) + i) *= m_scaling;
+            m_pGridData.vPostion->at((m_terrainHeight * j) + i).y *= m_heightScaling;
         }
     }
 
@@ -397,8 +405,8 @@ bool Terrain::CalculateNormals()
             index2 = (j       *  m_terrainHeight)      + (i + 1);
             index3 = ((j + 1) *  m_terrainHeight)      + i;
 
-            vector0 = m_heightMap[index1].position - m_heightMap[index3].position;
-            vector1 = m_heightMap[index3].position - m_heightMap[index2].position;
+            vector0 = m_pGridData.vPostion->at(index1) - m_pGridData.vPostion->at(index3);
+            vector1 = m_pGridData.vPostion->at(index3) - m_pGridData.vPostion->at(index2);
 
             normals[index0] = vector0.GetCross(vector0, vector1);
         }
@@ -454,7 +462,7 @@ bool Terrain::CalculateNormals()
             index0 = (j * m_terrainHeight) + i;
 
             // Normalize the shared normal for this vertex.
-            m_heightMap[index0].normal = sum.Normalize();
+            m_pGridData.vNormals->at(index0) = sum.Normalize();
         }
     }
 
@@ -468,29 +476,23 @@ bool Terrain::CalculateNormals()
 
 void Terrain::ShutdownHeightMap()
 {
-    m_heightMap.clear();
     return;
 }
 
 
 void Terrain::CalculateTextureCoordinates()
 {
-    int incrementCount = 0;
-    float incrementValue = 0.0f;
-
     int tuCount = 0;
     int tvCount = 0;
 
-    float tuCoordinate = 0.0f;
-    float tvCoordinate = 1.0f;
-
+    Vec2f texCoord = Vec2f(0.0f, 1.0f);
     int textureRepeat = (m_terrainWidth - 1) / 8;
 
     // Calculate how much to increment the texture coordinates by.
-    incrementValue = (float)textureRepeat / (float)(m_terrainWidth - 1);
+    float incrementValue = (float)textureRepeat / (float)(m_terrainWidth - 1);
 
     // Calculate how many times to repeat the texture.
-    incrementCount = (m_terrainWidth - 1) / textureRepeat;
+    int incrementCount = (m_terrainWidth - 1) / textureRepeat;
 
     // Loop through the height map and calculate the texture coordinates for each vertex.
     for (int j = 0; j < m_terrainHeight - 1; j++)
@@ -498,29 +500,28 @@ void Terrain::CalculateTextureCoordinates()
         for (int i = 0; i < m_terrainWidth - 1; i++)
         {
             // Store the texture coordinate in the height map.
-            m_heightMap[(m_terrainHeight * j) + i].texture.u = tuCoordinate;
-            m_heightMap[(m_terrainHeight * j) + i].texture.v = tvCoordinate;
+            m_pGridData.vTexCoords->at((m_terrainHeight * j) + i) = Vec3f(texCoord.u,
+                                                                          texCoord.v,
+                                                                          0.0f);
             // 3rd texture coordinate empty yet
-            //m_heightMap[(m_terrainHeight * j) + i].texture.z = 1.0f;
-
-            tuCoordinate += incrementValue;
+            texCoord.u += incrementValue;
             tuCount++;
 
             // Check if at the far right end of the texture then start at the beginning.
             if (tuCount == incrementCount)
             {
-                tuCoordinate = 0.0f;
+                texCoord.u = 0.0f;
                 tuCount = 0;
             }
         }
 
-        tvCoordinate -= incrementValue;
+        texCoord.v -= incrementValue;
         tvCount++;
 
         // Check if at the top of the texture then start at the bottom again.
         if (tvCount == incrementCount)
         {
-            tvCoordinate = 1.0f;
+            texCoord.v = 1.0f;
             tvCount = 0;
         }
     }
@@ -555,12 +556,15 @@ bool Terrain::LoadColorMap(WCHAR *filename)
         {
             index = (m_terrainHeight * j) + i;
 
-            m_heightMap[index].color.r = (float)pixelData[k++] / conversionFactor;
-            m_heightMap[index].color.g = (float)pixelData[k++] / conversionFactor;
-            m_heightMap[index].color.b = (float)pixelData[k++] / conversionFactor;
-            m_heightMap[index].color.a = 1.0f;
+            Vec4f color = Vec4f((float)pixelData[3 * i],
+                                (float)pixelData[3 * i + 1],
+                                (float)pixelData[3 * i + 2],
+                                conversionFactor);
+
+            m_pGridData.vColors->at(index) = color / conversionFactor;
         }
     }
+
     // Release the bitmap image data.
     delete[] pixelData;
     pixelData = 0;
@@ -578,14 +582,16 @@ bool Terrain::InitializeBuffers()
     int index3;
     int index4;
 
-    float tu;
-    float tv;
+    Vec2f texCoord;
 
     // Calculate the number of vertices in the terrain mesh.
+    // Consider a grid of squares (resolution-1 per dimension).
+    // Each square becomes two triangles in the  triangle list, so we need
+    // 2*3=6 times the number of squares.
     m_vertexCount = (m_terrainWidth - 1)*(m_terrainHeight - 1)*6;
 
-    // Create the vertex vector.
-    m_vertices.resize(m_vertexCount);
+    // Resize the vertex data vector.
+    m_pVertexData.ResizeAll(m_vertexCount);
 
     for (int j = 0; j < (m_terrainHeight - 1); j++)
     {
@@ -598,61 +604,46 @@ bool Terrain::InitializeBuffers()
 
             // Upper left.
             // Modify the texture coordinates to cover the top edge.
-            tv = m_heightMap[index3].texture.v;
-            if (tv == 1.0f)
-            {
-                tv = 0.0f;
-            }
-            m_vertices[index] = m_heightMap[index3];
-            m_vertices[index++].texture.v = tv;
+            texCoord = m_pGridData.vTexCoords->at(index3).uv;
+            texCoord.v = (texCoord.v == 1.0f) ? 0.0f : texCoord.v;
+
+            m_pVertexData.TransferData(&m_pGridData, index, index3);
+            m_pVertexData.vTexCoords->at(index++).v = texCoord.v;
 
             // Upper right.
             // Modify the texture coordinates to cover the top and right edge.
-            tu = m_heightMap[index4].texture.u;
-            tv = m_heightMap[index4].texture.v;
-            if (tu == 0.0f)
-            {
-                tu = 1.0f;
-            }
-            if (tv == 1.0f)
-            {
-                tv = 0.0f;
-            }
-            m_vertices[index] = m_heightMap[index4];
-            m_vertices[index].texture.u = tu;
-            m_vertices[index++].texture.v = tv;
+            texCoord = m_pGridData.vTexCoords->at(index4).uv;
+
+            texCoord.u = (texCoord.u == 0.0f) ? 1.0f : texCoord.u;
+            texCoord.v = (texCoord.v == 1.0f) ? 0.0f : texCoord.v;
+
+            m_pVertexData.TransferData(&m_pGridData, index, index4);
+            m_pVertexData.vTexCoords->at(index).u = texCoord.u;
+            m_pVertexData.vTexCoords->at(index++).v = texCoord.v;
 
             // Bottom left.
-            m_vertices[index++] = m_heightMap[index1];
+            m_pVertexData.TransferData(&m_pGridData, index++, index1);
 
             // Bottom left.
-            m_vertices[index++] = m_heightMap[index1];
+            m_pVertexData.TransferData(&m_pGridData, index++, index1);
 
             // Upper right.
             // Modify the texture coordinates to cover the top and right edge.
-            tu = m_heightMap[index4].texture.u;
-            tv = m_heightMap[index4].texture.v;
-            if (tu == 0.0f)
-            {
-                tu = 1.0f;
-            }
-            if (tv == 1.0f)
-            {
-                tv = 0.0f;
-            }
-            m_vertices[index] = m_heightMap[index4];
-            m_vertices[index].texture.u = tu;
-            m_vertices[index++].texture.v = tv;
+            texCoord = m_pGridData.vTexCoords->at(index4).uv;
+            texCoord.u = (texCoord.u == 0.0f) ? 1.0f : texCoord.u;
+            texCoord.v = (texCoord.v == 1.0f) ? 0.0f : texCoord.v;
+
+            m_pVertexData.TransferData(&m_pGridData, index, index4);
+            m_pVertexData.vTexCoords->at(index).u = texCoord.u;
+            m_pVertexData.vTexCoords->at(index++).v = texCoord.v;
 
             // Bottom right.
             // Modify the texture coordinates to cover the right edge.
-            tu = m_heightMap[index2].texture.u;
-            if (tu == 0.0f)
-            {
-                tu = 1.0f;
-            }
-            m_vertices[index] = m_heightMap[index2];
-            m_vertices[index++].texture.u = tu;
+            texCoord.u = m_pGridData.vTexCoords->at(index2).u;
+            texCoord.u = (texCoord.u == 0.0f) ? 1.0f : texCoord.u;
+
+            m_pVertexData.TransferData(&m_pGridData, index, index2);
+            m_pVertexData.vTexCoords->at(index++).u = texCoord.u;
         }
     }
 
@@ -662,9 +653,6 @@ bool Terrain::InitializeBuffers()
 
 void Terrain::ShutdownBuffers()
 {
-    // Release the vertex array.
-    m_vertices.clear();
-
     return;
 }
 
@@ -672,12 +660,6 @@ void Terrain::ShutdownBuffers()
 int Terrain::GetVertexCount()
 {
     return m_vertexCount;
-}
-
-
-vector<VertexType> Terrain::GetVertices()
-{
-    return m_vertices;
 }
 
 
@@ -696,4 +678,28 @@ void Terrain::GenNewRand()
 int Terrain::GetRand()
 {
     return m_rand;
+}
+
+
+void Terrain::GetPositions(vector<Vec3f> &vPostion)
+{
+    vPostion = *m_pVertexData.vPostion;
+}
+
+
+void Terrain::GetTexCoords(vector<Vec3f> &vTexCoords)
+{
+    vTexCoords = *m_pVertexData.vTexCoords;
+}
+
+
+void Terrain::GetNormals(vector<Vec3f> &vNormals)
+{
+    vNormals = *m_pVertexData.vNormals;
+}
+
+
+void Terrain::GetColors(vector<Vec4f> &vColors)
+{
+    vColors = *m_pVertexData.vColors;
 }

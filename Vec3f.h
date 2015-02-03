@@ -4,6 +4,7 @@
 #include <DirectXMath.h>
 #include <DirectXPackedVector.h>
 
+#include "Vec2f.h"
 #include "Vec4f.h"
 
 using namespace DirectX;
@@ -66,6 +67,36 @@ public:
     inline float GetZ() const
     {
         return this->m_v.z;
+    }
+
+    inline Vec2f GetXY() const
+    {
+        return Vec2f(this->m_v.x, this->m_v.y);
+    }
+
+    inline Vec2f GetYZ() const
+    {
+        return Vec2f(this->m_v.y, this->m_v.z);
+    }
+
+    inline Vec2f GetXZ() const
+    {
+        return Vec2f(this->m_v.x, this->m_v.z);
+    }
+
+    inline Vec2f GetYX() const
+    {
+        return Vec2f(this->m_v.y, this->m_v.x);
+    }
+
+    inline Vec2f GetZY() const
+    {
+        return Vec2f(this->m_v.z, this->m_v.y);
+    }
+
+    inline Vec2f GetZX() const
+    {
+        return Vec2f(this->m_v.z, this->m_v.x);
     }
 
     inline float GetAxis(UINT axis) const
@@ -411,15 +442,31 @@ public:
     __declspec(property(get = GetY, put = SetY)) float y;
     __declspec(property(get = GetZ, put = SetZ)) float z;
 
+    __declspec(property(get = GetXY)) Vec2f xy;
+    __declspec(property(get = GetYZ)) Vec2f yz;
+    __declspec(property(get = GetXZ)) Vec2f xz;
+    __declspec(property(get = GetYX)) Vec2f yx;
+    __declspec(property(get = GetZY)) Vec2f zy;
+    __declspec(property(get = GetZX)) Vec2f zx;
+
     // texture coordinate
     __declspec(property(get = GetX, put = SetX)) float u;
     __declspec(property(get = GetY, put = SetY)) float v;
+
+    __declspec(property(get = GetXY)) Vec2f uv;
+    __declspec(property(get = GetYX)) Vec2f vu;
 
     // color
     __declspec(property(get = GetX, put = SetX)) float r;
     __declspec(property(get = GetY, put = SetY)) float g;
     __declspec(property(get = GetZ, put = SetZ)) float b;
 
+    __declspec(property(get = GetXY)) Vec2f rg;
+    __declspec(property(get = GetYZ)) Vec2f gb;
+    __declspec(property(get = GetXZ)) Vec2f rb;
+    __declspec(property(get = GetYX)) Vec2f gr;
+    __declspec(property(get = GetZY)) Vec2f bg;
+    __declspec(property(get = GetZX)) Vec2f br;
 
 private:
     XMFLOAT3 m_v;

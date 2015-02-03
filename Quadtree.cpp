@@ -5,6 +5,12 @@ QuadTree::QuadTree()
 {
     m_pRootNode = nullptr;
     omp_set_num_threads(NUM_THREADS);
+
+    m_vVertexPositions = new vector<Vec3f>;
+    m_vVertexTexCoords = new vector<Vec3f>;
+    m_vVertexNormals = new vector<Vec3f>;
+    m_vVertexColors = new vector<Vec4f>;
+
 }
 
 
@@ -30,8 +36,11 @@ bool QuadTree::Initialize(Terrain *pTerrain,
     int vertexCount = pTerrain->GetVertexCount();
     m_triangleCount = vertexCount / 3;
 
-    m_vVertexList.resize(vertexCount);
-    m_vVertexList = pTerrain->GetVertices();
+    // get the transposed vertex data
+    pTerrain->GetPositions(*m_vVertexPositions);
+    pTerrain->GetTexCoords(*m_vVertexTexCoords);
+    pTerrain->GetNormals(*m_vVertexNormals);
+    pTerrain->GetColors(*m_vVertexColors);
 
     Vec3f center = Vec3f(0.0f);
     float width;
@@ -47,9 +56,6 @@ bool QuadTree::Initialize(Terrain *pTerrain,
 
     // Recursively build the quad tree based on the vertex list data and mesh dimensions.
     CreateTreeNode(m_pRootNode, center, width, pDevice);
-
-    // Release the vertex list since the quad tree now has the vertices in the nodes.
-    m_vVertexList.clear();
 
     return true;
 }
@@ -97,8 +103,8 @@ void QuadTree::CalculateMeshDimensions(int vertexCount,
     // Sum of the positions of all the vertices in the mesh.
     for (int i = 0; i < vertexCount - 1; i++)
     {
-        center.x += m_vVertexList[i].position.x;
-        center.z += m_vVertexList[i].position.z;
+        center.x += m_vVertexPositions->at(i).x;
+        center.z += m_vVertexPositions->at(i).z;
     }
     // Divide by the number of vertices to find the mid-point.
     center.x = center.x / (float) vertexCount;
@@ -107,8 +113,8 @@ void QuadTree::CalculateMeshDimensions(int vertexCount,
     float maxWidth = 0.0f;
     float maxDepth = 0.0f;
 
-    float minWidth = fabsf(m_vVertexList[0].position.x - center.x);
-    float minDepth = fabsf(m_vVertexList[0].position.z - center.z);
+    float minWidth = fabsf(m_vVertexPositions->at(0).x - center.x);
+    float minDepth = fabsf(m_vVertexPositions->at(0).z - center.z);
 
     float width;
     float depth;
@@ -116,8 +122,8 @@ void QuadTree::CalculateMeshDimensions(int vertexCount,
     // Find maximum and minimum width and depth of the mesh.
     for (int i = 0; i < vertexCount; i++)
     {
-        width = fabsf(m_vVertexList[i].position.x - center.x);
-        depth = fabsf(m_vVertexList[i].position.z - center.z);
+        width = fabsf(m_vVertexPositions->at(i).x - center.x);
+        depth = fabsf(m_vVertexPositions->at(i).z - center.z);
 
         if (width > maxWidth)
         {
@@ -222,15 +228,15 @@ void QuadTree::CreateTreeNode(NodeType *pNode,
                 for (int j = 0; j < 3; j++)
                 {
                     // Get the three vertices of this triangle from the vertex list.
-                    pVertices[index].position = m_vVertexList[vertexId].position.GetAsXMFloat3();
-                    pVertices[index].texture = m_vVertexList[vertexId].texture.GetAsXMFloat3();
-                    pVertices[index].normal = m_vVertexList[vertexId].normal.GetAsXMFloat3();
-                    pVertices[index].color = m_vVertexList[vertexId].color.GetAsXMFloat4();
+                    pVertices[index].position = m_vVertexPositions->at(vertexId).GetAsXMFloat3();
+                    pVertices[index].texture = m_vVertexTexCoords->at(vertexId).GetAsXMFloat3();
+                    pVertices[index].normal = m_vVertexNormals->at(vertexId).GetAsXMFloat3();
+                    pVertices[index].color = m_vVertexColors->at(vertexId).GetAsXMFloat4();
                     pIndices[index] = index;
                     // Store the vertex position information in the vertex list for
                     // intersection test (height based movement)
-                    tmpVertex.Set(m_vVertexList[vertexId].position);
-                    pNode->vVertexList.push_back(tmpVertex);
+                    //tmpVertex.Set(m_vVertexPositions->at(vertexId));
+                    pNode->vVertexList.push_back(m_vVertexPositions->at(vertexId));
                     index++;
                     vertexId++;
                 }
@@ -240,7 +246,7 @@ void QuadTree::CreateTreeNode(NodeType *pNode,
         // Vertex buffer description.
         D3D11_BUFFER_DESC vertexBufferDesc;
         vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-        vertexBufferDesc.ByteWidth = sizeof(VertexType) * vertexCount;
+        vertexBufferDesc.ByteWidth = sizeof(VertexCombined) * vertexCount;
         vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
         vertexBufferDesc.CPUAccessFlags = 0;
         vertexBufferDesc.MiscFlags = 0;
@@ -318,16 +324,16 @@ bool QuadTree::IsTriangleContained(int index, Vec3f position, float width)
     // Get the vertices of the triangle.
     Vec3f xCoord;
     Vec3f zCoord;
-    xCoord.x = m_vVertexList[vertexId].position.x;
-    zCoord.x = m_vVertexList[vertexId].position.z;
+    xCoord.x = m_vVertexPositions->at(vertexId).x;
+    zCoord.x = m_vVertexPositions->at(vertexId).z;
     vertexId++;
 
-    xCoord.y = m_vVertexList[vertexId].position.x;
-    zCoord.y = m_vVertexList[vertexId].position.z;
+    xCoord.y = m_vVertexPositions->at(vertexId).x;
+    zCoord.y = m_vVertexPositions->at(vertexId).z;
     vertexId++;
 
-    xCoord.z = m_vVertexList[vertexId].position.x;
-    zCoord.z = m_vVertexList[vertexId].position.z;
+    xCoord.z = m_vVertexPositions->at(vertexId).x;
+    zCoord.z = m_vVertexPositions->at(vertexId).z;
 
     // Min and max of x-coordinate inside the triangle?
     float minimumX = min(xCoord.x, min(xCoord.y, xCoord.z));

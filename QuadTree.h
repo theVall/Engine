@@ -109,7 +109,13 @@ private:
     int m_maxTrianges;
     bool m_quadTreeEnabled;
 
-    vector<VertexType> m_vVertexList;
+    //vector<VertexType> m_vVertexList;
+
+    vector<Vec3f> *m_vVertexPositions;
+    vector<Vec3f> *m_vVertexTexCoords;
+    vector<Vec3f> *m_vVertexNormals;
+    vector<Vec4f> *m_vVertexColors;
+
     NodeType *m_pRootNode;
 };
 

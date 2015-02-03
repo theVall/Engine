@@ -1126,7 +1126,7 @@ bool Application::RenderGraphics()
     //                  0);
 #endif
 
-    // gender AntTweakBar
+    // render AntTweakBar
     m_pGUI->RenderGUI();
 
     if (m_drawMandelbrot && m_drawMinimap)
@@ -1494,12 +1494,12 @@ void Application::HandleMinimapClicks(int mouseX, int mouseY,
                 m_mandelUpperLeftY = m_pMandelMini->upperLeft.y;
                 m_mandelLowerRightX = m_pMandelMini->lowerRight.x;
                 m_mandelLowerRightY = m_pMandelMini->lowerRight.y;
-                // clear POI
+                // clear selected POI
                 m_pMandelMini->clickCnt = 0;
                 m_pMandelMini->poi = Vec2f(-10.0f);
             }
         }
     }
-    // clear POI
+    // clear hovered POI
     m_pMandelMini->poi2 = Vec2f(-10.0f);
 }
