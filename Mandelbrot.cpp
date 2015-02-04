@@ -348,7 +348,6 @@ bool Mandelbrot::CalcHeightsInRectangle(Vec2f upperLeft,
     UINT groupCountY = (m_heightMapDim + BLOCK_SIZE_Y - 1) / BLOCK_SIZE_Y;
     pContext->Dispatch(groupCountX, groupCountY, 1);
 
-
     // Gauss blur
     //
     // Buffers and constants already set/bound from before, so just dispatch.

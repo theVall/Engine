@@ -1329,7 +1329,7 @@ bool Application::SetGuiParams()
         {
             if (!m_pGUI->AddIntVar("Resolution",
                                    m_terrainResolution,
-                                   "min=2 max=10 step=1 group='Terrain Settings'"))
+                                   "min=3 max=10 step=1 group='Terrain Settings'"))
             {
                 return false;
             }

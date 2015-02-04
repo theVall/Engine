@@ -112,10 +112,10 @@ private:
 
     //vector<VertexType> m_vVertexList;
 
-    vector<Vec3f> *m_vVertexPositions;
-    vector<Vec3f> *m_vVertexTexCoords;
-    vector<Vec3f> *m_vVertexNormals;
-    vector<Vec4f> *m_vVertexColors;
+    vector<Vec3f> m_vVertexPositions;
+    vector<Vec3f> m_vVertexTexCoords;
+    vector<Vec3f> m_vVertexNormals;
+    //vector<Vec4f> m_vVertexColors;
 
     NodeType *m_pRootNode;
 };

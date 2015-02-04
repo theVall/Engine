@@ -30,69 +30,51 @@ class Terrain
     // Transposed approach, all vertex attributes are in separate arrays
     struct VerticesTransposed
     {
-        vector<Vec3f> *vPostion;
-        vector<Vec3f> *vTexCoords;
-        vector<Vec3f> *vNormals;
-        vector<Vec4f> *vColors;
+        vector<Vec3f> vPostion;
+        vector<Vec3f> vTexCoords;
+        vector<Vec3f> vNormals;
+        //vector<Vec4f> vColors;
 
-        void InitAll()
+        void ReserveAll(size_t size)
         {
-            vPostion = new vector<Vec3f>;
-            vTexCoords = new vector<Vec3f>;
-            vNormals = new vector<Vec3f>;
-            vColors = new vector<Vec4f>;
+            vPostion.reserve(size);
+            vTexCoords.reserve(size);
+            vNormals.reserve(size);
+            //vColors.reserve(1024 * 1024 * 6);
         }
-
-        void DeleteAll()
-        {
-            ClearAll();
-
-            if (vPostion)
-            {
-                delete vPostion;
-                vPostion = 0;
-            }
-            if (vTexCoords)
-            {
-                delete vTexCoords;
-                vTexCoords = 0;
-            }
-            if (vNormals)
-            {
-                delete vNormals;
-                vNormals = 0;
-            }
-            if (vColors)
-            {
-                delete vColors;
-                vColors = 0;
-            }
-        };
 
         void ClearAll()
         {
-            vPostion->clear();
-            vTexCoords->clear();
-            vNormals->clear();
-            vColors->clear();
+            vPostion.clear();
+            vTexCoords.clear();
+            vNormals.clear();
+            //vColors.clear();
         };
 
-        // throws bad_alloc on size >= (2048*2048*6)
-        // probably heap fragmentation/allocation/size problem
+        // throws bad_alloc on size > (1236*1236*6)
+        // probably stack allocation/size problem
         void ResizeAll(size_t size)
         {
-            vPostion->resize(size);
-            vTexCoords->resize(size);
-            vNormals->resize(size);
-            vColors->resize(size);
+            vPostion.resize(size);
+            vTexCoords.resize(size);
+            vNormals.resize(size);
+            //vColors.resize(size);
         }
+
+        void ShrinkAll()
+        {
+            vPostion.shrink_to_fit();
+            vTexCoords.shrink_to_fit();
+            vNormals.shrink_to_fit();
+            //vColors.shrink_to_fit();
+        };
 
         void TransferData(VerticesTransposed *pOther, int idSelf, int idOther)
         {
-            vPostion->at(idSelf) = pOther->vPostion->at(idOther);
-            vTexCoords->at(idSelf) = pOther->vTexCoords->at(idOther);
-            vNormals->at(idSelf) = pOther->vNormals->at(idOther);
-            vColors->at(idSelf) = pOther->vColors->at(idOther);
+            vPostion.at(idSelf) = pOther->vPostion.at(idOther);
+            vTexCoords.at(idSelf) = pOther->vTexCoords.at(idOther);
+            vNormals.at(idSelf) = pOther->vNormals.at(idOther);
+            //vColors.at(idSelf) = pOther->vColors.at(idOther);
         }
     };
 
@@ -168,7 +150,7 @@ private:
 
     // the vertex data of the initially generated grid
     // (from height-map or diamond-square)
-    VerticesTransposed m_pGridData;
+    VerticesTransposed m_gridData;
     // render ready vertex data
-    VerticesTransposed m_pVertexData;
+    VerticesTransposed m_vertexData;
 };
