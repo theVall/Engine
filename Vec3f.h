@@ -452,9 +452,14 @@ public:
     // texture coordinate
     __declspec(property(get = GetX, put = SetX)) float u;
     __declspec(property(get = GetY, put = SetY)) float v;
+    __declspec(property(get = GetY, put = SetY)) float w;
 
     __declspec(property(get = GetXY)) Vec2f uv;
+    __declspec(property(get = GetYZ)) Vec2f vw;
+    __declspec(property(get = GetXZ)) Vec2f uw;
     __declspec(property(get = GetYX)) Vec2f vu;
+    __declspec(property(get = GetZY)) Vec2f wv;
+    __declspec(property(get = GetZX)) Vec2f wu;
 
     // color
     __declspec(property(get = GetX, put = SetX)) float r;

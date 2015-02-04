@@ -54,8 +54,10 @@ bool QuadTree::Initialize(Terrain *pTerrain,
         return false;
     }
 
+    // Determine the initial number of triangles.
+    int numTriangles = CountTriangles(center, width);
     // Recursively build the quad tree based on the vertex list data and mesh dimensions.
-    CreateTreeNode(m_pRootNode, center, width, pDevice);
+    CreateTreeNode(m_pRootNode, center, width, numTriangles, pDevice);
 
     return true;
 }
@@ -157,6 +159,7 @@ void QuadTree::CalculateMeshDimensions(int vertexCount,
 void QuadTree::CreateTreeNode(NodeType *pNode,
                               Vec3f position,
                               float width,
+                              int numTriangles,
                               ID3D11Device *pDevice)
 {
     // set node parameters
@@ -173,7 +176,7 @@ void QuadTree::CreateTreeNode(NodeType *pNode,
     pNode->pChildNodes[3] = nullptr;
 
     // Count the number of triangles inside this node.
-    int numTriangles = CountTriangles(position, width);
+    //int numTriangles = CountTriangles(position, width);
     // if quad tree is disabled: put all triangles in root node
     if (!m_quadTreeEnabled)
     {
@@ -198,8 +201,8 @@ void QuadTree::CreateTreeNode(NodeType *pNode,
             offset.z = (((i % 4) < 2) ? -1.0f : 1.0f) * (width / 4.0f);
 
             // Check if there are any triangles in the new node.
-            int count = CountTriangles(position + offset, width / 2.0f);
-            if (count > 0)
+            int newNumTriangles = CountTriangles(position + offset, width / 2.0f);
+            if (newNumTriangles > 0)
             {
                 pNode->pChildNodes[i] = new NodeType;
 
@@ -207,6 +210,7 @@ void QuadTree::CreateTreeNode(NodeType *pNode,
                 CreateTreeNode(pNode->pChildNodes[i],
                                position + offset,
                                width / 2.0f,
+                               newNumTriangles,
                                pDevice);
             }
         }
@@ -240,9 +244,10 @@ void QuadTree::CreateTreeNode(NodeType *pNode,
                     pVertices[index].normal = m_vVertexNormals->at(vertexId).GetAsXMFloat3();
                     pVertices[index].color = m_vVertexColors->at(vertexId).GetAsXMFloat4();
                     pIndices[index] = index;
-                    // Store the vertex position information in the vertex list for
+
+                    // Store the vertex position id in the vertex list. Used for
                     // intersection test (height based movement)
-                    pNode->vVertexList.push_back(m_vVertexPositions->at(vertexId));
+                    pNode->vVertexList.push_back(vertexId);
                     index++;
                 }
             }
@@ -329,36 +334,36 @@ bool QuadTree::IsTriangleContained(int index, Vec3f position, float width)
     // Get the vertices of the triangle.
     Vec3f xCoord;
     Vec3f zCoord;
-    xCoord.x = m_vVertexPositions->at(vertexId).x;
-    zCoord.x = m_vVertexPositions->at(vertexId).z;
+    xCoord.u = m_vVertexPositions->at(vertexId).x;
+    zCoord.u = m_vVertexPositions->at(vertexId).z;
     vertexId++;
 
-    xCoord.y = m_vVertexPositions->at(vertexId).x;
-    zCoord.y = m_vVertexPositions->at(vertexId).z;
+    xCoord.v = m_vVertexPositions->at(vertexId).x;
+    zCoord.v = m_vVertexPositions->at(vertexId).z;
     vertexId++;
 
-    xCoord.z = m_vVertexPositions->at(vertexId).x;
-    zCoord.z = m_vVertexPositions->at(vertexId).z;
+    xCoord.w = m_vVertexPositions->at(vertexId).x;
+    zCoord.w = m_vVertexPositions->at(vertexId).z;
 
     // Min and max of x-coordinate inside the triangle?
-    float minimumX = min(xCoord.x, min(xCoord.y, xCoord.z));
+    float minimumX = min(xCoord.u, min(xCoord.v, xCoord.w));
     if (minimumX > (position.x + radius))
     {
         return false;
     }
-    float maximumX = max(xCoord.x, max(xCoord.y, xCoord.z));
+    float maximumX = max(xCoord.u, max(xCoord.v, xCoord.w));
     if (maximumX < (position.x - radius))
     {
         return false;
     }
 
     // Min and max of z-coordinate inside the triangle?
-    float minimumZ = min(zCoord.x, min(zCoord.y, zCoord.z));
+    float minimumZ = min(zCoord.u, min(zCoord.v, zCoord.w));
     if (minimumZ > (position.z + radius))
     {
         return false;
     }
-    float maximumZ = max(zCoord.x, max(zCoord.y, zCoord.z));
+    float maximumZ = max(zCoord.u, max(zCoord.v, zCoord.w));
     if (maximumZ < (position.z - radius))
     {
         return false;
@@ -520,11 +525,12 @@ void QuadTree::FindNode(NodeType *pNode, float x, float z, float &height)
 
     // If there are no children, the polygon must be in this node.
     // Check polygons in this node to find the height.
-    for (int i = 0; i < pNode->triangleCount; i += 3)
+    int index = 0;
+    for (int i = 0; i < pNode->triangleCount; ++i)
     {
-        v0 = pNode->vVertexList.at(i);
-        v1 = pNode->vVertexList.at(i + 1);
-        v2 = pNode->vVertexList.at(i + 2);
+        v0 = m_vVertexPositions->at(pNode->vVertexList.at(index++));
+        v1 = m_vVertexPositions->at(pNode->vVertexList.at(index++));
+        v2 = m_vVertexPositions->at(pNode->vVertexList.at(index++));
 
         // Check if this is the polygon we are looking for.
         foundHeight = CheckHeightOfTriangle(x, z, height, v0, v1, v2);

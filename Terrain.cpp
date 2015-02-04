@@ -111,9 +111,6 @@ bool Terrain::Initialize()
 
 void Terrain::Shutdown()
 {
-    m_pGridData.ClearAll();
-    m_pVertexData.ClearAll();
-
     m_pGridData.DeleteAll();
     m_pVertexData.DeleteAll();
 
@@ -137,8 +134,10 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
                                         float hurst,
                                         float initialVariance)
 {
-    // size and length of the terrain is 2 to the power of the sizeFactor (2^factor) + 1
+    // size and length of the terrain is 2 to the power of the sizeFactor (2^factor)
+    // plus 1 for unambiguous center point
     m_terrainHeight = (int)(1 << terrainSizeFactor) + 1;
+
     // terrain is always quadratic
     m_terrainWidth = m_terrainHeight;
 
@@ -585,7 +584,6 @@ bool Terrain::InitializeBuffers()
     m_vertexCount = (m_terrainWidth - 1)*(m_terrainHeight - 1)*6;
 
     // Clear and resize the vertex data vectors.
-    m_pVertexData.ClearAll();
     m_pVertexData.ResizeAll(m_vertexCount);
 
     #pragma omp parallel for

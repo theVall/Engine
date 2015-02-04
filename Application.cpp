@@ -51,7 +51,7 @@ Application::Application()
     m_zoom              = 1.0f;
     m_screenDepth       = 10000.0f;
     m_screenNear        = 0.1f;
-    m_spectatorHeight   = 10.0f;
+    m_spectatorHeight   = m_terrainScaling*2.0f;
     m_elapsedTime       = 0;
 
     // set pointer to null

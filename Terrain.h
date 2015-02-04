@@ -45,6 +45,8 @@ class Terrain
 
         void DeleteAll()
         {
+            ClearAll();
+
             if (vPostion)
             {
                 delete vPostion;
@@ -75,6 +77,8 @@ class Terrain
             vColors->clear();
         };
 
+        // throws bad_alloc on size >= (2048*2048*6)
+        // probably heap fragmentation/allocation/size problem
         void ResizeAll(size_t size)
         {
             vPostion->resize(size);

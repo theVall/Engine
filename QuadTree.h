@@ -41,7 +41,7 @@ private:
 
         int triangleCount;
 
-        vector<Vec3f> vVertexList;
+        vector<int> vVertexList;
 
         ID3D11Buffer *pVertexBuffer;
         ID3D11Buffer *pIndexBuffer;
@@ -75,6 +75,7 @@ private:
     void CreateTreeNode(NodeType *pNode,
                         Vec3f center,
                         float width,
+                        int numTriangles,
                         ID3D11Device *pDevice);
 
     // count number of triangles in node
