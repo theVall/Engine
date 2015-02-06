@@ -189,6 +189,7 @@ private:
     // Quad tree settings
     bool m_useQuadtree;
     bool m_oldUseQuadtree;
+    bool m_drawQuadTreeLines;
     int m_maxTrianglesQtNode;
 
     // Minimap settings struct
@@ -236,6 +237,7 @@ private:
     MandelbrotShader *m_pMandelbrotShader;
     Element2d *m_pMinimap;
     TextureShader *m_pMinimapShader;
+    LineShader *m_pLineShader;
 
     // textures
     Texture *m_pSkyDomeTex;

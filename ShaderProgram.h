@@ -77,5 +77,6 @@ protected:
     ID3D11Buffer *m_pMatrixBuffer;
 
     ID3D11RasterizerState *m_pRsStateWireframe;
+    ID3D11RasterizerState *m_pRsStateSolid;
 };
 

@@ -643,6 +643,9 @@ bool Terrain::InitializeBuffers()
         }
     }
 
+    // clear grid data
+    //m_gridData.ClearAll();
+
     return true;
 }
 

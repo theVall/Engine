@@ -49,6 +49,15 @@ bool ShaderProgram::Initialize(ID3D11Device *pDevice,
         return false;
     }
 
+    // Create solid state
+    rasterDesc.FillMode = D3D11_FILL_SOLID;
+    hres = pDevice->CreateRasterizerState(&rasterDesc, &m_pRsStateSolid);
+    if (FAILED(hres))
+    {
+        return false;
+    }
+
+
     // Call object specific initialization method.
     result = InitializeShader(pDevice,
                               hwnd,

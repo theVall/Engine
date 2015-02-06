@@ -11,7 +11,8 @@
 
 #include "Terrain.h"
 #include "Frustum.h"
-#include "Terrainshader.h"
+#include "TerrainShader.h"
+#include "LineShader.h"
 
 using namespace std;
 using namespace DirectX;
@@ -19,6 +20,27 @@ using namespace DirectX::PackedVector;
 
 // maximum number of node children (4 for quad tree obviously...)
 const int MAX_CHILDREN = 4;
+const int NUM_CUBE_VERTICES = 8;
+const int NUM_BOX_INDICES = 24;
+
+const static float cubeVertices[] =
+{
+    -0.5f, -0.5f, -0.5f,
+    0.5f, -0.5f, -0.5f,
+    0.5f,  0.5f, -0.5f,
+    -0.5f, 0.5f, -0.5f,
+    -0.5f, -0.5f, 0.5f,
+    0.5f, -0.5f,  0.5f,
+    0.5f,  0.5f,  0.5f,
+    -0.5f, 0.5f,  0.5f,
+};
+
+const static unsigned long boxEdges[] =
+{
+    0, 1, 1, 2, 2, 3, 3, 0,
+    4, 5, 5, 6, 6, 7, 7, 4,
+    0, 4, 1, 5, 2, 6, 3, 7
+};
 
 class QuadTree
 {
@@ -45,6 +67,9 @@ private:
 
         ID3D11Buffer *pVertexBuffer;
         ID3D11Buffer *pIndexBuffer;
+
+        ID3D11Buffer *pCubeVertexBuffer;
+
         NodeType *pChildNodes[MAX_CHILDREN];
     };
 
@@ -64,10 +89,24 @@ public:
                 TerrainShader *pShader,
                 bool wireframe);
 
+    void RenderBorder(Frustum *pFrustum,
+                      ID3D11DeviceContext *pContext,
+                      LineShader *pShader);
+
     int GetDrawCount();
     bool GetHeightAtPosition(float posX, float posZ, float &height);
 
 private:
+
+    template<typename T> void SafeRelease(T *&obj)
+    {
+        if (obj)
+        {
+            obj->Release();
+            obj = NULL;
+        }
+    }
+
     // calculate center point and width of the mesh
     void CalculateMeshDimensions(int vertexCount, Vec3f &center, float &width);
 
@@ -92,6 +131,11 @@ private:
                     TerrainShader *pShader,
                     bool wireframe);
 
+    void RenderNodeBorder(NodeType *pNode,
+                          Frustum *pFrustum,
+                          ID3D11DeviceContext *pContext,
+                          LineShader *pLineShader);
+
     void FindNode(NodeType *node, float posX, float posZ, float &height);
 
     // Checks if the y-parallel line with posX and posZ intersects the triangle
@@ -110,13 +154,13 @@ private:
     int m_maxTrianges;
     bool m_quadTreeEnabled;
 
-    //vector<VertexType> m_vVertexList;
-
     vector<Vec3f> m_vVertexPositions;
     vector<Vec3f> m_vVertexTexCoords;
     vector<Vec3f> m_vVertexNormals;
     //vector<Vec4f> m_vVertexColors;
 
     NodeType *m_pRootNode;
+
+    ID3D11Buffer *m_pCubeIndexBuffer;
 };
 

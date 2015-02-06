@@ -53,6 +53,22 @@ bool QuadTree::Initialize(Terrain *pTerrain,
     // Recursively build the quad tree based on the vertex list data and mesh dimensions.
     CreateTreeNode(m_pRootNode, center, width, numTriangles, pDevice);
 
+    // Cube index buffer.
+    D3D11_BUFFER_DESC indexBufferDesc;
+    indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+    indexBufferDesc.ByteWidth = sizeof(unsigned long) * NUM_BOX_INDICES;
+    indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    indexBufferDesc.CPUAccessFlags = 0;
+    indexBufferDesc.MiscFlags = 0;
+    indexBufferDesc.StructureByteStride = 0;
+
+    D3D11_SUBRESOURCE_DATA indexData;
+    indexData.pSysMem = boxEdges;
+    indexData.SysMemPitch = 0;
+    indexData.SysMemSlicePitch = 0;
+
+    pDevice->CreateBuffer(&indexBufferDesc, &indexData, &m_pCubeIndexBuffer);
+
     return true;
 }
 
@@ -81,6 +97,17 @@ void QuadTree::Render(Frustum *pFrustum,
 
     // Render all visible nodes.
     RenderNode(m_pRootNode, pFrustum, pContext, pShader, wireframe);
+
+    return;
+}
+
+
+void QuadTree::RenderBorder(Frustum *pFrustum,
+                            ID3D11DeviceContext *pContext,
+                            LineShader *pShader)
+{
+    // Render all visible nodes.
+    RenderNodeBorder(m_pRootNode, pFrustum, pContext, pShader);
 
     return;
 }
@@ -162,6 +189,7 @@ void QuadTree::CreateTreeNode(NodeType *pNode,
     pNode->triangleCount = 0;
     pNode->pVertexBuffer = nullptr;
     pNode->pIndexBuffer = nullptr;
+    pNode->pCubeVertexBuffer = nullptr;
 
     // initialize children
     pNode->pChildNodes[0] = nullptr;
@@ -169,8 +197,6 @@ void QuadTree::CreateTreeNode(NodeType *pNode,
     pNode->pChildNodes[2] = nullptr;
     pNode->pChildNodes[3] = nullptr;
 
-    // Count the number of triangles inside this node.
-    //int numTriangles = CountTriangles(position, width);
     // if quad tree is disabled: put all triangles in root node
     if (!m_quadTreeEnabled)
     {
@@ -288,6 +314,30 @@ void QuadTree::CreateTreeNode(NodeType *pNode,
         delete[] pIndices;
         pIndices = 0;
 
+        // Cube vertex buffer.
+        XMFLOAT3 *pVerticesCube = new XMFLOAT3[NUM_CUBE_VERTICES];
+        for (int i = 0; i < NUM_CUBE_VERTICES; ++i)
+        {
+            int j = i * 3;
+            pVerticesCube[i].x = cubeVertices[j] * width + position.x;
+            pVerticesCube[i].y = cubeVertices[j+1] * width + position.y;
+            pVerticesCube[i].z = cubeVertices[j+2] * width + position.z;
+            //pVerticesCube[i].w = 1.0f;
+        }
+
+        vertexBufferDesc.ByteWidth = sizeof(XMFLOAT3) * NUM_CUBE_VERTICES;
+
+        D3D11_SUBRESOURCE_DATA cubeVertexData;
+        cubeVertexData.pSysMem = pVerticesCube;
+        cubeVertexData.SysMemPitch = 0;
+        cubeVertexData.SysMemSlicePitch = 0;
+
+        HRESULT hres = pDevice->CreateBuffer(&vertexBufferDesc, &cubeVertexData, &pNode->pCubeVertexBuffer);
+
+        // clean-up
+        delete[] pVerticesCube;
+        pVerticesCube = 0;
+
         return;
     }
 }
@@ -378,17 +428,10 @@ void QuadTree::ReleaseNode(NodeType *pNode)
         }
     }
 
-    if (pNode->pVertexBuffer)
-    {
-        pNode->pVertexBuffer->Release();
-        pNode->pVertexBuffer = 0;
-    }
-
-    if (pNode->pIndexBuffer)
-    {
-        pNode->pIndexBuffer->Release();
-        pNode->pIndexBuffer = 0;
-    }
+    SafeRelease(pNode->pVertexBuffer);
+    SafeRelease(pNode->pIndexBuffer);
+    SafeRelease(pNode->pCubeVertexBuffer);
+    SafeRelease(m_pCubeIndexBuffer);
 
     for (int i = 0; i < MAX_CHILDREN; i++)
     {
@@ -426,7 +469,11 @@ void QuadTree::RenderNode(NodeType *pNode,
         if (pNode->pChildNodes[i] != 0)
         {
             count++;
-            RenderNode(pNode->pChildNodes[i], pFrustum, pContext, pShader, wireframe);
+            RenderNode(pNode->pChildNodes[i],
+                       pFrustum,
+                       pContext,
+                       pShader,
+                       wireframe);
         }
     }
     if (count != 0)
@@ -451,6 +498,55 @@ void QuadTree::RenderNode(NodeType *pNode,
 
     // Update the number of triangles to contain the newly rendered ones.
     m_drawCount += pNode->triangleCount;
+
+    return;
+}
+
+
+void QuadTree::RenderNodeBorder(NodeType *pNode,
+                                Frustum *pFrustum,
+                                ID3D11DeviceContext *pContext,
+                                LineShader *pLineShader)
+{
+    bool result;
+
+    // Check to see if the node can be seen.
+    // __NOTE__ y-Center value is assumed to be 0! (only 2D quad tree)
+    // -> Undefined behavior for (much) "higher/lower" nodes.
+    result = pFrustum->CheckCube(pNode->position, pNode->width / 2.0f);
+    if (!result)
+    {
+        return;
+    }
+
+    int count = 0;
+    for (int i = 0; i < MAX_CHILDREN; ++i)
+    {
+        if (pNode->pChildNodes[i] != 0)
+        {
+            count++;
+            RenderNodeBorder(pNode->pChildNodes[i],
+                             pFrustum,
+                             pContext,
+                             pLineShader);
+        }
+    }
+    if (count != 0)
+    {
+        return;
+    }
+
+    unsigned int stride = sizeof(XMFLOAT3);
+    unsigned int offset = 0;
+
+    // Set the box vertex and index buffers to active.
+    pContext->IASetVertexBuffers(0, 1, &pNode->pCubeVertexBuffer, &stride, &offset);
+    pContext->IASetIndexBuffer(m_pCubeIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+    pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+
+    // The box render call.
+    pLineShader->RenderShader(pContext, NUM_BOX_INDICES);
 
     return;
 }

@@ -206,7 +206,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
         return false;
     }
 
-    // Create and initialize __shader__.
+    // Create and initialize __terrain shader__.
     m_pTerrainShader = new TerrainShader;
     if (!m_pTerrainShader)
     {
@@ -220,6 +220,25 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     {
         MessageBox(m_hwnd,
                    L"Could not initialize the terrain shader object.",
+                   L"Error",
+                   MB_OK);
+        return false;
+    }
+
+    // Create and initialize __line shader__ for quad tree visualization.
+    m_pLineShader = new LineShader;
+    if (!m_pLineShader)
+    {
+        return false;
+    }
+    result = m_pLineShader->Initialize(m_pDirect3D->GetDevice(),
+                                       m_hwnd,
+                                       L"../Engine/shader/LineVS.hlsl",
+                                       L"../Engine/shader/LinePS.hlsl");
+    if (!result)
+    {
+        MessageBox(m_hwnd,
+                   L"Could not initialize the line shader object.",
                    L"Error",
                    MB_OK);
         return false;
@@ -526,6 +545,7 @@ void Application::Shutdown()
     //SafeShutdown(m_pMinimap);
     // TODO: error on SRV release
     SafeShutdown(m_pMinimapShader);
+    SafeShutdown(m_pLineShader);
 
     SafeDelete(m_pProfiler);
     SafeDelete(m_pPosition);
@@ -1055,6 +1075,22 @@ bool Application::RenderGraphics()
                             m_pDirect3D->GetDeviceContext(),
                             m_pTerrainShader,
                             m_wireframe);
+
+        if (m_drawQuadTreeLines)
+        {
+            if (!m_pLineShader->SetShaderParameters(m_pDirect3D->GetDeviceContext(),
+                                                    worldMatrix,
+                                                    viewMatrix,
+                                                    projectionMatrix))
+            {
+                return false;
+            }
+
+            // Render the node borders using the quad tree and line shader.
+            m_pQuadTree->RenderBorder(m_pFrustum,
+                                      m_pDirect3D->GetDeviceContext(),
+                                      m_pLineShader);
+        }
     }
 
     if (m_drawMandelbrot)
@@ -1324,6 +1360,12 @@ bool Application::SetGuiParams()
             {
                 return false;
             }
+            if (!m_pGUI->AddFloatVar("Scaling",
+                                     m_terrainScaling,
+                                     "min=1.0 max=10000.0 step=1 group='Terrain Settings'"))
+            {
+                return false;
+            }
         }
         else
         {
@@ -1333,12 +1375,12 @@ bool Application::SetGuiParams()
             {
                 return false;
             }
-        }
-        if (!m_pGUI->AddFloatVar("Scaling",
-                                 m_terrainScaling,
-                                 "min=1.0 max=100.0 step=1 group='Terrain Settings'"))
-        {
-            return false;
+            if (!m_pGUI->AddFloatVar("Scaling",
+                                     m_terrainScaling,
+                                     "min=1.0 max=100.0 step=1 group='Terrain Settings'"))
+            {
+                return false;
+            }
         }
         if (!m_pGUI->AddFloatVar("Height Scaling",
                                  m_terrainHeightScaling,
@@ -1372,7 +1414,11 @@ bool Application::SetGuiParams()
         }
 
         // Quad tree settings
-        if (!m_pGUI->AddBoolVar("Use Quad-Tree", m_useQuadtree, "group='Quad Tree Settings'"))
+        if (!m_pGUI->AddBoolVar("Use Quad Tree", m_useQuadtree, "group='Quad Tree Settings'"))
+        {
+            return false;
+        }
+        if (!m_pGUI->AddBoolVar("Draw Quad Tree", m_drawQuadTreeLines, "group='Quad Tree Settings'"))
         {
             return false;
         }
