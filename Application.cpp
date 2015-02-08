@@ -53,6 +53,8 @@ Application::Application()
     m_screenNear        = 0.1f;
     m_spectatorHeight   = m_terrainScaling*2.0f;
     m_elapsedTime       = 0;
+    // basic sensitivity, higher is faster
+    m_sensitivity       = 0.3f;
 
     // set pointer to null
     m_pInput            = nullptr;
@@ -707,9 +709,6 @@ bool Application::HandleInput(float frameTime)
     int mouseX = 0;
     int mouseY = 0;
 
-    // basic sensitivity, higher is faster
-    float sensitivity = 0.25f;
-
     // Set the frame time for calculating the updated position.
     m_pPosition->SetFrameTime(frameTime);
 
@@ -720,10 +719,8 @@ bool Application::HandleInput(float frameTime)
         return false;
     }
     keyDown = GetAsyncKeyState(VK_SHIFT);
-    if (keyDown)
-    {
-        sensitivity = 0.75f;
-    }
+    float sensitivity = keyDown ? 2.0f * m_sensitivity : m_sensitivity;
+
 
     if (!m_orbitalCamera && m_windowActive)
     {
@@ -1277,6 +1274,12 @@ bool Application::SetGuiParams()
         {
             return false;
         }
+    }
+    if (!m_pGUI->AddFloatVar("Camera Speed",
+                             m_sensitivity,
+                             "min=0.0 max=5.0 step=0.1"))
+    {
+        return false;
     }
 
     if (!m_pGUI->AddSeperator(NULL, NULL))

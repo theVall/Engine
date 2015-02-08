@@ -141,7 +141,7 @@ private:
     bool m_backFaceCulling;
     bool m_windowActive;
 
-    // draw object bools
+    // draw object booleans
     bool m_drawSkyDome;
     bool m_drawOcean;
     bool m_drawTerrain;
@@ -202,6 +202,7 @@ private:
     float m_screenNear;
     float m_spectatorHeight;
     float m_elapsedTime;
+    float m_sensitivity;
 
     // misc settings
     float m_guiLightDir[3];
