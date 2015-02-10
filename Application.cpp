@@ -22,11 +22,11 @@ Application::Application()
     m_drawMinimap       = true;
 
     // terrain settings
-    m_terrainHurst          = m_oldTerrainHurst         = 0.75f;
-    m_terrainVariance       = m_oldTerrainVariance      = 1.0f;
-    m_terrainScaling        = m_oldTerrainScaling       = 14.0f;
-    m_terrainHeightScaling  = m_oldTerrainHeightScaling = 20.0f;
-    m_terrainResolution     = m_oldTerrainResolution    = 8;
+    m_terrainHurst.SetValue(0.75f);
+    m_terrainVariance.SetValue(1.0f);
+    m_terrainScaling.SetValue(14.0f);
+    m_terrainHeightScaling.SetValue(20.0f);
+    m_terrainResolution.SetValue(8);
 
     // Quad tree
     m_useQuadtree        = m_oldUseQuadtree = false;
@@ -34,29 +34,29 @@ Application::Application()
 
     // Mandelbrot settings
     m_mandelChanged     = false;
-    m_mandelUpperLeftX  = m_oldMandelUpperLeftX     = -2.1f;
-    m_mandelUpperLeftY  = m_oldMandelUpperLeftY     = 1.2f;
-    m_mandelLowerRightX = m_oldMandelLowerRightX    = 0.6f;
-    m_mandelLowerRightY = m_oldMandelLowerRightY    = -1.2f;
-    m_mandelIterations  = m_oldMandelIterations     = 500.0f;
-    m_mandelMaskSize    = m_oldMandelMaskSize       = 15;
+    m_mandelUpperLeftX.SetValue(-2.1f);
+    m_mandelUpperLeftY.SetValue(1.2f);
+    m_mandelLowerRightX.SetValue(0.6f);
+    m_mandelLowerRightY.SetValue(-1.2f);
+    m_mandelIterations.SetValue(500.0f);
+    m_mandelMaskSize.SetValue(15);
 
     // ocean settings
     m_oceanTileFactor   = 7;
     m_oceanTimeScale    = 0.0003f;
-    m_oceanHeightOffset = -m_terrainHeightScaling - 5.0f;
+    m_oceanHeightOffset = -m_terrainHeightScaling.GetValue() - 5.0f;
 
     // camera settings
     m_orbitalCamera     = false;
     m_zoom              = 1.0f;
     m_screenDepth       = 10000.0f;
     m_screenNear        = 0.1f;
-    m_spectatorHeight   = m_terrainScaling*2.0f;
+    m_spectatorHeight   = m_terrainScaling.GetValue()*2.0f;
     m_elapsedTime       = 0;
     // basic sensitivity, higher is faster
     m_sensitivity       = 0.3f;
 
-    // set pointer to null
+    // Set pointer members to null
     m_pInput            = nullptr;
     m_pDirect3D         = nullptr;
     m_pCamera           = nullptr;
@@ -151,9 +151,9 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight, int n
     m_pCamera->GetViewMatrix(m_baseViewMatrix);
     // Set the initial position of the camera.
     Vec3f camPos;
-    camPos.x = 100.0f * m_terrainScaling;
-    camPos.y = 10.0f * m_terrainHeightScaling;
-    camPos.z = 100.0f * m_terrainScaling;
+    camPos.x = 100.0f * m_terrainScaling.GetValue();
+    camPos.y = 10.0f * m_terrainHeightScaling.GetValue();
+    camPos.z = 100.0f * m_terrainScaling.GetValue();
     m_pCamera->SetPosition(camPos);
     m_pCamera->SetRotation(Vec3f(0.0f, 270.0f, 0.0f));
 
@@ -198,11 +198,11 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight, int n
     }
     m_pTerrain->Initialize(numCpu);
     result = m_pTerrain->GenerateDiamondSquare(m_pUtil,
-                                               m_terrainResolution,
-                                               m_terrainHurst,
-                                               m_terrainVariance,
-                                               m_terrainScaling,
-                                               m_terrainHeightScaling);
+                                               m_terrainResolution.GetValue(),
+                                               m_terrainHurst.GetValue(),
+                                               m_terrainVariance.GetValue(),
+                                               m_terrainScaling.GetValue(),
+                                               m_terrainHeightScaling.GetValue());
     if (!result)
     {
         MessageBox(m_hwnd, L"Could not initialize the terrain object.", L"Error", MB_OK);
@@ -464,21 +464,23 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight, int n
                                    m_pDirect3D->GetDeviceContext(),
                                    m_hwnd,
                                    L"../Engine/shader/MandelbrotCS.hlsl",
-                                   1 << m_terrainResolution))
+                                   1 << m_terrainResolution.GetValue()))
     {
         MessageBox(m_hwnd, L"Could not initialize the Mandelbrot object.", L"Error", MB_OK);
         return false;
     }
 
-    m_pMandelbrot->CalcHeightsInRectangle(Vec2f(m_mandelUpperLeftX, m_mandelUpperLeftY),
-                                          Vec2f(m_mandelLowerRightX, m_mandelLowerRightY),
-                                          m_mandelIterations,
-                                          m_terrainVariance,
-                                          m_mandelMaskSize,
+    m_pMandelbrot->CalcHeightsInRectangle(Vec2f(m_mandelUpperLeftX.GetValue(),
+                                                m_mandelUpperLeftY.GetValue()),
+                                          Vec2f(m_mandelLowerRightX.GetValue(),
+                                                m_mandelLowerRightY.GetValue()),
+                                          m_mandelIterations.GetValue(),
+                                          m_terrainVariance.GetValue(),
+                                          m_mandelMaskSize.GetValue(),
                                           m_pDirect3D->GetDeviceContext());
 
     //  Create and initialize the __Mandelbrot Shader__ program
-    m_pMandelbrotShader = new MandelbrotShader(1 << m_terrainResolution);
+    m_pMandelbrotShader = new MandelbrotShader(1 << m_terrainResolution.GetValue());
     if (!m_pMandelbrotShader)
     {
         return false;
@@ -501,10 +503,12 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight, int n
     // Mandelbrot Minimap settings struct
     m_pMandelMini = new MandelMinimap;
     m_pMandelMini->clickCnt = 0;
-    m_pMandelMini->upperLeft = Vec2f(m_mandelUpperLeftX, m_mandelUpperLeftY);
-    m_pMandelMini->lowerRight = Vec2f(m_mandelLowerRightX, m_mandelLowerRightY);
-    m_pMandelMini->xScale = fabs(m_mandelUpperLeftX - m_mandelLowerRightX);
-    m_pMandelMini->yScale = fabs(m_mandelUpperLeftY - m_mandelLowerRightY);
+    m_pMandelMini->upperLeft = Vec2f(m_mandelUpperLeftX.GetValue(),
+                                     m_mandelUpperLeftY.GetValue());
+    m_pMandelMini->lowerRight = Vec2f(m_mandelLowerRightX.GetValue(),
+                                      m_mandelLowerRightY.GetValue());
+    m_pMandelMini->xScale = fabs(m_mandelUpperLeftX.GetValue() - m_mandelLowerRightX.GetValue());
+    m_pMandelMini->yScale = fabs(m_mandelUpperLeftY.GetValue() - m_mandelLowerRightY.GetValue());
     m_pMandelMini->width = (int)(INITIAL_MINIMAP_SIZE / 2.0f * m_pMandelMini->xScale);
     m_pMandelMini->height = (int)(INITIAL_MINIMAP_SIZE / 2.0f * m_pMandelMini->yScale);
 
@@ -615,7 +619,7 @@ bool Application::ProcessFrame()
     if (m_drawMandelbrot && m_mandelChanged)
     {
         // On resolution change: create new Mandelbrot and -shader objects
-        if (m_oldTerrainResolution != m_terrainResolution)
+        if (m_terrainResolution.IsChanged())
         {
             // Shutdown old Mandelbrot objects
             m_pMandelbrotShader->Shutdown();
@@ -626,13 +630,13 @@ bool Application::ProcessFrame()
                                            m_pDirect3D->GetDeviceContext(),
                                            m_hwnd,
                                            L"../Engine/shader/MandelbrotCS.hlsl",
-                                           1 << m_terrainResolution))
+                                           1 << m_terrainResolution.GetValue()))
             {
                 MessageBox(m_hwnd, L"Could not initialize the Mandelbrot object.", L"Error", MB_OK);
                 return false;
             }
 
-            m_pMandelbrotShader = new MandelbrotShader(1 << m_terrainResolution);
+            m_pMandelbrotShader = new MandelbrotShader(1 << m_terrainResolution.GetValue());
             if (!m_pMandelbrotShader)
             {
                 return false;
@@ -647,55 +651,55 @@ bool Application::ProcessFrame()
             }
 
             // Update resolution memory variable.
-            m_oldTerrainResolution = m_terrainResolution;
+            m_terrainResolution.ChangeProcessed();
         }
 
         // scale terrain on minimap selection proportional to the size difference
         Vec2f oldUL = Vec2f(m_oldMandelUpperLeftX, m_oldMandelUpperLeftY);
         Vec2f oldLR = Vec2f(m_oldMandelLowerRightX, m_oldMandelLowerRightY);
 
-        Vec2f newUL = Vec2f(m_mandelUpperLeftX, m_mandelUpperLeftY);
-        Vec2f newLR = Vec2f(m_mandelLowerRightX, m_mandelLowerRightY);
+        Vec2f newUL = Vec2f(m_mandelUpperLeftX.GetValue(), m_mandelUpperLeftY.GetValue());
+        Vec2f newLR = Vec2f(m_mandelLowerRightX.GetValue(), m_mandelLowerRightY.GetValue());
 
         float delta = (oldUL - oldLR).Length() - (newUL - newLR).Length();
 
-        if (delta*m_terrainScaling > 0.5f)
+        if (delta*m_terrainScaling.GetValue() > 0.5f)
         {
             // use square root function to enhance small changes
-            m_terrainScaling *= (1.0f + sqrt(delta*m_terrainScaling));
+            m_terrainScaling.SetValue(m_terrainScaling.GetValue() * (1.0f + sqrt(delta*m_terrainScaling.GetValue())));
         }
 
         // calculate the Mandelbrot values of the new selection
-        m_pMandelbrot->CalcHeightsInRectangle(Vec2f(m_mandelUpperLeftX,
-                                                    m_mandelUpperLeftY),
-                                              Vec2f(m_mandelLowerRightX,
-                                                    m_mandelLowerRightY),
-                                              m_mandelIterations,
-                                              m_terrainVariance,
-                                              m_mandelMaskSize,
+        m_pMandelbrot->CalcHeightsInRectangle(Vec2f(m_mandelUpperLeftX.GetValue(),
+                                                    m_mandelUpperLeftY.GetValue()),
+                                              Vec2f(m_mandelLowerRightX.GetValue(),
+                                                    m_mandelLowerRightY.GetValue()),
+                                              m_mandelIterations.GetValue(),
+                                              m_terrainVariance.GetValue(),
+                                              m_mandelMaskSize.GetValue(),
                                               m_pDirect3D->GetDeviceContext());
 
         // update minimap scaling
-        m_pMandelMini->xScale = fabs(m_mandelUpperLeftX - m_mandelLowerRightX);
-        m_pMandelMini->yScale = fabs(m_mandelUpperLeftY - m_mandelLowerRightY);
+        m_pMandelMini->xScale = fabs(m_mandelUpperLeftX.GetValue() - m_mandelLowerRightX.GetValue());
+        m_pMandelMini->yScale = fabs(m_mandelUpperLeftY.GetValue() - m_mandelLowerRightY.GetValue());
         m_pMandelMini->width = (int)(INITIAL_MINIMAP_SIZE / 2.0f * m_pMandelMini->xScale);
         m_pMandelMini->height = (int)(INITIAL_MINIMAP_SIZE / 2.0f * m_pMandelMini->yScale);
 
-        if (m_pMandelMini->width*(1.0f + 0.1f*m_terrainScaling) < INITIAL_MINIMAP_SIZE &&
-                m_pMandelMini->height*(1.0f + 0.1f*m_terrainScaling) < INITIAL_MINIMAP_SIZE)
+        if (m_pMandelMini->width*(1.0f + 0.1f*m_terrainScaling.GetValue()) < INITIAL_MINIMAP_SIZE &&
+                m_pMandelMini->height*(1.0f + 0.1f*m_terrainScaling.GetValue()) < INITIAL_MINIMAP_SIZE)
         {
-            m_pMandelMini->width = (int)(m_pMandelMini->width*0.75f*m_terrainScaling);
-            m_pMandelMini->height = (int)(m_pMandelMini->height*0.75f*m_terrainScaling);
+            m_pMandelMini->width = (int)(m_pMandelMini->width*0.75f*m_terrainScaling.GetValue());
+            m_pMandelMini->height = (int)(m_pMandelMini->height*0.75f*m_terrainScaling.GetValue());
         }
 
         m_pMinimap->SetElementWidth(m_pMandelMini->width);
         m_pMinimap->SetElementHeight(m_pMandelMini->height);
 
         // update 'memory' parameters of coordinates
-        m_oldMandelUpperLeftX = m_mandelUpperLeftX;
-        m_oldMandelUpperLeftY = m_mandelUpperLeftY;
-        m_oldMandelLowerRightX = m_mandelLowerRightX;
-        m_oldMandelLowerRightY = m_mandelLowerRightY;
+        m_oldMandelUpperLeftX = m_mandelUpperLeftX.GetValue();
+        m_oldMandelUpperLeftY = m_mandelUpperLeftY.GetValue();
+        m_oldMandelLowerRightX = m_mandelLowerRightX.GetValue();
+        m_oldMandelLowerRightY = m_mandelLowerRightY.GetValue();
 
         m_mandelChanged = false;
     }
@@ -766,20 +770,21 @@ bool Application::HandleInput(float frameTime)
     if (keyDown != 0 && m_drawTerrain)
     {
         m_pTerrain->GenNewRand();
-        m_terrainHurst += 0.000001f;
+        // workaround...
+        m_terrainHurst.SetValue(m_terrainHurst.GetValue() + 0.0000001f);
     }
     // Mandelbrot mode: reset terrain.
     else if (keyDown != 0 && m_drawMandelbrot)
     {
         m_mandelChanged = true;
         // Reset Mandelbrot area coordinates
-        m_mandelUpperLeftX = -2.1f;
-        m_mandelUpperLeftY = 1.2f;
-        m_mandelLowerRightX = 0.6f;
-        m_mandelLowerRightY = -1.2f;
+        m_mandelUpperLeftX.SetValue(-2.1f);
+        m_mandelUpperLeftY.SetValue(1.2f);
+        m_mandelLowerRightX.SetValue(0.6f);
+        m_mandelLowerRightY.SetValue(-1.2f);
         // Reset terrain scaling parameters
-        m_terrainHeightScaling = 20;
-        m_terrainScaling = 1;
+        m_terrainHeightScaling.SetValue(20);
+        m_terrainScaling.SetValue(1);
         // Reset minimap
         m_pMandelMini->width = INITIAL_MINIMAP_SIZE;
         m_pMandelMini->height = INITIAL_MINIMAP_SIZE;
@@ -872,24 +877,18 @@ bool Application::HandleInput(float frameTime)
     // Only bother with rebuilding terrain if it is actually drawn...
     if (m_drawTerrain)
     {
-        // workaround, TODO: use callback methods...
-        if (m_oldTerrainHurst != m_terrainHurst ||
-                m_oldTerrainVariance != m_terrainVariance ||
-                m_oldTerrainResolution != m_terrainResolution ||
-                m_oldTerrainScaling != m_terrainScaling ||
-                m_oldTerrainHeightScaling != m_terrainHeightScaling ||
-                m_oldUseQuadtree != m_useQuadtree ||
-                m_oldDrawTerrain != m_drawTerrain)
+        if (TerrainParamsChanged() || m_useQuadtree != m_oldUseQuadtree)
         {
+            m_terrainResolution.ChangeProcessed();
             m_pQuadTree->ClearTree();
             m_pTerrain->Shutdown();
 
             if (!m_pTerrain->GenerateDiamondSquare(m_pUtil,
-                                                   m_terrainResolution,
-                                                   m_terrainHurst,
-                                                   m_terrainVariance,
-                                                   m_terrainScaling,
-                                                   m_terrainHeightScaling))
+                                                   m_terrainResolution.GetValue(),
+                                                   m_terrainHurst.GetValue(),
+                                                   m_terrainVariance.GetValue(),
+                                                   m_terrainScaling.GetValue(),
+                                                   m_terrainHeightScaling.GetValue()))
             {
                 MessageBox(m_hwnd,
                            L"Something went wrong while generating terrain.",
@@ -904,12 +903,6 @@ bool Application::HandleInput(float frameTime)
                                    m_maxTrianglesQtNode,
                                    m_useQuadtree);
 
-            // update memory values
-            m_oldTerrainHurst = m_terrainHurst;
-            m_oldTerrainVariance = m_terrainVariance;
-            m_oldTerrainScaling = m_terrainScaling;
-            m_oldTerrainHeightScaling = m_terrainHeightScaling;
-            m_oldTerrainResolution = m_terrainResolution;
             m_oldUseQuadtree = m_useQuadtree;
         }
     }
@@ -917,26 +910,9 @@ bool Application::HandleInput(float frameTime)
     {
         // Check if Mandelbrot terrain parameters have changed.
         // If so, set flag for recalculating Mandelbrot rectangle.
-        if (m_oldTerrainResolution != m_terrainResolution ||
-                m_oldTerrainVariance != m_terrainVariance ||
-                m_oldTerrainScaling != m_terrainScaling ||
-                m_oldMandelUpperLeftX != m_mandelUpperLeftX ||
-                m_oldMandelUpperLeftY != m_mandelUpperLeftY ||
-                m_oldMandelLowerRightX != m_mandelLowerRightX ||
-                m_oldMandelLowerRightY != m_mandelLowerRightY ||
-                m_oldMandelIterations != m_mandelIterations ||
-                m_oldMandelMaskSize != m_mandelMaskSize ||
-                m_oldDrawMandelbrot != m_drawMandelbrot)
+        if (MandelParamsChanged() || TerrainParamsChanged())
         {
             m_mandelChanged = true;
-
-            // Update memory variables.
-            // Resolution is updated in process frame because it is needed for a check.
-            m_oldTerrainVariance = m_terrainVariance;
-            m_oldTerrainScaling = m_terrainScaling;
-
-            m_oldMandelIterations = m_mandelIterations;
-            m_oldMandelMaskSize = m_mandelMaskSize;
         }
     }
 
@@ -947,20 +923,20 @@ bool Application::HandleInput(float frameTime)
         // hide terrain and ocean in Mandelbrot mode
         if ((m_drawMandelbrot != m_oldDrawMandelbrot) && m_drawMandelbrot)
         {
-            m_terrainResolution = 10;
-            m_terrainHeightScaling = 20;
-            m_terrainScaling = 1;
-            m_terrainVariance = 5.0f;
+            m_terrainResolution.SetValue(10);
+            m_terrainHeightScaling.SetValue(20);
+            m_terrainScaling.SetValue(1);
+            m_terrainVariance.SetValue(5.0f);
 
             m_drawTerrain = false;
             m_drawOcean = false;
         }
         else if ((m_drawMandelbrot != m_oldDrawMandelbrot) && !m_drawMandelbrot)
         {
-            m_terrainResolution = 8;
-            m_terrainHeightScaling = 20;
-            m_terrainScaling = 14;
-            m_terrainVariance = 1.0f;
+            m_terrainResolution.SetValue(8);
+            m_terrainHeightScaling.SetValue(20);
+            m_terrainScaling.SetValue(14);
+            m_terrainVariance.SetValue(1.0f);
 
             m_drawTerrain = true;
             m_drawOcean = true;
@@ -997,7 +973,7 @@ bool Application::RenderGraphics()
     if (m_orbitalCamera)
     {
         // Calculate target point from terrain size for orbital cam.
-        float target = (float)(1 << m_terrainResolution) * (float)m_terrainScaling / 2.0f;
+        float target = (float)(1 << m_terrainResolution.GetValue()) * (float)m_terrainScaling.GetValue() / 2.0f;
         if (m_drawTerrain)
         {
             m_pCamera->RenderOrbital(Vec3f(target, 0.0f, target), m_zoom);
@@ -1071,7 +1047,7 @@ bool Application::RenderGraphics()
                                                    m_pLight->GetAmbientColor(),
                                                    m_pLight->GetDiffuseColor(),
                                                    m_vTerrainTextures,
-                                                   m_terrainHeightScaling))
+                                                   m_terrainHeightScaling.GetValue()))
         {
             return false;
         }
@@ -1108,10 +1084,12 @@ bool Application::RenderGraphics()
                                     m_pLight->GetDirection(),
                                     m_pMandelbrot->GetHeightMap(),
                                     m_wireframe,
-                                    Vec2f(m_mandelUpperLeftX, m_mandelUpperLeftY),
-                                    Vec2f(m_mandelLowerRightX, m_mandelLowerRightY),
-                                    m_terrainScaling,
-                                    m_terrainHeightScaling);
+                                    Vec2f(m_mandelUpperLeftX.GetValue(),
+                                          m_mandelUpperLeftY.GetValue()),
+                                    Vec2f(m_mandelLowerRightX.GetValue(),
+                                          m_mandelLowerRightY.GetValue()),
+                                    m_terrainScaling.GetValue(),
+                                    m_terrainHeightScaling.GetValue());
     }
 
     // Render the ocean geometry
@@ -1189,8 +1167,8 @@ bool Application::RenderGraphics()
                                  m_pMandelbrot->GetHeightTex(),
                                  (float)m_pMandelMini->width,
                                  (float)m_pMandelMini->height,
-                                 (float)(1 << m_terrainResolution),
-                                 (float)(1 << m_terrainResolution),
+                                 (float)(1 << m_terrainResolution.GetValue()),
+                                 (float)(1 << m_terrainResolution.GetValue()),
                                  m_pMandelMini->poi,
                                  m_pMandelMini->poi2);
 
@@ -1329,33 +1307,33 @@ bool Application::SetGuiParams()
     // Mandelbrot pixel game settings
     if (m_drawMandelbrot)
     {
-        if (!m_pGUI->AddFloatVar("Iterations",
-                                 m_mandelIterations,
-                                 "min=500.0 max=100000.0 step=500 group='Pixel Game Settings'"))
+        if (!m_pGUI->AddVarCB("Iterations",
+                              &m_mandelIterations,
+                              "min=500.0 max=100000.0 step=500 group='Pixel Game Settings'"))
         {
             return false;
         }
-        if (!m_pGUI->AddFloatVar("Upper Left x",
-                                 m_mandelUpperLeftX,
-                                 "min=-2.1 max=0.6 step=0.01 precision=5 group='Pixel Game Settings'"))
+        if (!m_pGUI->AddVarCB("Upper Left x",
+                              &m_mandelUpperLeftX,
+                              "min=-2.1 max=0.6 step=0.01 precision=5 group='Pixel Game Settings'"))
         {
             return false;
         }
-        if (!m_pGUI->AddFloatVar("Upper Left y",
-                                 m_mandelUpperLeftY,
-                                 "min=-1.2 max=1.2 step=0.01 precision=5 group='Pixel Game Settings'"))
+        if (!m_pGUI->AddVarCB("Upper Left y",
+                              &m_mandelUpperLeftY,
+                              "min=-1.2 max=1.2 step=0.01 precision=5 group='Pixel Game Settings'"))
         {
             return false;
         }
-        if (!m_pGUI->AddFloatVar("Lower Right x",
-                                 m_mandelLowerRightX,
-                                 "min=-2.1 max=0.6 step=0.01 precision=5 group='Pixel Game Settings'"))
+        if (!m_pGUI->AddVarCB("Lower Right x",
+                              &m_mandelLowerRightX,
+                              "min=-2.1 max=0.6 step=0.01 precision=5 group='Pixel Game Settings'"))
         {
             return false;
         }
-        if (!m_pGUI->AddFloatVar("Lower Right y",
-                                 m_mandelLowerRightY,
-                                 "min=-1.2 max=1.2 step=0.01 precision=5 group='Pixel Game Settings'"))
+        if (!m_pGUI->AddVarCB("Lower Right y",
+                              &m_mandelLowerRightY,
+                              "min=-1.2 max=1.2 step=0.01 precision=5 group='Pixel Game Settings'"))
         {
             return false;
         }
@@ -1366,61 +1344,61 @@ bool Application::SetGuiParams()
     {
         if (m_drawMandelbrot)
         {
-            if (!m_pGUI->AddIntVar("Resolution",
-                                   m_terrainResolution,
-                                   "min=2 max=12 step=1 group='Terrain Settings'"))
+            if (!m_pGUI->AddVarCB("Resolution",
+                                  &m_terrainResolution,
+                                  "min=2 max=12 step=1 group='Terrain Settings'"))
             {
                 return false;
             }
-            if (!m_pGUI->AddFloatVar("Scaling",
-                                     m_terrainScaling,
-                                     "min=1.0 max=10000.0 step=1 group='Terrain Settings'"))
+            if (!m_pGUI->AddVarCB("Scaling",
+                                  &m_terrainScaling,
+                                  "min=1.0 max=10000.0 step=1 group='Terrain Settings'"))
             {
                 return false;
             }
         }
         else
         {
-            if (!m_pGUI->AddIntVar("Resolution",
-                                   m_terrainResolution,
-                                   "min=3 max=10 step=1 group='Terrain Settings'"))
+            if (!m_pGUI->AddVarCB("Resolution",
+                                  &m_terrainResolution,
+                                  "min=3 max=10 step=1 group='Terrain Settings'"))
             {
                 return false;
             }
-            if (!m_pGUI->AddFloatVar("Scaling",
-                                     m_terrainScaling,
-                                     "min=1.0 max=100.0 step=1 group='Terrain Settings'"))
+            if (!m_pGUI->AddVarCB("Scaling",
+                                  &m_terrainScaling,
+                                  "min=1.0 max=100.0 step=1 group='Terrain Settings'"))
             {
                 return false;
             }
         }
-        if (!m_pGUI->AddFloatVar("Height Scaling",
-                                 m_terrainHeightScaling,
-                                 "min=1.0 max=100.0 step=1 group='Terrain Settings'"))
+        if (!m_pGUI->AddVarCB("Height Scaling",
+                              &m_terrainHeightScaling,
+                              "min=1.0 max=100.0 step=1 group='Terrain Settings'"))
         {
             return false;
         }
         if (m_drawMandelbrot)
         {
-            if (!m_pGUI->AddIntVar("Gauss Mask Size",
-                                   m_mandelMaskSize,
-                                   "min=1 max=45 step=2 group='Terrain Settings'"))
+            if (!m_pGUI->AddVarCB("Gauss Mask Size",
+                                  &m_mandelMaskSize,
+                                  "min=1 max=45 step=2 group='Terrain Settings'"))
             {
                 return false;
             }
         }
-        if (!m_pGUI->AddFloatVar("Variance",
-                                 m_terrainVariance,
-                                 "min=0 max=10.0 step=0.01 group='Terrain Settings'"))
+        if (!m_pGUI->AddVarCB("Variance",
+                              &m_terrainVariance,
+                              "min=0 max=10.0 step=0.01 group='Terrain Settings'"))
         {
             return false;
         }
     }
     if (!m_drawMandelbrot)
     {
-        if (!m_pGUI->AddFloatVar("Hurst Exponent",
-                                 m_terrainHurst,
-                                 "min=0 max=1.0 step=0.01 group='Terrain Settings'"))
+        if (!m_pGUI->AddVarCB("Hurst Exponent",
+                              &m_terrainHurst,
+                              "min=0 max=1.0 step=0.01 group='Terrain Settings'"))
         {
             return false;
         }
@@ -1522,7 +1500,8 @@ void Application::HandleMinimapClicks(int mouseX, int mouseY,
         // coordinate system
         mouseMinimapCoords.x *= m_pMandelMini->xScale;
         mouseMinimapCoords.y *= m_pMandelMini->yScale;
-        mouseMinimapCoords += Vec2f(m_mandelUpperLeftX, m_mandelLowerRightY);
+        mouseMinimapCoords += Vec2f(m_mandelUpperLeftX.GetValue(),
+                                    m_mandelLowerRightY.GetValue());
         // sign correction
         mouseMinimapCoords.y *= -1;
 
@@ -1548,10 +1527,10 @@ void Application::HandleMinimapClicks(int mouseX, int mouseY,
                 }
 
                 // set new border points
-                m_mandelUpperLeftX = m_pMandelMini->upperLeft.x;
-                m_mandelUpperLeftY = m_pMandelMini->upperLeft.y;
-                m_mandelLowerRightX = m_pMandelMini->lowerRight.x;
-                m_mandelLowerRightY = m_pMandelMini->lowerRight.y;
+                m_mandelUpperLeftX.SetValue(m_pMandelMini->upperLeft.x);
+                m_mandelUpperLeftY.SetValue(m_pMandelMini->upperLeft.y);
+                m_mandelLowerRightX.SetValue(m_pMandelMini->lowerRight.x);
+                m_mandelLowerRightY.SetValue(m_pMandelMini->lowerRight.y);
                 // clear selected POI
                 m_pMandelMini->clickCnt = 0;
                 m_pMandelMini->poi = Vec2f(-10.0f);
@@ -1560,4 +1539,76 @@ void Application::HandleMinimapClicks(int mouseX, int mouseY,
     }
     // clear hovered POI
     m_pMandelMini->poi2 = Vec2f(-10.0f);
+}
+
+
+bool Application::TerrainParamsChanged()
+{
+    bool isChanged = false;
+
+    if (m_terrainHurst.IsChanged())
+    {
+        m_terrainHurst.ChangeProcessed();
+        isChanged = true;
+    }
+    if (m_terrainVariance.IsChanged())
+    {
+        m_terrainVariance.ChangeProcessed();
+        isChanged = true;
+    }
+    if (m_terrainScaling.IsChanged())
+    {
+        m_terrainScaling.ChangeProcessed();
+        isChanged = true;
+    }
+    if (m_terrainHeightScaling.IsChanged())
+    {
+        m_terrainHeightScaling.ChangeProcessed();
+        isChanged = true;
+    }
+    if (m_terrainResolution.IsChanged())
+    {
+        isChanged = true;
+    }
+
+    return isChanged;
+}
+
+
+bool Application::MandelParamsChanged()
+{
+    bool isChanged = false;
+
+    if (m_mandelUpperLeftX.IsChanged())
+    {
+        m_mandelUpperLeftX.ChangeProcessed();
+        isChanged = true;
+    }
+    if (m_mandelUpperLeftY.IsChanged())
+    {
+        m_mandelUpperLeftY.ChangeProcessed();
+        isChanged = true;
+    }
+    if (m_mandelLowerRightX.IsChanged())
+    {
+        m_mandelLowerRightX.ChangeProcessed();
+        isChanged = true;
+    }
+    if (m_mandelLowerRightY.IsChanged())
+    {
+        m_mandelLowerRightY.ChangeProcessed();
+        isChanged = true;
+    }
+    if (m_mandelIterations.IsChanged())
+    {
+        m_mandelIterations.ChangeProcessed();
+        isChanged = true;
+    }
+    if (m_mandelMaskSize.IsChanged())
+    {
+        m_mandelMaskSize.ChangeProcessed();
+        isChanged = true;
+    }
+
+    return isChanged;
 }

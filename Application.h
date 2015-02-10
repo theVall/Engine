@@ -26,6 +26,7 @@
 #include "MandelbrotShader.h"
 #include "Element2d.h"
 #include "TextureShader.h"
+#include "GuiParam.h"
 
 #define INITIAL_MINIMAP_SIZE 256
 
@@ -109,6 +110,8 @@ private:
     void HandleMinimapClicks(int mouseX, int mouseY,
                              bool isRightMouse, bool isLeftMouse);
 
+    void UpdateTerrain();
+
     // Safe shutdown/delete handler
     template<typename T> void SafeShutdown(T *&obj)
     {
@@ -128,6 +131,9 @@ private:
             obj = NULL;
         }
     }
+
+    bool TerrainParamsChanged();
+    bool MandelParamsChanged();
 
 private:
     //  Member variables
@@ -158,33 +164,25 @@ private:
     float m_oceanHeightOffset;
 
     // terrain settings
-    float m_terrainHurst;
-    float m_terrainVariance;
-    float m_terrainScaling;
-    float m_terrainHeightScaling;
-    int m_terrainResolution;
-    // TODO: Callback methods
-    float m_oldTerrainHurst;
-    float m_oldTerrainVariance;
-    float m_oldTerrainScaling;
-    float m_oldTerrainHeightScaling;
-    int m_oldTerrainResolution;
+    GuiParam<float> m_terrainHurst;
+    GuiParam<float> m_terrainVariance;
+    GuiParam<float> m_terrainScaling;
+    GuiParam<float> m_terrainHeightScaling;
+    GuiParam<int> m_terrainResolution;
 
     // Mandelbrot settings
     bool m_mandelChanged;
-    float m_mandelUpperLeftX;
-    float m_mandelUpperLeftY;
-    float m_mandelLowerRightX;
-    float m_mandelLowerRightY;
-    float m_mandelIterations;
-    int m_mandelMaskSize;
-    // TODO callbacks
+    GuiParam<float> m_mandelUpperLeftX;
+    GuiParam<float> m_mandelUpperLeftY;
+    GuiParam<float> m_mandelLowerRightX;
+    GuiParam<float> m_mandelLowerRightY;
+    GuiParam<float> m_mandelIterations;
+    GuiParam<int> m_mandelMaskSize;
+    // memory values
     float m_oldMandelUpperLeftX;
     float m_oldMandelUpperLeftY;
     float m_oldMandelLowerRightX;
     float m_oldMandelLowerRightY;
-    float m_oldMandelIterations;
-    int m_oldMandelMaskSize;
 
     // Quad tree settings
     bool m_useQuadtree;

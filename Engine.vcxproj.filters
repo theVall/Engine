@@ -162,6 +162,9 @@
     <ClInclude Include="LineShader.h">
       <Filter>Header Files\ShaderProgram</Filter>
     </ClInclude>
+    <ClInclude Include="GuiParam.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="System.cpp">

@@ -111,6 +111,64 @@ bool GUI::AddVec3fVar(const char *name, float &var, const char *params)
 }
 
 
+bool GUI::AddVarCB(const char *name, GuiParam<float> *pParam, const char *params)
+{
+    if (!m_pTweakBar)
+    {
+        return false;
+    }
+
+    TwAddVarCB(m_pTweakBar,
+               name,
+               TW_TYPE_FLOAT,
+               GuiParam<float>::SetCB,
+               GuiParam<float>::GetCB,
+               pParam,
+               params);
+
+
+    return true;
+}
+
+bool GUI::AddVarCB(const char *name, GuiParam<bool> *pParam, const char *params)
+{
+    if (!m_pTweakBar)
+    {
+        return false;
+    }
+
+    TwAddVarCB(m_pTweakBar,
+               name,
+               TW_TYPE_BOOL8,
+               GuiParam<float>::SetCB,
+               GuiParam<float>::GetCB,
+               pParam,
+               params);
+
+
+    return true;
+}
+
+bool GUI::AddVarCB(const char *name, GuiParam<int> *pParam, const char *params)
+{
+    if (!m_pTweakBar)
+    {
+        return false;
+    }
+
+    TwAddVarCB(m_pTweakBar,
+               name,
+               TW_TYPE_INT32,
+               GuiParam<float>::SetCB,
+               GuiParam<float>::GetCB,
+               pParam,
+               params);
+
+
+    return true;
+}
+
+
 bool GUI::AddSeperator(const char *name, const char *params)
 {
     if (!m_pTweakBar)
@@ -143,3 +201,7 @@ void GUI::RenderGUI()
 }
 
 
+TwBar *GUI::GetCurrentBar()
+{
+    return m_pTweakBar;
+}

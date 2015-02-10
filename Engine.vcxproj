@@ -108,6 +108,7 @@
     <ClInclude Include="Frustum.h" />
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="GUI.h" />
+    <ClInclude Include="GuiParam.h" />
     <ClInclude Include="include\AntTweakBar.h" />
     <ClInclude Include="LineShader.h" />
     <ClInclude Include="Mandelbrot.h" />

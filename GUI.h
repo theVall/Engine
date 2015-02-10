@@ -28,8 +28,9 @@
 */
 
 #include <d3d11.h>
-#include <AntTweakBar.h>
+//#include <AntTweakBar.h>
 #include <String.h>
+#include "GuiParam.h"
 
 class GUI
 {
@@ -49,10 +50,15 @@ public:
     bool AddIntVar(const char *name, int &var, const char *params);
     bool AddBoolVar(const char *name, bool &var, const char *params);
     bool AddVec3fVar(const char *name, float &var, const char *params);
+    bool AddVarCB(const char *name, GuiParam<float> *pParam, const char *params);
+    bool AddVarCB(const char *name, GuiParam<int> *pParam, const char *params);
+    bool AddVarCB(const char *name, GuiParam<bool> *pParam, const char *params);
+
     bool AddSeperator(const char *name, const char *params);
     bool AddLabel(const char *label);
 
     void RenderGUI();
+    TwBar *GetCurrentBar();
 
 private:
     TwBar *m_pTweakBar;
