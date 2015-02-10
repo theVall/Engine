@@ -17,8 +17,6 @@
 #include "Vec4f.h"
 #include "VertexType.h"
 
-#define NUM_THREADS 8
-
 using namespace std;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
@@ -94,7 +92,8 @@ public:
     // generate a terrain from a height map image file
     bool GenerateFromFile(Util *util, WCHAR *heightmapFilename);
 
-    bool Initialize();
+    // Initialize basic values, number of cores and reserve vector data space.
+    bool Initialize(int numCpu);
     void Shutdown();
 
     int GetVertexCount();
@@ -144,8 +143,9 @@ private:
     int m_vertexCount;
 
     int m_rand;
+    int m_numCpu;
 
-    // Util class pointer for .dds reading function (height-map).
+    // Utility class pointer for .dds reading function (height-map).
     Util *m_Util;
 
     // the vertex data of the initially generated grid

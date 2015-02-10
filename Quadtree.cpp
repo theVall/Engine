@@ -4,7 +4,6 @@
 QuadTree::QuadTree()
 {
     m_pRootNode = nullptr;
-    omp_set_num_threads(NUM_THREADS);
 }
 
 
@@ -18,10 +17,42 @@ QuadTree::~QuadTree()
 }
 
 
-bool QuadTree::Initialize(Terrain *pTerrain,
-                          ID3D11Device *pDevice,
-                          const int maxTriangles,
-                          bool enabled)
+bool QuadTree::Initialize(ID3D11Device *pDevice,
+                          int numCpu)
+{
+    // Set number of CPU cores for parallel processing.
+    omp_set_num_threads(numCpu);
+
+    // Cube index buffer.
+    D3D11_BUFFER_DESC indexBufferDesc;
+    indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+    indexBufferDesc.ByteWidth = sizeof(unsigned long) * NUM_BOX_INDICES;
+    indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    indexBufferDesc.CPUAccessFlags = 0;
+    indexBufferDesc.MiscFlags = 0;
+    indexBufferDesc.StructureByteStride = 0;
+
+    D3D11_SUBRESOURCE_DATA indexData;
+    indexData.pSysMem = boxEdges;
+    indexData.SysMemPitch = 0;
+    indexData.SysMemSlicePitch = 0;
+
+    HRESULT hres = pDevice->CreateBuffer(&indexBufferDesc,
+                                         &indexData,
+                                         &m_pCubeIndexBuffer);
+    if (FAILED(hres))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+
+bool QuadTree::BuildTree(Terrain *pTerrain,
+                         ID3D11Device *pDevice,
+                         const int maxTriangles,
+                         bool enabled)
 {
     // Set the maximum number of triangles per node.
     m_maxTrianges = maxTriangles;
@@ -53,27 +84,21 @@ bool QuadTree::Initialize(Terrain *pTerrain,
     // Recursively build the quad tree based on the vertex list data and mesh dimensions.
     CreateTreeNode(m_pRootNode, center, width, numTriangles, pDevice);
 
-    // Cube index buffer.
-    D3D11_BUFFER_DESC indexBufferDesc;
-    indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-    indexBufferDesc.ByteWidth = sizeof(unsigned long) * NUM_BOX_INDICES;
-    indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-    indexBufferDesc.CPUAccessFlags = 0;
-    indexBufferDesc.MiscFlags = 0;
-    indexBufferDesc.StructureByteStride = 0;
-
-    D3D11_SUBRESOURCE_DATA indexData;
-    indexData.pSysMem = boxEdges;
-    indexData.SysMemPitch = 0;
-    indexData.SysMemSlicePitch = 0;
-
-    pDevice->CreateBuffer(&indexBufferDesc, &indexData, &m_pCubeIndexBuffer);
-
     return true;
 }
 
 
 void QuadTree::Shutdown()
+{
+    ClearTree();
+
+    SafeRelease(m_pCubeIndexBuffer);
+
+    return;
+}
+
+
+void QuadTree::ClearTree()
 {
     // Recursively release the quad tree node data.
     if (m_pRootNode)
@@ -82,8 +107,6 @@ void QuadTree::Shutdown()
         delete m_pRootNode;
         m_pRootNode = 0;
     }
-
-    return;
 }
 
 
@@ -211,8 +234,7 @@ void QuadTree::CreateTreeNode(NodeType *pNode,
     // Node too big -> create new nodes.
     else if (numTriangles > m_maxTrianges && m_quadTreeEnabled)
     {
-        omp_set_num_threads(MAX_CHILDREN);
-        #pragma omp parallel for
+#pragma loop(hint_parallel(4))
         for (int i = 0; i < MAX_CHILDREN; i++)
         {
             // Calculate the position offsets for the new child node.
@@ -234,7 +256,6 @@ void QuadTree::CreateTreeNode(NodeType *pNode,
                                pDevice);
             }
         }
-        omp_set_num_threads(NUM_THREADS);
 
         return;
     }
@@ -332,7 +353,9 @@ void QuadTree::CreateTreeNode(NodeType *pNode,
         cubeVertexData.SysMemPitch = 0;
         cubeVertexData.SysMemSlicePitch = 0;
 
-        HRESULT hres = pDevice->CreateBuffer(&vertexBufferDesc, &cubeVertexData, &pNode->pCubeVertexBuffer);
+        pDevice->CreateBuffer(&vertexBufferDesc,
+                              &cubeVertexData,
+                              &pNode->pCubeVertexBuffer);
 
         // clean-up
         delete[] pVerticesCube;
@@ -431,7 +454,6 @@ void QuadTree::ReleaseNode(NodeType *pNode)
     SafeRelease(pNode->pVertexBuffer);
     SafeRelease(pNode->pIndexBuffer);
     SafeRelease(pNode->pCubeVertexBuffer);
-    SafeRelease(m_pCubeIndexBuffer);
 
     for (int i = 0; i < MAX_CHILDREN; i++)
     {

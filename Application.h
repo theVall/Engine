@@ -62,7 +62,7 @@ public:
     ~Application(void);
 
     //  Initialization
-    bool Initialize(HWND hwnd, int screenWidth, int screenHeight);
+    bool Initialize(HWND hwnd, int screenWidth, int screenHeight, int numCpu);
 
     //  Safely destroy graphics class.
     void Shutdown();

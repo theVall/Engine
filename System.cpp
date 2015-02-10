@@ -31,12 +31,17 @@ bool System::Initialize()
         return false;
     }
 
-    //  Initialize windows API.
+    // Initialize windows API.
     InitializeWindows(screenWidth, screenHeight);
+
+    // Get number of processors for multi-threading
+    SYSTEM_INFO sysinfo;
+    GetSystemInfo(&sysinfo);
+    int numCpu = sysinfo.dwNumberOfProcessors;
 
     // Initialize the application wrapper object.
     // Must be called __after__ windows API initialization.
-    result = m_Application->Initialize(m_hwnd, screenWidth, screenHeight);
+    result = m_Application->Initialize(m_hwnd, screenWidth, screenHeight, numCpu);
     if (!result)
     {
         return false;

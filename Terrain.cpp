@@ -3,17 +3,6 @@
 
 Terrain::Terrain()
 {
-    m_Util = 0;
-    m_scaling = 1.0f;
-    m_heightScaling = 1.0f;
-    m_rand = 14875;
-
-    // random seed
-    srand((int)time(NULL));
-    omp_set_num_threads(NUM_THREADS);
-
-    // max resolution * 6 for 2 triangles per grid square
-    m_vertexData.ReserveAll(1024 * 1024 * 6);
 }
 
 
@@ -51,7 +40,17 @@ bool Terrain::GenerateDiamondSquare(Util *util,
     // Calculate texture coordinates and load the textures from file.
     CalculateTextureCoordinates();
 
-    if (!Initialize())
+    // Normalize the height of the height map. Scaling is negative proportional.
+    NormalizeHeightMap();
+
+    // Calculate the normals for the terrain data.
+    if (!CalculateNormals())
+    {
+        return false;
+    }
+
+    // Initialize buffers
+    if (!InitializeBuffers())
     {
         return false;
     }
@@ -76,17 +75,6 @@ bool Terrain::GenerateFromFile(Util *util, WCHAR *heightmapFilename)
     // Calculate texture coordinates and load the textures from file.
     CalculateTextureCoordinates();
 
-    if (!Initialize())
-    {
-        return false;
-    }
-
-    return true;
-}
-
-
-bool Terrain::Initialize()
-{
     // Normalize the height of the height map. Scaling is negative proportional.
     NormalizeHeightMap();
 
@@ -101,6 +89,28 @@ bool Terrain::Initialize()
     {
         return false;
     }
+
+    return true;
+}
+
+
+bool Terrain::Initialize(int numCpu)
+{
+    m_Util = 0;
+    m_scaling = 1.0f;
+    m_heightScaling = 1.0f;
+    m_rand = 14875;
+
+    // random seed
+    srand((int)time(NULL));
+
+    // Set number of threads for parallel processing.
+    omp_set_num_threads(numCpu);
+    m_numCpu = numCpu;
+
+    // Reserve enough vector space on the stack for 2^10 * 2^10 * 6 vertices.
+    // max resolution * 6 for 2 triangles per grid square
+    m_vertexData.ReserveAll(1024 * 1024 * 6);
 
     return true;
 }
@@ -191,8 +201,7 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
         int modDiv = (1 << i)*2;
 
         // first step: generate diamonds: 2^n * 2^n midpoints
-        // parallel section
-        #pragma omp parallel for
+#pragma loop(hint_parallel(0))
         for (int j = 0; j < ((1 << i) * (1 << i)); ++j)
         {
             // index calculation: first part is the x-offset, second part is the y-offset
@@ -228,8 +237,7 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
         // Second step: generate squares.
         // Divide into two parts: even and odd rows
         // even rows 0, 2, 4, ...
-        // parallel section
-        #pragma omp parallel for
+#pragma loop(hint_parallel(0))
         for (int j = 0; j < ((1 << i) * ((1 << i) + 1)); ++j)
         {
             // index calculation: first part is the x-offset, second part is the y-offset
@@ -248,8 +256,7 @@ bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
         }
 
         // odd rows 1, 3, 5,...
-        // parallel section
-        #pragma omp parallel for
+#pragma loop(hint_parallel(0))
         for (int j = 0; j < ((1 << i) * ((1 << i) + 1)); ++j)
         {
             // index calculation: first part is the x-offset, second part is the y-offset
@@ -340,8 +347,7 @@ bool Terrain::LoadHeightMap(WCHAR *hightmapFilename)
     m_gridData.ResizeAll(m_terrainWidth * m_terrainHeight);
 
     // Read the image data into the height map.
-    // parallel section
-    #pragma omp parallel for
+#pragma loop(hint_parallel(0))
     for (int j = 0; j < m_terrainHeight; j++)
     {
         for (int i = 0; i < m_terrainWidth; i++)
@@ -363,8 +369,7 @@ bool Terrain::LoadHeightMap(WCHAR *hightmapFilename)
 
 void Terrain::NormalizeHeightMap()
 {
-    // parallel section
-    #pragma omp parallel for
+#pragma loop(hint_parallel(0))
     for (int j = 0; j < m_terrainHeight; j++)
     {
         for (int i = 0; i  <m_terrainWidth; i++)
@@ -395,8 +400,7 @@ bool Terrain::CalculateNormals()
     vector<Vec3f> normals((m_terrainHeight - 1) * (m_terrainWidth - 1));
 
     // Go through all the faces in the mesh and calculate their normals.
-    // parallel section
-    #pragma omp parallel for
+#pragma loop(hint_parallel(0))
     for (int j = 0; j < (m_terrainHeight - 1); j++)
     {
         for (int i = 0; i < (m_terrainWidth - 1); i++)
@@ -415,8 +419,7 @@ bool Terrain::CalculateNormals()
 
     // Go through all the vertices and take an average of each face normal
     // that the vertex touches to get the averaged normal for that vertex.
-    // parallel section
-    #pragma omp parallel for
+#pragma loop(hint_parallel(0))
     for (int j = 0; j < m_terrainHeight; j++)
     {
         for (int i = 0; i < m_terrainWidth; i++)
@@ -544,7 +547,7 @@ bool Terrain::LoadColorMap(WCHAR *filename)
     }
 
     // Read the image color data into the struct.
-    #pragma omp parallel for
+#pragma loop(hint_parallel(0))
     for (int j = 0; j < m_terrainHeight; j++)
     {
         for (i = 0; i < m_terrainWidth; i++)
@@ -588,7 +591,7 @@ bool Terrain::InitializeBuffers()
     m_vertexData.ResizeAll(m_vertexCount);
     m_vertexData.ShrinkAll();
 
-    #pragma omp parallel for
+#pragma loop(hint_parallel(0))
     for (int j = 0; j < (m_terrainHeight - 1); j++)
     {
         for (int i = 0; i < (m_terrainWidth - 1); i++)

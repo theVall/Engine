@@ -94,7 +94,7 @@ Application::~Application()
 }
 
 
-bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
+bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight, int numCpu)
 {
     bool result;
 
@@ -196,6 +196,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     {
         return false;
     }
+    m_pTerrain->Initialize(numCpu);
     result = m_pTerrain->GenerateDiamondSquare(m_pUtil,
                                                m_terrainResolution,
                                                m_terrainHurst,
@@ -273,15 +274,23 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight)
     {
         return false;
     }
-    result = m_pQuadTree->Initialize(m_pTerrain,
-                                     m_pDirect3D->GetDevice(),
-                                     m_maxTrianglesQtNode,
-                                     m_useQuadtree);
+    result = m_pQuadTree->Initialize(m_pDirect3D->GetDevice(),
+                                     numCpu);
     if (!result)
     {
         MessageBox(hwnd, L"Could not initialize the quad tree object.", L"Error", MB_OK);
         return false;
     }
+    result = m_pQuadTree->BuildTree(m_pTerrain,
+                                    m_pDirect3D->GetDevice(),
+                                    m_maxTrianglesQtNode,
+                                    m_useQuadtree);
+    if (!result)
+    {
+        MessageBox(hwnd, L"Could not bu´ld the quad tree.", L"Error", MB_OK);
+        return false;
+    }
+
 
     // Create and initialize __textures__.
     m_pSkyDomeTex = new Texture;
@@ -872,7 +881,7 @@ bool Application::HandleInput(float frameTime)
                 m_oldUseQuadtree != m_useQuadtree ||
                 m_oldDrawTerrain != m_drawTerrain)
         {
-            m_pQuadTree->Shutdown();
+            m_pQuadTree->ClearTree();
             m_pTerrain->Shutdown();
 
             if (!m_pTerrain->GenerateDiamondSquare(m_pUtil,
@@ -890,10 +899,10 @@ bool Application::HandleInput(float frameTime)
             }
 
             // rebuild quad-tree
-            m_pQuadTree->Initialize(m_pTerrain,
-                                    m_pDirect3D->GetDevice(),
-                                    m_maxTrianglesQtNode,
-                                    m_useQuadtree);
+            m_pQuadTree->BuildTree(m_pTerrain,
+                                   m_pDirect3D->GetDevice(),
+                                   m_maxTrianglesQtNode,
+                                   m_useQuadtree);
 
             // update memory values
             m_oldTerrainHurst = m_terrainHurst;
