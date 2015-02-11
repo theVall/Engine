@@ -20,14 +20,14 @@ ColorShader::~ColorShader(void)
 }
 
 
-bool ColorShader::Initialize(ID3D11Device* device, HWND hwnd)
+bool ColorShader::Initialize(ID3D11Device *device, HWND hwnd)
 {
     bool result;
 
     result = InitializeShader(device,
                               hwnd,
-                              L"../Engine/shader/VertexShader.hlsl",
-                              L"../Engine/shader/PixelShader.hlsl");
+                              L"./shader/VertexShader.hlsl",
+                              L"./shader/PixelShader.hlsl");
     if (!result)
     {
         return false;
@@ -46,7 +46,7 @@ void ColorShader::Shutdown()
 }
 
 
-bool ColorShader::Render(ID3D11DeviceContext* deviceContext,
+bool ColorShader::Render(ID3D11DeviceContext *deviceContext,
                          int indexCount,
                          const XMMATRIX &worldMatrix,
                          const XMMATRIX &viewMatrix,
@@ -68,15 +68,15 @@ bool ColorShader::Render(ID3D11DeviceContext* deviceContext,
 }
 
 
-bool ColorShader::InitializeShader(ID3D11Device* device,
+bool ColorShader::InitializeShader(ID3D11Device *device,
                                    HWND hwnd,
-                                   WCHAR* vsFilename,
-                                   WCHAR* psFilename)
+                                   WCHAR *vsFilename,
+                                   WCHAR *psFilename)
 {
     HRESULT result;
-    ID3D10Blob* errorMessage;
-    ID3D10Blob* vertexShaderBuffer;
-    ID3D10Blob* pixelShaderBuffer;
+    ID3D10Blob *errorMessage;
+    ID3D10Blob *vertexShaderBuffer;
+    ID3D10Blob *pixelShaderBuffer;
     D3D11_INPUT_ELEMENT_DESC polygonLayout[2];
     unsigned int numElements;
     D3D11_BUFFER_DESC matrixBufferDesc;
@@ -149,7 +149,7 @@ bool ColorShader::InitializeShader(ID3D11Device* device,
         return false;
     }
 
-    result = device->CreatePixelShader(pixelShaderBuffer->GetBufferPointer(), 
+    result = device->CreatePixelShader(pixelShaderBuffer->GetBufferPointer(),
                                        pixelShaderBuffer->GetBufferSize(),
                                        NULL,
                                        &m_pixelShader);
@@ -178,7 +178,7 @@ bool ColorShader::InitializeShader(ID3D11Device* device,
     numElements = sizeof(polygonLayout) / sizeof(polygonLayout[0]);
 
     result = device->CreateInputLayout(polygonLayout,
-                                       numElements, 
+                                       numElements,
                                        vertexShaderBuffer->GetBufferPointer(),
                                        vertexShaderBuffer->GetBufferSize(),
                                        &m_layout);
@@ -214,14 +214,14 @@ bool ColorShader::InitializeShader(ID3D11Device* device,
 }
 
 
-bool ColorShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
+bool ColorShader::SetShaderParameters(ID3D11DeviceContext *deviceContext,
                                       const XMMATRIX &worldMatrix,
                                       const XMMATRIX &viewMatrix,
                                       const XMMATRIX &projectionMatrix)
 {
     HRESULT result;
     D3D11_MAPPED_SUBRESOURCE mappedResource;
-    MatrixBufferType* dataPtr;
+    MatrixBufferType *dataPtr;
     unsigned int bufferNumber;
 
     // Lock the constant buffer so it can be written to.
@@ -231,7 +231,7 @@ bool ColorShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
         return false;
     }
 
-    dataPtr = (MatrixBufferType*)mappedResource.pData;
+    dataPtr = (MatrixBufferType *)mappedResource.pData;
 
     // Transpose the matrices for shader and copy them into the constant buffer.
     dataPtr->world      = XMMatrixTranspose(worldMatrix);
@@ -246,7 +246,7 @@ bool ColorShader::SetShaderParameters(ID3D11DeviceContext* deviceContext,
 }
 
 
-void ColorShader::RenderShader(ID3D11DeviceContext* deviceContext, int indexCount)
+void ColorShader::RenderShader(ID3D11DeviceContext *deviceContext, int indexCount)
 {
     deviceContext->IASetInputLayout(m_layout);
 
@@ -290,15 +290,15 @@ void ColorShader::ShutdownShader()
 }
 
 
-void ColorShader::OutputShaderErrorMessage(ID3D10Blob* errorMessage,
+void ColorShader::OutputShaderErrorMessage(ID3D10Blob *errorMessage,
                                            HWND hwnd,
-                                           WCHAR* shaderFilename)
+                                           WCHAR *shaderFilename)
 {
-    char* compileErrors;
+    char *compileErrors;
     unsigned long bufferSize, i;
     std::ofstream fout;
 
-    compileErrors = (char*)(errorMessage->GetBufferPointer());
+    compileErrors = (char *)(errorMessage->GetBufferPointer());
 
     bufferSize = errorMessage->GetBufferSize();
 

@@ -205,7 +205,7 @@ bool Ocean::Initialize(OceanParameter &params,
     // Create FFT
     //
     m_pFft = new FFT();
-    if (!m_pFft->Initialize512(pDevice, hwnd, L"../Engine/shader/FftCS.hlsl", 3))
+    if (!m_pFft->Initialize512(pDevice, hwnd, L"./shader/FftCS.hlsl", 3))
     {
         return false;
     }

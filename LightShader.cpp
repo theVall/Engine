@@ -29,8 +29,8 @@ bool LightShader::Initialize(ID3D11Device *device, HWND hwnd)
 
     result = InitializeShader(device,
                               hwnd,
-                              L"../Engine/shader/LightVS.hlsl",
-                              L"../Engine/shader/LightPS.hlsl");
+                              L"./shader/LightVS.hlsl",
+                              L"./shader/LightPS.hlsl");
     if(!result)
     {
         return false;
