@@ -217,8 +217,8 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight, int n
     }
     result = m_pTerrainShader->Initialize(m_pDirect3D->GetDevice(),
                                           m_hwnd,
-                                          L"../Engine/shader/TerrainVS.hlsl",
-                                          L"../Engine/shader/TerrainPS.hlsl");
+                                          L"./shader/TerrainVS.hlsl",
+                                          L"./shader/TerrainPS.hlsl");
     if (!result)
     {
         MessageBox(m_hwnd,
@@ -236,8 +236,8 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight, int n
     }
     result = m_pLineShader->Initialize(m_pDirect3D->GetDevice(),
                                        m_hwnd,
-                                       L"../Engine/shader/LineVS.hlsl",
-                                       L"../Engine/shader/LinePS.hlsl");
+                                       L"./shader/LineVS.hlsl",
+                                       L"./shader/LinePS.hlsl");
     if (!result)
     {
         MessageBox(m_hwnd,
@@ -299,18 +299,18 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight, int n
         return false;
     }
     if (!m_pSkyDomeTex->LoadFromDDS(m_pDirect3D->GetDevice(),
-                                    L"../Engine/res/tex/sky2_new.dds"))
+                                    L"./res/tex/sky2_new.dds"))
     {
         MessageBox(m_hwnd, L"Error loading sky dome texture.", L"Error", MB_OK);
         return false;
     }
     // terrain textures
     vector<WCHAR *> terrainTexFilenames;
-    terrainTexFilenames.push_back(L"../Engine/res/tex/sand.dds");
-    terrainTexFilenames.push_back(L"../Engine/res/tex/rock.dds");
-    terrainTexFilenames.push_back(L"../Engine/res/tex/mossyRock.dds");
-    terrainTexFilenames.push_back(L"../Engine/res/tex/grass.dds");
-    terrainTexFilenames.push_back(L"../Engine/res/tex/snow.dds");
+    terrainTexFilenames.push_back(L"./res/tex/sand.dds");
+    terrainTexFilenames.push_back(L"./res/tex/rock.dds");
+    terrainTexFilenames.push_back(L"./res/tex/mossyRock.dds");
+    terrainTexFilenames.push_back(L"./res/tex/grass.dds");
+    terrainTexFilenames.push_back(L"./res/tex/snow.dds");
 
     for (size_t i = 0; i < terrainTexFilenames.size(); ++i)
     {
@@ -363,7 +363,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight, int n
         return false;
     }
     if (!m_pSkyDome->Initialize(m_pDirect3D->GetDevice(),
-                                L"../Engine/res/model/dome.txt",
+                                L"./res/model/dome.txt",
                                 m_pUtil))
     {
         MessageBox(m_hwnd, L"Could not initialize the sky dome object.", L"Error", MB_OK);
@@ -378,8 +378,8 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight, int n
     }
     if (!m_pSkyDomeShader->Initialize(m_pDirect3D->GetDevice(),
                                       m_hwnd,
-                                      L"../Engine/shader/SkyDomeVS.hlsl",
-                                      L"../Engine/shader/SkyDomePS.hlsl"))
+                                      L"./shader/SkyDomeVS.hlsl",
+                                      L"./shader/SkyDomePS.hlsl"))
     {
         MessageBox(m_hwnd,
                    L"Could not initialize the sky dome shader object.",
@@ -406,9 +406,9 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight, int n
                               m_pDirect3D->GetDevice(),
                               m_pDirect3D->GetDeviceContext(),
                               m_hwnd,
-                              L"../Engine/shader/OceanSimVS.hlsl",
-                              L"../Engine/shader/OceanSimPS.hlsl",
-                              L"../Engine/shader/OceanSimCS.hlsl"))
+                              L"./shader/OceanSimVS.hlsl",
+                              L"./shader/OceanSimPS.hlsl",
+                              L"./shader/OceanSimCS.hlsl"))
     {
         MessageBox(m_hwnd, L"Could not initialize the ocean object.", L"Error", MB_OK);
         return false;
@@ -424,8 +424,8 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight, int n
     }
     if (!m_pOceanShader->Initialize(m_pDirect3D->GetDevice(),
                                     m_hwnd,
-                                    L"../Engine/shader/OceanVS.hlsl",
-                                    L"../Engine/shader/OceanPS.hlsl"))
+                                    L"./shader/OceanVS.hlsl",
+                                    L"./shader/OceanPS.hlsl"))
     {
         MessageBox(m_hwnd, L"Could not initialize the ocean shader object.", L"Error", MB_OK);
         return false;
@@ -463,7 +463,7 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight, int n
     if (!m_pMandelbrot->Initialize(m_pDirect3D->GetDevice(),
                                    m_pDirect3D->GetDeviceContext(),
                                    m_hwnd,
-                                   L"../Engine/shader/MandelbrotCS.hlsl",
+                                   L"./shader/MandelbrotCS.hlsl",
                                    1 << m_terrainResolution.GetValue()))
     {
         MessageBox(m_hwnd, L"Could not initialize the Mandelbrot object.", L"Error", MB_OK);
@@ -487,8 +487,8 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight, int n
     }
     if (!m_pMandelbrotShader->Initialize(m_pDirect3D->GetDevice(),
                                          m_hwnd,
-                                         L"../Engine/shader/MandelbrotVS.hlsl",
-                                         L"../Engine/shader/MandelbrotPS.hlsl"))
+                                         L"./shader/MandelbrotVS.hlsl",
+                                         L"./shader/MandelbrotPS.hlsl"))
     {
         MessageBox(m_hwnd, L"Could not initialize the Mandelbrot shader object.", L"Error", MB_OK);
         return false;
@@ -530,8 +530,8 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight, int n
     }
     if (!m_pMinimapShader->Initialize(m_pDirect3D->GetDevice(),
                                       m_hwnd,
-                                      L"../Engine/shader/TextureVS.hlsl",
-                                      L"../Engine/shader/MinimapPS.hlsl"))
+                                      L"./shader/TextureVS.hlsl",
+                                      L"./shader/MinimapPS.hlsl"))
     {
         MessageBox(m_hwnd, L"Could not initialize the Minimap Shader object.", L"Error", MB_OK);
         return false;
@@ -629,7 +629,7 @@ bool Application::ProcessFrame()
             if (!m_pMandelbrot->Initialize(m_pDirect3D->GetDevice(),
                                            m_pDirect3D->GetDeviceContext(),
                                            m_hwnd,
-                                           L"../Engine/shader/MandelbrotCS.hlsl",
+                                           L"./shader/MandelbrotCS.hlsl",
                                            1 << m_terrainResolution.GetValue()))
             {
                 MessageBox(m_hwnd, L"Could not initialize the Mandelbrot object.", L"Error", MB_OK);
@@ -643,8 +643,8 @@ bool Application::ProcessFrame()
             }
             if (!m_pMandelbrotShader->Initialize(m_pDirect3D->GetDevice(),
                                                  m_hwnd,
-                                                 L"../Engine/shader/MandelbrotVS.hlsl",
-                                                 L"../Engine/shader/MandelbrotPS.hlsl"))
+                                                 L"./shader/MandelbrotVS.hlsl",
+                                                 L"./shader/MandelbrotPS.hlsl"))
             {
                 MessageBox(m_hwnd, L"Could not initialize the Mandelbrot shader object.", L"Error", MB_OK);
                 return false;
@@ -1359,7 +1359,7 @@ bool Application::SetGuiParams()
         }
         else
         {
-            if (!m_pGUI->AddVarCB("Resolution",
+            if (!m_pGUI->AddVarCB("Resolution 2^",
                                   &m_terrainResolution,
                                   "min=3 max=10 step=1 group='Terrain Settings'"))
             {
