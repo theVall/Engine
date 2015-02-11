@@ -1344,9 +1344,9 @@ bool Application::SetGuiParams()
     {
         if (m_drawMandelbrot)
         {
-            if (!m_pGUI->AddVarCB("Resolution",
+            if (!m_pGUI->AddVarCB("Resolution 2^",
                                   &m_terrainResolution,
-                                  "min=2 max=12 step=1 group='Terrain Settings'"))
+                                  "min=3 max=12 step=1 group='Terrain Settings'"))
             {
                 return false;
             }

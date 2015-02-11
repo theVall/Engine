@@ -580,7 +580,6 @@ bool Terrain::GenerateVertexData()
     int index3;
     int index4;
 
-
     // Calculate the number of vertices in the terrain mesh.
     // Consider a grid of squares (resolution-1 per dimension).
     // Each square becomes two triangles in the  triangle list, so we need
@@ -594,6 +593,7 @@ bool Terrain::GenerateVertexData()
 #pragma loop(hint_parallel(0))
     for (int j = 0; j < (m_terrainHeight - 1); j++)
     {
+#pragma loop(hint_parallel(0))
         for (int i = 0; i < (m_terrainWidth - 1); i++)
         {
             index1 = (m_terrainHeight *       j) +  i;      // Bottom left.
@@ -647,7 +647,7 @@ bool Terrain::GenerateVertexData()
     }
 
     // clear grid data
-    //m_gridData.ClearAll();
+    m_gridData.ClearAll();
 
     return true;
 }
