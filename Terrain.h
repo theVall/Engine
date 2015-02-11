@@ -81,7 +81,7 @@ public:
     Terrain(const Terrain &);
     ~Terrain();
 
-    // generate a fractal terrain with the diamond square algorithm (plasma terrain)
+    // Generate a fractal terrain with the diamond square algorithm (plasma terrain).
     bool GenerateDiamondSquare(Util  *util,
                                int terrainSizeFactor,
                                float hurst,
@@ -89,50 +89,54 @@ public:
                                float scaling,
                                float heightScaling);
 
-    // generate a terrain from a height map image file
+    // Generate a terrain from a height map image file.
     bool GenerateFromFile(Util *util, WCHAR *heightmapFilename);
 
     // Initialize basic values, number of cores and reserve vector data space.
     bool Initialize(int numCpu);
     void Shutdown();
 
+    // Get the number of terrain vertices.
     int GetVertexCount();
-    ID3D11ShaderResourceView *GetTexture();
+    // Get the current scaling factor.
     float GetScalingFactor();
+    // Get the terrain size per dimension.
     int GetWidth();
     // Set the scaling for the terrain height.
     void SetScalingFactor(float scaling);
-    // generate new random variable for fractal terrain generation
+    // Generate new random number for fractal terrain generation.
     void GenNewRand();
+    // Get the current random number.
     int GetRand();
 
-    // Get pointers to transposed vertex data
+    // Get pointers to transposed vertex data.
     void GetPositions(vector<Vec3f> &vPositions);
     void GetTexCoords(vector<Vec3f> &vTexCoords);
     void GetNormals(vector<Vec3f> &vNormals);
-    void GetColors(vector<Vec4f> &vColors);
+    //void GetColors(vector<Vec4f> &vColors);
 
 private:
-    bool InitializeBuffers();
+    bool GenerateVertexData();
     void ShutdownBuffers();
 
     // Height map
     bool LoadHeightMap(WCHAR *heightmapFilename);
 
-    // Diamond square
-    bool BuildTerrainDiamondSquare(int terrainSizeFactor,
-                                   float hurst,
-                                   float initialVariance);
+    // Generate a height map with diamond square algorithm
+    bool BuildHeightMapDiamondSquare(int terrainSizeFactor,
+                                     float hurst,
+                                     float initialVariance);
     // Interpolate the height values of the points in von-Neumann-neighborhood
     // border treatment: mirrored repeat
     void InterpolateHightValues(int index, int divSegment, int idWidth, float &height);
 
     // Initialization helper methods
     bool LoadColorMap(WCHAR *colorMapFilename);
-    void NormalizeHeightMap();
+    // Scale the height map according to the scale factor members.
+    void ScaleHeightMap();
+    // Calculate vertex normals.
     bool CalculateNormals();
-    void ShutdownHeightMap();
-
+    // Calculate vertex texture coordinates.
     void CalculateTextureCoordinates();
 
 private:

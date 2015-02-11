@@ -32,7 +32,7 @@ bool Terrain::GenerateDiamondSquare(Util *util,
     }
 
     // generate the height-map with the diamond-squares algorithm
-    if (!BuildTerrainDiamondSquare(terrainSizeFactor, hurst, initialVariance))
+    if (!BuildHeightMapDiamondSquare(terrainSizeFactor, hurst, initialVariance))
     {
         return false;
     }
@@ -41,7 +41,7 @@ bool Terrain::GenerateDiamondSquare(Util *util,
     CalculateTextureCoordinates();
 
     // Normalize the height of the height map. Scaling is negative proportional.
-    NormalizeHeightMap();
+    ScaleHeightMap();
 
     // Calculate the normals for the terrain data.
     if (!CalculateNormals())
@@ -50,7 +50,7 @@ bool Terrain::GenerateDiamondSquare(Util *util,
     }
 
     // Initialize buffers
-    if (!InitializeBuffers())
+    if (!GenerateVertexData())
     {
         return false;
     }
@@ -76,7 +76,7 @@ bool Terrain::GenerateFromFile(Util *util, WCHAR *heightmapFilename)
     CalculateTextureCoordinates();
 
     // Normalize the height of the height map. Scaling is negative proportional.
-    NormalizeHeightMap();
+    ScaleHeightMap();
 
     // Calculate the normals for the terrain data.
     if (!CalculateNormals())
@@ -85,7 +85,7 @@ bool Terrain::GenerateFromFile(Util *util, WCHAR *heightmapFilename)
     }
 
     // Initialize buffers
-    if (!InitializeBuffers())
+    if (!GenerateVertexData())
     {
         return false;
     }
@@ -137,9 +137,9 @@ void Terrain::SetScalingFactor(float scalingFactor)
 }
 
 
-bool Terrain::BuildTerrainDiamondSquare(int terrainSizeFactor,
-                                        float hurst,
-                                        float initialVariance)
+bool Terrain::BuildHeightMapDiamondSquare(int terrainSizeFactor,
+                                          float hurst,
+                                          float initialVariance)
 {
     // size and length of the terrain is 2 to the power of the sizeFactor (2^factor)
     // plus 1 for unambiguous center point
@@ -367,7 +367,7 @@ bool Terrain::LoadHeightMap(WCHAR *hightmapFilename)
 }
 
 
-void Terrain::NormalizeHeightMap()
+void Terrain::ScaleHeightMap()
 {
 #pragma loop(hint_parallel(0))
     for (int j = 0; j < m_terrainHeight; j++)
@@ -571,7 +571,7 @@ bool Terrain::LoadColorMap(WCHAR *filename)
 }
 
 
-bool Terrain::InitializeBuffers()
+bool Terrain::GenerateVertexData()
 {
     int index = 0;
 
