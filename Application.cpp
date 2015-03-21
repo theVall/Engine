@@ -218,6 +218,8 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight, int n
     result = m_pTerrainShader->Initialize(m_pDirect3D->GetDevice(),
                                           m_hwnd,
                                           L"./shader/TerrainVS.hlsl",
+                                          L"./shader/TerrainHS.hlsl",
+                                          L"./shader/TerrainDS.hlsl",
                                           L"./shader/TerrainPS.hlsl");
     if (!result)
     {
@@ -321,6 +323,18 @@ bool Application::Initialize(HWND hwnd, int screenWidth, int screenHeight, int n
             MessageBox(m_hwnd, L"Error loading terrain texture.", L"Error", MB_OK);
             return false;
         }
+    }
+    // perlin noise texture
+    m_pNoiseTex = new Texture;
+    if (!m_pNoiseTex)
+    {
+        return false;
+    }
+    if (!m_pNoiseTex->LoadFromDDS(m_pDirect3D->GetDevice(),
+                                  L"./res/noise/perlin.dds"))
+    {
+        MessageBox(m_hwnd, L"Error loading Perlin noise texture.", L"Error", MB_OK);
+        return false;
     }
 
     // Create and initialize the __timer__ object.
@@ -572,6 +586,7 @@ void Application::Shutdown()
     SafeDelete(m_pMandelMini);
 
     SafeDelete(m_pSkyDomeTex);
+    SafeDelete(m_pNoiseTex);
     for (size_t i = 0; i < m_vTerrainTextures.size(); ++i)
     {
         SafeDelete(m_vTerrainTextures.at(i));
@@ -891,7 +906,7 @@ bool Application::HandleInput(float frameTime)
                                                    m_terrainHeightScaling.GetValue()))
             {
                 MessageBox(m_hwnd,
-                           L"Something went wrong while generating terrain.",
+                           L"Something went wrong while generating terrain data.",
                            L"Error",
                            MB_OK);
                 return false;
@@ -1046,7 +1061,9 @@ bool Application::RenderGraphics()
                                                    m_pLight->GetDirection(),
                                                    m_pLight->GetAmbientColor(),
                                                    m_pLight->GetDiffuseColor(),
+                                                   m_pCamera->GetPosition().GetAsXMFloat3(),
                                                    m_vTerrainTextures,
+                                                   m_pNoiseTex,
                                                    m_terrainHeightScaling.GetValue()))
         {
             return false;

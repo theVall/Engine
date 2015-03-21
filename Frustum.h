@@ -25,7 +25,7 @@ public:
     bool CheckPoint(Vec3f vec);
     bool CheckCube(Vec3f center, float radius);
     bool CheckSphere(Vec3f center, float radius);
-    bool CheckRectangle(Vec3f center, Vec3f size);
+    bool CheckCuboid(Vec3f center, Vec3f size);
 
 private:
 

@@ -510,7 +510,7 @@ void QuadTree::RenderNode(NodeType *pNode,
     pContext->IASetVertexBuffers(0, 1, &pNode->pVertexBuffer, &stride, &offset);
     pContext->IASetIndexBuffer(pNode->pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
-    pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);
 
     // Number of indices is trice the triangle amount.
     int indexCount = pNode->triangleCount * 3;
@@ -565,6 +565,7 @@ void QuadTree::RenderNodeBorder(NodeType *pNode,
     pContext->IASetVertexBuffers(0, 1, &pNode->pCubeVertexBuffer, &stride, &offset);
     pContext->IASetIndexBuffer(m_pCubeIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
+    // TODO: NVIDIA line bug
     pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 
     // The box render call.

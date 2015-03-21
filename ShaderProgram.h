@@ -47,16 +47,36 @@ public:
                     WCHAR *vsFilename,
                     WCHAR *psFilename,
                     WCHAR *gsFilename);
+    bool Initialize(ID3D11Device *pDevice,
+                    HWND hwnd,
+                    WCHAR *vsFilename,
+                    WCHAR *hsFilename,
+                    WCHAR *dsFilename,
+                    WCHAR *psFilename);
+
     void Shutdown();
 
 protected:
     void OutputShaderErrorMessage(ID3D10Blob *pBlob, HWND hwnd, WCHAR *pError);
 
-    // pure virtual methods
-    virtual bool InitializeShader(ID3D11Device *device,
+    bool CompileShader(WCHAR *shaderFilename,
+                       LPCSTR pEntryPoint,
+                       LPCSTR pTarget,
+                       ID3DBlob **pCode,
+                       HWND hwnd);
+
+    // virtual methods
+    virtual bool InitializeShader(ID3D11Device *pDevice,
                                   HWND hwnd,
                                   WCHAR *vsFilename,
-                                  WCHAR *psFilename) = 0;
+                                  WCHAR *psFilename);
+    virtual bool InitializeShader(ID3D11Device *pDevice,
+                                  HWND hwnd,
+                                  WCHAR *vsFilename,
+                                  WCHAR *hsFilename,
+                                  WCHAR *dsFilename,
+                                  WCHAR *psFilename);
+
     virtual void ShutdownShader() = 0;
 
     template<typename T> void SafeRelease(T *&obj)
@@ -68,9 +88,17 @@ protected:
         }
     }
 
+private:
+    bool SetRasterStates(ID3D11Device *pDevice);
+
 protected:
+    // Shader pointer
     ID3D11VertexShader *m_pVertexShader;
+    ID3D11HullShader *m_pHullShader;
+    ID3D11DomainShader *m_pDomainShader;
+    ID3D11GeometryShader *m_pGeometryShader;
     ID3D11PixelShader *m_pPixelShader;
+
     ID3D11InputLayout *m_pLayout;
     ID3D11SamplerState *m_pSamplerState;
 

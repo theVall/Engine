@@ -48,7 +48,6 @@ void Frustum::ConstructFrustum(XMMATRIX &projectionMatrix,
 
     // Create the frustum matrix from the view matrix and updated projection matrix.
     tmpMatrix = viewMatrix * projectionMatrixCopy;
-    // tmpMatrix = XMMatrixTranspose(tmpMatrix);
     XMStoreFloat4x4(&tmpFloatMatrix, tmpMatrix);
 
     // Calculate near plane of frustum.
@@ -191,9 +190,9 @@ bool Frustum::CheckSphere(Vec3f center, float radius)
 }
 
 
-bool Frustum::CheckRectangle(Vec3f center, Vec3f size)
+bool Frustum::CheckCuboid(Vec3f center, Vec3f size)
 {
-    // Check if any of the 6 planes of the rectangle are inside the view frustum.
+    // Check if any of the 8 corner vertices of the cuboid are inside the view frustum.
     for (int i = 0; i < NUM_PLANES; i++)
     {
         if (m_planes[i].IsInside(center - size))

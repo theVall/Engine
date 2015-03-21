@@ -22,12 +22,8 @@ ShaderProgram::~ShaderProgram()
 }
 
 
-bool ShaderProgram::Initialize(ID3D11Device *pDevice,
-                               HWND hwnd,
-                               WCHAR *pVsFilename,
-                               WCHAR *pPsFilename)
+bool ShaderProgram::SetRasterStates(ID3D11Device *pDevice)
 {
-    bool result;
     HRESULT hres;
 
     // Create wireframe state
@@ -57,13 +53,45 @@ bool ShaderProgram::Initialize(ID3D11Device *pDevice,
         return false;
     }
 
+    return true;
+}
+
+
+bool ShaderProgram::Initialize(ID3D11Device *pDevice,
+                               HWND hwnd,
+                               WCHAR *pVsFilename,
+                               WCHAR *pPsFilename)
+{
+    SetRasterStates(pDevice);
 
     // Call object specific initialization method.
-    result = InitializeShader(pDevice,
-                              hwnd,
-                              pVsFilename,
-                              pPsFilename);
-    if (!result)
+    if (!InitializeShader(pDevice,
+                          hwnd,
+                          pVsFilename,
+                          pPsFilename))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+
+bool ShaderProgram::Initialize(ID3D11Device *pDevice,
+                               HWND hwnd,
+                               WCHAR *pVsFilename,
+                               WCHAR *pHsFilename,
+                               WCHAR *pDsFilename,
+                               WCHAR *pPsFilename)
+{
+    SetRasterStates(pDevice);
+
+    if (!InitializeShader(pDevice,
+                          hwnd,
+                          pVsFilename,
+                          pHsFilename,
+                          pDsFilename,
+                          pPsFilename))
     {
         return false;
     }
@@ -76,6 +104,8 @@ void ShaderProgram::Shutdown()
 {
     // Release general shader program objects.
     SafeRelease(m_pPixelShader);
+    SafeRelease(m_pHullShader);
+    SafeRelease(m_pDomainShader);
     SafeRelease(m_pVertexShader);
 
     SafeRelease(m_pSamplerState);
@@ -89,6 +119,44 @@ void ShaderProgram::Shutdown()
     ShutdownShader();
 
     return;
+}
+
+
+bool ShaderProgram::CompileShader(WCHAR *shaderFilename,
+                                  LPCSTR pEntryPoint,
+                                  LPCSTR pTarget,
+                                  ID3DBlob **pCode,
+                                  HWND hwnd)
+{
+    ID3D10Blob *errorMessage;
+
+    HRESULT result = D3DCompileFromFile(shaderFilename,
+                                        NULL,
+                                        NULL,
+                                        pEntryPoint,
+                                        pTarget,
+                                        NULL,
+                                        NULL,
+                                        pCode,
+                                        &errorMessage);
+
+    if (FAILED(result))
+    {
+        // If the shader failed to compile show the error message.
+        if (errorMessage)
+        {
+            OutputShaderErrorMessage(errorMessage, hwnd, shaderFilename);
+        }
+        // If there was nothing in the error message then the file could not be found.
+        else
+        {
+            MessageBox(hwnd, shaderFilename, L"Missing shader file", MB_OK);
+        }
+
+        return false;
+    }
+
+    return true;
 }
 
 
@@ -118,4 +186,30 @@ void ShaderProgram::OutputShaderErrorMessage(ID3D10Blob *errorMessage, HWND hwnd
                MB_OK);
 
     return;
+}
+
+
+bool ShaderProgram::InitializeShader(ID3D11Device *pDevice,
+                                     HWND hwnd,
+                                     WCHAR *vsFilename,
+                                     WCHAR *psFilename)
+{
+    // Workaround dummy method for linking error with the shader classes
+    // using the tessellation stage.
+
+    return true;
+}
+
+
+bool ShaderProgram::InitializeShader(ID3D11Device *pDevice,
+                                     HWND hwnd,
+                                     WCHAR *vsFilename,
+                                     WCHAR *hsFilename,
+                                     WCHAR *dsFilename,
+                                     WCHAR *psFilename)
+{
+    // Workaround dummy method for linking error with the shader classes
+    // not actually using the tessellation stage.
+
+    return true;
 }

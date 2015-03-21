@@ -2,15 +2,15 @@
 //  Pixel shader for terrain coloring and lighting
 
 // TODO: TexArray
-Texture2D sandTex : register(t0);
-Texture2D rockTex : register(t1);
-Texture2D mossyRockTex : register(t2);
-Texture2D grassTex : register(t3);
-Texture2D snowTex : register(t4);
+Texture2D sandTex : register(t1);
+Texture2D rockTex : register(t2);
+Texture2D mossyRockTex : register(t3);
+Texture2D grassTex : register(t4);
+Texture2D snowTex : register(t5);
 
 Texture2DArray textures;
 
-SamplerState SampleType;
+SamplerState sampleLinear : register(s0);
 
 cbuffer LightBuffer
 {
@@ -23,10 +23,10 @@ cbuffer LightBuffer
 struct PixelInputType
 {
 float4 position : SV_POSITION;
-float2 tex : TEXCOORD0;
+float2 tex : TEXCOORD;
 float3 normal : NORMAL;
 float4 color : COLOR;
-float4 positionModel : TEXCOORD1;
+float4 positionModel : POSMODEL;
 };
 
 // Entry point main method
@@ -39,11 +39,11 @@ float4 Main(PixelInputType input) : SV_TARGET
     float blendFactor;
 
     // TODO texArray
-    float4 sandTexColor = sandTex.Sample(SampleType, input.tex);
-    float4 rockTexColor = rockTex.Sample(SampleType, input.tex);
-    float4 mossyRockTexColor = mossyRockTex.Sample(SampleType, input.tex);
-    float4 grassTexColor = grassTex.Sample(SampleType, input.tex);
-    float4 snowTexColor = snowTex.Sample(SampleType, input.tex);
+    float4 sandTexColor = sandTex.SampleLevel(sampleLinear, input.tex, 0);
+    float4 rockTexColor = rockTex.SampleLevel(sampleLinear, input.tex, 0);
+    float4 mossyRockTexColor = mossyRockTex.SampleLevel(sampleLinear, input.tex, 0);
+    float4 grassTexColor = grassTex.SampleLevel(sampleLinear, input.tex, 0);
+    float4 snowTexColor = snowTex.SampleLevel(sampleLinear, input.tex, 0);
 
     // Calculate the slope of this point.
     float slope = 1.0f - input.normal.y;
@@ -122,7 +122,7 @@ float4 Main(PixelInputType input) : SV_TARGET
     // colormap is not used atm
     //lerp(color, input.color, float4(0.5f, 0.5f, 0.5f, 0.5f));
 
-    color.a = 1.0;
+    color.a = 1.0f;
 
     return color;
 }

@@ -240,5 +240,6 @@ private:
 
     // textures
     Texture *m_pSkyDomeTex;
+    Texture *m_pNoiseTex;
     vector<Texture *> m_vTerrainTextures;
 };
