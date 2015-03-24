@@ -584,7 +584,7 @@ bool Terrain::GenerateVertexData()
     // Consider a grid of squares (resolution-1 per dimension).
     // Each square becomes two triangles in the  triangle list, so we need
     // 2*3=6 times the number of squares.
-    m_vertexCount = (m_terrainWidth - 1)*(m_terrainHeight - 1)*6;
+    m_vertexCount = (m_terrainWidth - 1)*(m_terrainHeight - 1)*6; // TODO change to squares
 
     // Clear and resize the vertex data vectors.
     m_vertexData.ResizeAll(m_vertexCount);

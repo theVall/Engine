@@ -36,8 +36,7 @@ float insideTessFactor	: SV_InsideTessFactor;
 #define NUM_CONTROL_POINTS 3
 
 // Patch Constant Function
-ConstantDataOutputType CalcHSPatchConstants(InputPatch<HullInputType,
-                                            NUM_CONTROL_POINTS> inPatch,
+ConstantDataOutputType CalcHSPatchConstants(InputPatch<HullInputType, NUM_CONTROL_POINTS> inPatch,
                                             uint PatchID : SV_PrimitiveID)
 {
     ConstantDataOutputType output;
@@ -45,9 +44,9 @@ ConstantDataOutputType CalcHSPatchConstants(InputPatch<HullInputType,
 
     // Calculate edge scale factor from vertex scale factor: simply compute
     // average tess factor between the two vertices making up an edge
-    edgeTessFact.x = 0.5 * (inPatch[1].vertDistFact + inPatch[2].vertDistFact);
-    edgeTessFact.y = 0.5 * (inPatch[2].vertDistFact + inPatch[0].vertDistFact);
-    edgeTessFact.z = 0.5 * (inPatch[0].vertDistFact + inPatch[1].vertDistFact);
+    edgeTessFact.x = 0.5f * (inPatch[1].vertDistFact + inPatch[2].vertDistFact);
+    edgeTessFact.y = 0.5f * (inPatch[2].vertDistFact + inPatch[0].vertDistFact);
+    edgeTessFact.z = 0.5f * (inPatch[0].vertDistFact + inPatch[1].vertDistFact);
     edgeTessFact.w = edgeTessFact.x;
 
     // Multiply them by global tessellation factor

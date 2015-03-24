@@ -73,7 +73,7 @@ float4 Main(PixelInputType input) : SV_TARGET
     {
         if (slope < 0.2f)
         {
-            blendFactor = slope / 0.3f;
+            blendFactor = saturate(slope / 0.1f);
             textureColor = lerp(grassTexColor, mossyRockTexColor, blendFactor);
         }
         if ((slope < 0.7) && (slope >= 0.2f))

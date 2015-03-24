@@ -323,7 +323,7 @@ bool TerrainShader::SetShaderParameters(ID3D11DeviceContext *pContext,
     // Vertex shader buffers
     pContext->VSSetConstantBuffers(bufferNumber, 2, &constBuffers[0]);
     // Hull shader buffers
-    pContext->HSSetConstantBuffers(bufferNumber, 1, &m_pPerFrameBuffer);
+    pContext->HSSetConstantBuffers(bufferNumber, 1, &constBuffers[1]);
     // Domain shader buffers
     pContext->DSSetConstantBuffers(bufferNumber, 2, &constBuffers[0]);
     ID3D11ShaderResourceView *pSrv = pNoiseTex->GetSrv();

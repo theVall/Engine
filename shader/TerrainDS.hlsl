@@ -74,8 +74,8 @@ PixelInputType Main(DomainInputConstantDataType input,
     //// Displace vertex along normal
     //worldPos += normal * (detailTessHeightScale * (normalHeight.w - 1.0f));
 
-    float4 noise = noiseTex.SampleLevel(sampleLinear, output.tex, 0);
-    worldPos.y += noise.r * 20.0f;
+    float4 noise = noiseTex.SampleLevel(sampleLinear, frac(normal.xz), 0);
+    worldPos.y += noise.r * 10.0f;
 
     output.positionModel = float4(worldPos, 1.0f);
 

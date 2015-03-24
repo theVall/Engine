@@ -58,7 +58,7 @@ HullInputType Main(VertexInputType input)
     output.color = input.color;
 
     const float minDist = 1.0f;
-    const float maxDist = 2000.0f;
+    const float maxDist = 5000.0f;
 
     // Calculate distance between vertex and camera,
     // and a vertex distance factor issued from it.
