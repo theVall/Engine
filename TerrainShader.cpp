@@ -294,13 +294,8 @@ bool TerrainShader::SetShaderParameters(ID3D11DeviceContext *pContext,
     pPerFrameBuffer = (PerFrameBufferType *)mappedResource.pData;
     // update values
     pPerFrameBuffer->eyeVec = eyePosition;
-    pPerFrameBuffer->tessFact = XMFLOAT3(7.0f, 7.0f, 3.5f);
+    pPerFrameBuffer->tessFact = XMFLOAT3(7.0f, 7.0f, 15.0f);
     pContext->Unmap(m_pPerFrameBuffer, 0);
-
-    // Create array containing matrix and misc constant buffers.
-    ID3D11Buffer *constBuffers[2];
-    constBuffers[0] = m_pMatrixBuffer;
-    constBuffers[1] = m_pPerFrameBuffer;
 
     // Light parameter constant buffer.
     result = pContext->Map(m_pLightBuffer,
@@ -319,13 +314,18 @@ bool TerrainShader::SetShaderParameters(ID3D11DeviceContext *pContext,
     pLightDataBuffer->scaling = scaling;
     pContext->Unmap(m_pLightBuffer, 0);
 
-    bufferNumber = 0;
+    // Create array containing matrix and misc constant buffers.
+    ID3D11Buffer *constBuffers[3];
+    constBuffers[0] = m_pMatrixBuffer;
+    constBuffers[1] = m_pPerFrameBuffer;
+    constBuffers[2] = m_pLightBuffer;
+
     // Vertex shader buffers
-    pContext->VSSetConstantBuffers(bufferNumber, 2, &constBuffers[0]);
+    pContext->VSSetConstantBuffers(0, 2, &constBuffers[0]);
     // Hull shader buffers
-    pContext->HSSetConstantBuffers(bufferNumber, 1, &constBuffers[1]);
+    pContext->HSSetConstantBuffers(1, 1, &constBuffers[1]);
     // Domain shader buffers
-    pContext->DSSetConstantBuffers(bufferNumber, 2, &constBuffers[0]);
+    pContext->DSSetConstantBuffers(0, 2, &constBuffers[0]);
     ID3D11ShaderResourceView *pSrv = pNoiseTex->GetSrv();
     pContext->DSSetShaderResources(0, 1, &pSrv);
     // Pixel shader buffers
@@ -337,7 +337,7 @@ bool TerrainShader::SetShaderParameters(ID3D11DeviceContext *pContext,
     }
 
     pContext->PSSetShaderResources(1, vTextures.size(), pSrvs);
-    pContext->PSSetConstantBuffers(bufferNumber, 1, &m_pLightBuffer);
+    pContext->PSSetConstantBuffers(1, 2, &constBuffers[1]);
 
     return true;
 }

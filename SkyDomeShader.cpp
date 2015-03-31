@@ -24,6 +24,8 @@ bool SkyDomeShader::Render(ID3D11DeviceContext *deviceContext,
                            const XMMATRIX &projectionMatrix,
                            const XMFLOAT4 &apexColor,
                            const XMFLOAT4 &centerColor,
+                           const XMFLOAT3 &lightDir,
+                           const XMFLOAT3 &eyeVec,
                            ID3D11ShaderResourceView *skyDomeTex)
 {
     if (!SetShaderParameters(deviceContext,
@@ -32,6 +34,8 @@ bool SkyDomeShader::Render(ID3D11DeviceContext *deviceContext,
                              projectionMatrix,
                              apexColor,
                              centerColor,
+                             lightDir,
+                             eyeVec,
                              skyDomeTex))
     {
         return false;
@@ -246,6 +250,8 @@ bool SkyDomeShader::SetShaderParameters(ID3D11DeviceContext *deviceContext,
                                         const XMMATRIX &projectionMatrix,
                                         const XMFLOAT4 &apexColor,
                                         const XMFLOAT4 &centerColor,
+                                        const XMFLOAT3 &lightDir,
+                                        const XMFLOAT3 &eyeVec,
                                         ID3D11ShaderResourceView *skyDomeTex)
 {
     HRESULT result;
@@ -296,6 +302,8 @@ bool SkyDomeShader::SetShaderParameters(ID3D11DeviceContext *deviceContext,
     // Copy the gradient color variables into the constant buffer.
     pGradientDataBuffer->apexColor = apexColor;
     pGradientDataBuffer->centerColor = centerColor;
+    pGradientDataBuffer->lightDir = lightDir;
+    pGradientDataBuffer->eyeVec = eyeVec;
 
     deviceContext->PSSetShaderResources(0, 1, &skyDomeTex);
     // Unlock the constant buffer.

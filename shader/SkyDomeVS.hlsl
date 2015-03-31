@@ -19,6 +19,7 @@ struct PixelInputType
 float4 position : SV_POSITION;
 float4 domePosition : TEXCOORD0;
 float2 tex : TEXCOORD1;
+float4 positionModel : POSITIONMODEL;
 };
 
 
@@ -29,6 +30,8 @@ PixelInputType Main(VertexInputType input)
     input.position.w = 1.0f;
 
     output.position = mul(input.position, worldMatrix);
+    output.positionModel = output.position;
+
     output.position = mul(output.position, viewMatrix);
     output.position = mul(output.position, projectionMatrix);
 

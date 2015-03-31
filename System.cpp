@@ -255,7 +255,8 @@ void System::InitializeWindows(int &screenWidth, int &screenHeight)
     screenWidth  = GetSystemMetrics(SM_CXSCREEN);
     screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
-    //  Setup the screen settings depending on whether it is running in full screen or window mode.
+    // Setup the screen settings depending on whether it is running in full screen
+    // or window mode.
     if(m_Application->IsFullScreen())
     {
         //  Set the screen to maximum size of the users desktop and 32bit color depth.

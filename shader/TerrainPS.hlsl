@@ -12,7 +12,13 @@ Texture2DArray textures;
 
 SamplerState sampleLinear : register(s0);
 
-cbuffer LightBuffer
+cbuffer PerFrameConstBuf : register(b1)
+{
+    float3 eyeVec;
+    float3 tessFactor;
+};
+
+cbuffer LightBuffer : register(b2)
 {
     float4 ambientColor;
     float4 diffuseColor;
@@ -27,7 +33,16 @@ float2 tex : TEXCOORD;
 float3 normal : NORMAL;
 float4 color : COLOR;
 float4 positionModel : POSMODEL;
+float vertDistFact : VERTDISTFACT;
 };
+
+
+// primitive simulation of non-uniform atmospheric fog
+float3 CalcFogColor(float3 pixelToLightVec, float3 pixelToEyeVec)
+{
+    return lerp(float3(0.6, 0.6, 0.7), float3(1.0, 1.1, 1.4), 0.5*dot(pixelToLightVec, -pixelToEyeVec) + 0.5);
+}
+
 
 // Entry point main method
 float4 Main(PixelInputType input) : SV_TARGET
@@ -37,6 +52,9 @@ float4 Main(PixelInputType input) : SV_TARGET
     float4 color = ambientColor;
     float4 textureColor = float4(0.0f, 0.0f, 0.0f, 1.0f);
     float blendFactor;
+
+    // TODO: variable -> cbuffer/GUI
+    float fogDensity = 1.0f / 10000.0f;
 
     // TODO texArray
     float4 sandTexColor = sandTex.SampleLevel(sampleLinear, input.tex, 0);
@@ -105,13 +123,12 @@ float4 Main(PixelInputType input) : SV_TARGET
         textureColor = lerp(rockTexColor, snowTexColor, blendFactor);;
     }
 
-
     lightDir = -lightDirection;
     lightIntensity = saturate(dot(input.normal, lightDir));
 
     if (lightIntensity > 0.0f)
     {
-        color += (diffuseColor*lightIntensity);
+        color += diffuseColor*lightIntensity*1.0f;
     }
 
     color = color * textureColor;
@@ -122,7 +139,15 @@ float4 Main(PixelInputType input) : SV_TARGET
     // colormap is not used atm
     //lerp(color, input.color, float4(0.5f, 0.5f, 0.5f, 0.5f));
 
-    color.a = 1.0f;
+    // apply fog
+    float3 pixelPos = input.positionModel.xyz;
+    float3 pixelToLightVec = normalize(lightDirection - pixelPos);
+    float3 pixelToEyeVec = normalize(eyeVec - pixelPos);
+
+    color.rgb = lerp(CalcFogColor(pixelToLightVec, pixelToEyeVec).rgb,
+                     color.rgb,
+                     min(1.0f, exp(-length(eyeVec - pixelPos)*fogDensity)));
+    color.a = length(eyeVec - pixelPos);
 
     return color;
 }

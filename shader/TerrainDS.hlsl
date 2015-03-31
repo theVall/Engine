@@ -4,7 +4,7 @@ Texture2D noiseTex : register(t0);
 SamplerState sampleLinear : register(s0);
 
 //  Common matrices.
-cbuffer MatrixBuffer
+cbuffer MatrixBuffer : register(b0)
 {
     matrix worldMatrix;
     matrix viewMatrix;
@@ -26,6 +26,7 @@ float2 tex : TEXCOORD;
 float3 normal : NORMAL;
 float4 color : COLOR;
 float4 positionModel : POSMODEL;
+float vertDistFact : VERTDISTFACT;
 };
 // incoming constant data
 struct DomainInputConstantDataType
@@ -42,6 +43,7 @@ float2 tex : TEXCOORD;
 float3 normal : NORMAL;
 float4 color : COLOR;
 float4 positionModel : POSMODEL;
+float vertDistFact : VERTDISTFACT;
 };
 
 #define NUM_CONTROL_POINTS 3
@@ -82,6 +84,7 @@ PixelInputType Main(DomainInputConstantDataType input,
     // Transform world position with view-projection matrix
     output.position = mul(float4(worldPos, 1.0f), viewMatrix);
     output.position = mul(output.position, projectionMatrix);
+    output.vertDistFact = patch[0].vertDistFact;
 
     return output;
 }

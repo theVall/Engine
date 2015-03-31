@@ -11,6 +11,9 @@ private:
     {
         XMFLOAT4 apexColor;
         XMFLOAT4 centerColor;
+        XMFLOAT3 lightDir;
+        XMFLOAT3 eyeVec;
+        XMFLOAT2 padding;
     };
 
 public:
@@ -25,6 +28,8 @@ public:
                 const XMMATRIX &projectionMatrix,
                 const XMFLOAT4 &apexColor,
                 const XMFLOAT4 &centerColor,
+                const XMFLOAT3 &lightDir,
+                const XMFLOAT3 &eyeVec,
                 ID3D11ShaderResourceView *skyDomeTex);
 
 private:
@@ -40,6 +45,8 @@ private:
                              const XMMATRIX &projectionMatrix,
                              const XMFLOAT4 &apexColor,
                              const XMFLOAT4 &centerColor,
+                             const XMFLOAT3 &lightDir,
+                             const XMFLOAT3 &eyeVec,
                              ID3D11ShaderResourceView *skyDomeTex);
 
     void RenderShader(ID3D11DeviceContext *pContext, int indexCount);

@@ -1033,6 +1033,8 @@ bool Application::RenderGraphics()
                                  projectionMatrix,
                                  m_pSkyDome->GetApexColor(),
                                  m_pSkyDome->GetCenterColor(),
+                                 m_pLight->GetDirection(),
+                                 m_pCamera->GetPosition().GetAsXMFloat3(),
                                  m_pSkyDomeTex->GetSrv());
     }
     m_pDirect3D->TurnZBufferOn();

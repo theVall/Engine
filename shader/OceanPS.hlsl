@@ -23,7 +23,16 @@ float4 position : SV_POSITION;
 float2 tex	        : TEXCOORD0;
 float3 localPos	    : TEXCOORD1;
 float3 debugColor   : TEXCOORD2;
+float3 positionModel : POSITIONMODEL;
 };
+
+
+// primitive simulation of non-uniform atmospheric fog
+float3 CalcFogColor(float3 pixelToLightVec, float3 pixelToEyeVec)
+{
+    return lerp(float3(0.6, 0.6, 0.7), float3(1.0, 1.1, 1.4), 0.5*dot(pixelToLightVec, -pixelToEyeVec) + 0.5);
+}
+
 
 // Ocean shading
 float4 OceanPS(PixelInputType input) : SV_Target
@@ -31,6 +40,9 @@ float4 OceanPS(PixelInputType input) : SV_Target
     float4 waterMixColor = float4(0.08f, 0.14f, 0.22f, 1.0f);
     float4 skyMixColor = float4(0.4f, 0.5f, 0.6f, 1.0f);
     float4 sunColor = float4(0.7f, 0.7f, 0.4f, 1.0f);
+
+    // TODO: variable -> cbuffer/GUI
+    float fogDensity = 1.0f / 10000.0f;
 
     float3 sunDir = normalize(lightDir);
     float2 gradient = texGradient.Sample(samplerGradient, input.tex).xy;
@@ -74,6 +86,15 @@ float4 OceanPS(PixelInputType input) : SV_Target
     // sun reflection
     float specular = pow(saturate(dot(reflectVec, sunDir)), 200.0f);
     surfaceColor += sunColor * specular;
+
+    // calculate fog
+    float3 pixelPos = input.positionModel.xyz;
+    float3 pixelToLightVec = normalize(lightDir - pixelPos);
+    float3 pixelToEyeVec = normalize(eyeVec - pixelPos);
+
+    surfaceColor.rgb = lerp(CalcFogColor(pixelToLightVec, pixelToEyeVec).rgb,
+    surfaceColor.rgb,
+    min(1.0f, exp(-length(eyeVec - pixelPos)*fogDensity)));
 
     // TODO: shader based alpha blending
     surfaceColor.a = fresnel;

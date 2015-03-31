@@ -24,6 +24,7 @@ float2 tex : TEXCOORD;
 float3 normal : NORMAL;
 float4 color : COLOR;
 float4 positionModel : POSMODEL;
+float vertDistFact : VERTDISTFACT;
 };
 
 // Output patch constant data.
@@ -50,7 +51,7 @@ ConstantDataOutputType CalcHSPatchConstants(InputPatch<HullInputType, NUM_CONTRO
     edgeTessFact.w = edgeTessFact.x;
 
     // Multiply them by global tessellation factor
-    edgeTessFact *= float4(7.0f, 7.0f, 7.0f, 5.0f) ;// tessFactor.xxxy;
+    edgeTessFact *= tessFactor.xxxy;
 
     output.edgeTessFactor[0] = edgeTessFact.x;
     output.edgeTessFactor[1] = edgeTessFact.y;
@@ -65,7 +66,7 @@ ConstantDataOutputType CalcHSPatchConstants(InputPatch<HullInputType, NUM_CONTRO
 [outputtopology("triangle_cw")]
 [outputcontrolpoints(3)]
 [patchconstantfunc("CalcHSPatchConstants")]
-[maxtessfactor(15.0)]
+[maxtessfactor(35.0)]
 ControlPointOutputType Main(InputPatch<HullInputType, NUM_CONTROL_POINTS> inPatch,
                             uint pointId : SV_OutputControlPointID)
 {
@@ -76,6 +77,7 @@ ControlPointOutputType Main(InputPatch<HullInputType, NUM_CONTROL_POINTS> inPatc
     output.normal = inPatch[pointId].normal;
     output.color = inPatch[pointId].color;
     output.positionModel = inPatch[pointId].positionModel;
+    output.vertDistFact = inPatch[pointId].vertDistFact;
 
     return output;
 }

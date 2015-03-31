@@ -30,6 +30,7 @@ float4 position	    : SV_POSITION;
 float2 tex      	: TEXCOORD0;
 float3 localPos	    : TEXCOORD1;
 float3 debugColor   : TEXCOORD2;
+float3 positionModel : POSITIONMODEL;
 };
 
 PixelInputType Main(float2 pos : POSITION, uint instanceId : SV_InstanceID)
@@ -52,6 +53,7 @@ PixelInputType Main(float2 pos : POSITION, uint instanceId : SV_InstanceID)
 
     output.position = mul(posLocal, worldMatrix);
     output.position.xyz += offset;
+    output.positionModel = output.position.xyz;
     output.position = mul(output.position, viewMatrix);
     output.position = mul(output.position, projectionMatrix);
 
