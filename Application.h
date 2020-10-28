@@ -110,8 +110,6 @@ private:
     void HandleMinimapClicks(int mouseX, int mouseY,
                              bool isRightMouse, bool isLeftMouse);
 
-    void UpdateTerrain();
-
     // Safe shutdown/delete handler
     template<typename T> void SafeShutdown(T *&obj)
     {

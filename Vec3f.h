@@ -260,9 +260,9 @@ public:
 
     Vec3f operator*(float s) const
     {
-        Vec3f v(*this);
-        v.Scale(s);
-        return v;
+        Vec3f vec(*this);
+        vec.Scale(s);
+        return vec;
     }
 
     Vec3f &operator*=(float right)
@@ -275,9 +275,9 @@ public:
 
     Vec3f operator/(float s) const
     {
-        Vec3f v(*this);
-        v.Scale(1.0f / s);
-        return v;
+        Vec3f vec(*this);
+        vec.Scale(1.0f / s);
+        return vec;
     }
 
     Vec3f &operator/=(float right)
@@ -290,9 +290,9 @@ public:
 
     Vec3f operator-() const
     {
-        Vec3f v(*this);
-        v.Scale(-1.f);
-        return v;
+        Vec3f vec(*this);
+        vec.Scale(-1.f);
+        return vec;
     }
 
     Vec3f &operator=(const Vec3f &vec)
@@ -352,9 +352,9 @@ public:
 
     inline static Vec3f Sub(Vec3f &v0, Vec3f &v1)
     {
-        Vec3f v(v0);
-        v.Sub(v1);
-        return v;
+        Vec3f vec(v0);
+        vec.Sub(v1);
+        return vec;
     }
 
 

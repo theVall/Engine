@@ -204,9 +204,9 @@ public:
 
     Vec2f operator*(float s) const
     {
-        Vec2f v(*this);
-        v.Scale(s);
-        return v;
+        Vec2f vec(*this);
+        vec.Scale(s);
+        return vec;
     }
 
     Vec2f &operator*=(float right)
@@ -218,9 +218,9 @@ public:
 
     Vec2f operator/(float s) const
     {
-        Vec2f v(*this);
-        v.Scale(1.0f / s);
-        return v;
+        Vec2f vec(*this);
+        vec.Scale(1.0f / s);
+        return vec;
     }
 
     Vec2f &operator/=(float right)
@@ -232,9 +232,9 @@ public:
 
     Vec2f operator-() const
     {
-        Vec2f v(*this);
-        v.Scale(-1.f);
-        return v;
+        Vec2f vec(*this);
+        vec.Scale(-1.f);
+        return vec;
     }
 
     Vec2f &operator=(const Vec2f &vec)
@@ -286,9 +286,9 @@ public:
 
     inline static Vec2f Sub(Vec2f &v0, Vec2f &v1)
     {
-        Vec2f v(v0);
-        v.Sub(v1);
-        return v;
+        Vec2f vec(v0);
+        vec.Sub(v1);
+        return vec;
     }
 
 

@@ -48,12 +48,12 @@ float4 Main(PixelInputType input) : SV_TARGET
     color = texSkyDome.Sample(samplerType, input.tex);
 
     // calculate fog
-    //float3 pixelPos = input.positionModel.xyz;
-    //float3 pixelToLightVec = normalize(lightDir - pixelPos);
-    //float3 pixelToEyeVec = normalize(eyeVec - pixelPos);
+    float3 pixelPos = input.positionModel.xyz;
+    float3 pixelToLightVec = normalize(lightDir - pixelPos);
+    float3 pixelToEyeVec = normalize(eyeVec - pixelPos);
 
-    //float3 fogColor = CalcFogColor(pixelToLightVec, pixelToEyeVec);
-    //color.rgb = lerp(color.rgb, fogColor, pow(saturate(input.tex.y), 10.0f));
+    float3 fogColor = CalcFogColor(pixelToLightVec, pixelToEyeVec);
+    color.rgb = lerp(color.rgb, fogColor, pow(saturate(input.tex.y), 1.2f));
 
     color.a = 1.0f;
 

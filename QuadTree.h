@@ -24,14 +24,14 @@ const int NUM_BOX_INDICES = 24;
 
 const static float cubeVertices[] =
 {
-    -0.5f, -0.5f, -0.5f,
-    0.5f, -0.5f, -0.5f,
-    0.5f,  0.5f, -0.5f,
-    -0.5f, 0.5f, -0.5f,
-    -0.5f, -0.5f, 0.5f,
-    0.5f, -0.5f,  0.5f,
-    0.5f,  0.5f,  0.5f,
-    -0.5f, 0.5f,  0.5f,
+    -0.5f, -0.5f, -0.5f, 
+    0.5f, -0.5f, -0.5f, 
+    0.5f,  0.5f, -0.5f, 
+    -0.5f,  0.5f, -0.5f, 
+    -0.5f, -0.5f,  0.5f, 
+    0.5f, -0.5f,  0.5f, 
+    0.5f,  0.5f,  0.5f, 
+    -0.5f,  0.5f,  0.5f, 
 };
 
 const static unsigned long boxEdges[] =

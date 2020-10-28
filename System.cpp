@@ -24,14 +24,14 @@ bool System::Initialize()
     bool result = false;
 
     // Create the application wrapper object.
-    // Must be called __before__ windows API initialization.
+    // Must be called __before__ windows are initialized.
     m_Application = new Application;
     if (!m_Application)
     {
         return false;
     }
 
-    // Initialize windows API.
+    // Initialize windows.
     InitializeWindows(screenWidth, screenHeight);
 
     // Get number of processors for multi-threading
@@ -40,7 +40,7 @@ bool System::Initialize()
     int numCpu = sysinfo.dwNumberOfProcessors;
 
     // Initialize the application wrapper object.
-    // Must be called __after__ windows API initialization.
+    // Must be called __after__ windows are initialized.
     result = m_Application->Initialize(m_hwnd, screenWidth, screenHeight, numCpu);
     if (!result)
     {

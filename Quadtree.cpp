@@ -341,9 +341,8 @@ void QuadTree::CreateTreeNode(NodeType *pNode,
         {
             int j = i * 3;
             pVerticesCube[i].x = cubeVertices[j] * width + position.x;
-            pVerticesCube[i].y = cubeVertices[j+1] * width + position.y;
-            pVerticesCube[i].z = cubeVertices[j+2] * width + position.z;
-            //pVerticesCube[i].w = 1.0f;
+            pVerticesCube[i].y = cubeVertices[j + 1] * width + position.y;
+            pVerticesCube[i].z = cubeVertices[j + 2] * width + position.z;
         }
 
         vertexBufferDesc.ByteWidth = sizeof(XMFLOAT3) * NUM_CUBE_VERTICES;

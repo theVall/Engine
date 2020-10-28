@@ -56,7 +56,7 @@ bool D3D::Initialize(int screenWidth,
     unsigned int i            = 0;
     unsigned int numerator    = 0;
     unsigned int denominator  = 0;
-    unsigned int stringLength = 0;
+    size_t stringLength = 0;
     int error                 = 0;
     float fovAngleY           = 0.0f;
     float screenAspect        = 0.0f;
